@@ -1,12 +1,8 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { MessageCircle, X } from "lucide-react";
 
-// Only imported and rendered on the client — never on the server.
-// This keeps shiki / mermaid / streamdown out of the SSR bundle entirely.
-const StudyChat = lazy(() =>
-  import("@/components/study-chat").then((m) => ({ default: m.StudyChat }))
-);
+import { StudyChat } from "@/components/study-chat";
 
 const hiddenOn = ["/chat", "/login", "/signup", "/onboarding"];
 
@@ -22,9 +18,7 @@ export function FloatingChat() {
     <div className="pointer-events-none fixed inset-0 z-50 flex flex-col items-end justify-end p-4 sm:p-6">
       {open && (
         <div className="pointer-events-auto mb-3 flex h-[min(70dvh,560px)] w-[min(92vw,400px)] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-2xl">
-          <Suspense fallback={null}>
-            <StudyChat className="rounded-none border-0" onClose={() => setOpen(false)} />
-          </Suspense>
+          <StudyChat className="rounded-none border-0" onClose={() => setOpen(false)} />
         </div>
       )}
       <button

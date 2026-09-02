@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { motion, useInView, AnimatePresence } from "motion/react";
+import { motion, useInView, AnimatePresence, type Variants } from "motion/react";
 
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -71,7 +71,7 @@ function ScrollReveal({
   className,
 }: {
   children: React.ReactNode;
-  variants?: typeof fadeUp;
+  variants?: Variants;
   delay?: number;
   className?: string;
 }) {

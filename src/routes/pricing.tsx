@@ -404,7 +404,7 @@ function PricingPage() {
                       active ? "border-foreground bg-secondary" : "border-border bg-card"
                     }`}
                   >
-                    {plan.badge && (
+                    {"badge" in plan && Boolean(plan.badge) && (
                       <span className="block bg-ink-foreground py-1 text-center text-[11px] font-semibold text-ink">
                         {plan.badge}
                       </span>

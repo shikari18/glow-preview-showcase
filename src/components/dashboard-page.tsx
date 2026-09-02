@@ -14,6 +14,7 @@ import {
   BadgeCheck,
   MoreHorizontal,
   LogOut,
+  School,
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";

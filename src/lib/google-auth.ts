@@ -21,8 +21,11 @@ export interface GoogleCredentialPayload {
 
 /** Decode the JWT payload without verifying the signature (client-side only). */
 export function decodeGoogleJwt(credential: string): GoogleCredentialPayload {
-  const [, payload] = credential.split(".");
-  const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+  const parts = credential.split(".");
+  if (parts.length < 2 || !parts[1]) {
+    throw new Error("Invalid Google credential token");
+  }
+  const json = atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"));
   return JSON.parse(json) as GoogleCredentialPayload;
 }
 
