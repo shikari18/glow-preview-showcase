@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { AuthLayout } from "@/components/auth-layout";
 
@@ -26,10 +27,21 @@ const EMAIL_ERROR =
   "We're experiencing a problem with email sign-up right now. Please use Google to continue — we'll have this fixed soon.";
 
 function SignUpPage() {
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasPicture = window.localStorage.getItem("examglow.google_picture");
+    const authMethod = window.localStorage.getItem("examglow.auth_method");
+    if (hasPicture && authMethod === "google") {
+      navigate({ to: "/home" });
+    }
+  }, [navigate]);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();

@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useRef, useEffect } from "react";
 import { motion, useInView, AnimatePresence } from "motion/react";
 
 import { SiteNav } from "@/components/site-nav";
@@ -803,6 +803,18 @@ function ClosingCta() {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 function Index() {
+  const navigate = useNavigate();
+
+  // Auto-login: if the user already signed in with Google, go straight to /home
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasPicture = window.localStorage.getItem("examglow.google_picture");
+    const authMethod = window.localStorage.getItem("examglow.auth_method");
+    if (hasPicture && authMethod === "google") {
+      navigate({ to: "/home" });
+    }
+  }, [navigate]);
+
   return (
     <motion.div
       className="min-h-screen bg-background"
