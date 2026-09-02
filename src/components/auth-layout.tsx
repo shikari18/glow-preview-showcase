@@ -19,6 +19,10 @@ export function AuthLayout({ title, children }: { title: string; children: React
       const credential = await triggerGoogleSignIn();
       const payload = decodeGoogleJwt(credential);
       saveProfile({ name: payload.name, email: payload.email });
+      // Persist profile picture separately so the avatar can display it
+      try {
+        window.localStorage.setItem("examglow.google_picture", payload.picture);
+      } catch { /* storage unavailable */ }
       navigate({ to: "/onboarding/role" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Google sign-in failed.";

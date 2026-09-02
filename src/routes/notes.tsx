@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BookOpen, ChevronRight, Search, ArrowLeft } from "lucide-react";
 import { DashboardLayout, PageHeading } from "@/components/dashboard-page";
 import { SYLLABUS_NOTES, type SubjectNotes, type Chapter } from "@/lib/syllabus-notes";
@@ -26,12 +26,19 @@ function ChapterDoc({ chapter, allChapters, color, onBack, onNext, onPrev }: {
 }) {
   // Track which subheadings are collapsed
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
+  const scrollRef = useRef<HTMLDivElement>(null);
   const toggleCollapse = (i: number) =>
     setCollapsed(prev => ({ ...prev, [i]: !prev[i] }));
 
   const idx = allChapters.findIndex(c => c.number === chapter.number);
   const hasNext = idx < allChapters.length - 1;
   const hasPrev = idx > 0;
+
+  // Scroll to top and reset collapsed sections whenever chapter changes
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+    setCollapsed({});
+  }, [chapter.number]);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#f5f4ef] dark:bg-[#1a1a18]">
@@ -52,7 +59,7 @@ function ChapterDoc({ chapter, allChapters, color, onBack, onNext, onPrev }: {
       </div>
 
       {/* Scrollable document */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <article className="mx-auto max-w-5xl px-6 pb-24 pt-14 sm:px-12">
 
           {/* Chapter badge */}
@@ -280,14 +287,6 @@ function NotesPage() {
         {filtered.map(s => (
           <SubjectCard key={s.id} subject={s} />
         ))}
-      </div>
-
-      {/* Available subjects */}
-      <div className="mt-6 rounded-2xl border border-border bg-surface/60 p-5">
-        <p className="text-sm font-semibold">📚 Currently available: Biology (0610), Chemistry (0620), Physics (0625), Environmental Management (0680), Mathematics (0580), Additional Mathematics (0606), First Language English (0500), English as a Second Language (0510), Literature in English (0475), Accounting (0452), Business Studies (0450)</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Economics, Computer Science, Geography, and History notes coming soon.
-        </p>
       </div>
     </DashboardLayout>
   );
