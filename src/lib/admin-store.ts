@@ -1,28 +1,20 @@
-/**
- * Admin store — persists to Supabase so every user's sign-in appears
- * in the admin panel regardless of device.
- *
- * Falls back to localStorage when Supabase env vars are not configured,
- * so local development still works.
- */
-
-import { getSupabase } from "./supabase";
+import { isSupabaseConfigured, dbSelect, dbUpsert, dbUpdate, dbDelete } from "./supabase";
 
 export type PlanLabel = "free" | "weekly" | "monthly" | "termly" | "exam-pass";
 
 export type AdminAccount = {
-  id: string;            // Google sub (unique user ID)
+  id: string;
   name: string;
   email: string;
   picture: string;
   plan: PlanLabel;
   role: string;
   goal: string;
-  signedInAt: string;    // ISO date string
+  signedInAt: string;
   sessionActive: boolean;
 };
 
-// ─── localStorage fallback (used when Supabase is not configured) ─────────────
+// ─── localStorage fallback ────────────────────────────────────────────────────
 
 const LOCAL_KEY = "examglow.accounts";
 
@@ -40,7 +32,7 @@ function localWrite(accounts: AdminAccount[]) {
   catch { /* storage unavailable */ }
 }
 
-// ─── Supabase row shape ───────────────────────────────────────────────────────
+// ─── DB row shape ─────────────────────────────────────────────────────────────
 
 type DbRow = {
   id: string;
@@ -70,13 +62,10 @@ function rowToAccount(r: DbRow): AdminAccount {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-/** Register or update a user in Supabase (called on every Google sign-in). */
 export async function registerAccount(
   account: Omit<AdminAccount, "signedInAt" | "sessionActive">,
 ) {
-  const sb = getSupabase();
-
-  const entry = {
+  const row = {
     id: account.id,
     name: account.name,
     email: account.email,
@@ -88,73 +77,44 @@ export async function registerAccount(
     session_active: true,
   };
 
-  if (sb) {
-    // upsert — insert if new, update signed_in_at + session_active if existing
-    await sb
-      .from("examglow_accounts")
-      .upsert(entry, { onConflict: "id" });
+  if (isSupabaseConfigured()) {
+    await dbUpsert("examglow_accounts", row);
   } else {
-    // localStorage fallback
     const accounts = localRead();
     const idx = accounts.findIndex(a => a.id === account.id);
-    const localEntry: AdminAccount = { ...account, signedInAt: entry.signed_in_at, sessionActive: true };
-    if (idx >= 0) accounts[idx] = localEntry; else accounts.push(localEntry);
+    const entry: AdminAccount = { ...account, signedInAt: row.signed_in_at, sessionActive: true };
+    if (idx >= 0) accounts[idx] = entry; else accounts.push(entry);
     localWrite(accounts);
   }
 }
 
-/** Fetch all accounts (admin only). */
 export async function fetchAccounts(): Promise<AdminAccount[]> {
-  const sb = getSupabase();
-  if (sb) {
-    const { data, error } = await sb
-      .from("examglow_accounts")
-      .select("*")
-      .order("signed_in_at", { ascending: false });
-    if (error) {
-      throw new Error(
-        `Supabase error ${error.code ?? ""}: ${error.message ?? JSON.stringify(error)}`
-      );
-    }
-    return (data as DbRow[]).map(rowToAccount);
+  if (isSupabaseConfigured()) {
+    const rows = await dbSelect<DbRow>("examglow_accounts", "signed_in_at");
+    return rows.map(rowToAccount);
   }
   return localRead();
 }
 
-/** Mark a user's session as inactive (force sign-out from admin). */
 export async function logoutAccount(id: string) {
-  const sb = getSupabase();
-  if (sb) {
-    await sb
-      .from("examglow_accounts")
-      .update({ session_active: false })
-      .eq("id", id);
+  if (isSupabaseConfigured()) {
+    await dbUpdate("examglow_accounts", { id }, { session_active: false });
   } else {
     localWrite(localRead().map(a => a.id === id ? { ...a, sessionActive: false } : a));
   }
 }
 
-/** Change a user's plan tier. */
 export async function updateAccountPlan(id: string, plan: PlanLabel) {
-  const sb = getSupabase();
-  if (sb) {
-    await sb
-      .from("examglow_accounts")
-      .update({ plan })
-      .eq("id", id);
+  if (isSupabaseConfigured()) {
+    await dbUpdate("examglow_accounts", { id }, { plan });
   } else {
     localWrite(localRead().map(a => a.id === id ? { ...a, plan } : a));
   }
 }
 
-/** Permanently delete an account from the registry. */
 export async function deleteAccount(id: string) {
-  const sb = getSupabase();
-  if (sb) {
-    await sb
-      .from("examglow_accounts")
-      .delete()
-      .eq("id", id);
+  if (isSupabaseConfigured()) {
+    await dbDelete("examglow_accounts", { id });
   } else {
     localWrite(localRead().filter(a => a.id !== id));
   }

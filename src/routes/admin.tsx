@@ -27,7 +27,7 @@ import {
   type AdminAccount,
   type PlanLabel,
 } from "@/lib/admin-store";
-import { getSupabase } from "@/lib/supabase";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 // ─── Route ────────────────────────────────────────────────────────────────────
 
@@ -240,7 +240,7 @@ function AdminPage() {
   const [planFilter, setPlanFilter] = useState<PlanLabel | "all">("all");
   const [emailTarget, setEmailTarget] = useState<AdminAccount | null>(null);
 
-  const supabaseConfigured = typeof window !== "undefined" && !!getSupabase();
+  const supabaseConfigured = typeof window !== "undefined" && isSupabaseConfigured();
 
   const load = useCallback(async () => {
     setLoading(true);
