@@ -1,20 +1,121 @@
 import type { ReactNode } from "react";
-import { ChevronRight, Share2, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ChevronRight, Crown, Moon, Share2, SlidersHorizontal, Sun, Upload } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import logoMark from "@/assets/logo-mark.png";
 import avatar1 from "@/assets/avatar-1.jpg";
 
+const THEME_KEY = "examglow.theme";
+
+function applyTheme(dark: boolean) {
+  document.documentElement.classList.toggle("dark", dark);
+}
+
 export function ProfileAvatar({ className = "" }: { className?: string }) {
+  const [open, setOpen] = useState(false);
+  const [dark, setDark] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(THEME_KEY);
+    const isDark = stored === "dark";
+    setDark(isDark);
+    applyTheme(isDark);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [open]);
+
+  function toggleDark() {
+    const next = !dark;
+    setDark(next);
+    applyTheme(next);
+    try {
+      window.localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
   return (
-    <img
-      src={avatar1}
-      alt="Your profile"
-      loading="lazy"
-      width={512}
-      height={512}
-      className={`size-9 rounded-full object-cover ${className}`}
-    />
+    <div ref={rootRef} className={`relative ${className}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-label="Open profile menu"
+        aria-expanded={open}
+        className="block rounded-full transition-transform hover:scale-105"
+      >
+        <img
+          src={avatar1}
+          alt="Your profile"
+          loading="lazy"
+          width={512}
+          height={512}
+          className="size-9 rounded-full object-cover"
+        />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-11 z-50 w-60 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_50px_-18px_rgba(0,0,0,0.35)]">
+          <Link
+            to="/pricing"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-secondary"
+          >
+            <span className="flex size-8 items-center justify-center rounded-full bg-lilac">
+              <Crown className="size-4" aria-hidden />
+            </span>
+            Upgrade plan
+          </Link>
+          <Link
+            to="/onboarding/role"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-secondary"
+          >
+            <span className="flex size-8 items-center justify-center rounded-full bg-mint">
+              <SlidersHorizontal className="size-4" aria-hidden />
+            </span>
+            Personalization
+          </Link>
+          <button
+            type="button"
+            onClick={toggleDark}
+            className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-secondary"
+          >
+            <span className="flex size-8 items-center justify-center rounded-full bg-surface">
+              {dark ? <Sun className="size-4" aria-hidden /> : <Moon className="size-4" aria-hidden />}
+            </span>
+            <span className="flex-1 text-left">Dark mode</span>
+            <span
+              className={`relative h-5 w-9 rounded-full transition-colors ${dark ? "bg-lavender" : "bg-secondary"}`}
+              role="switch"
+              aria-checked={dark}
+              aria-label="Dark mode"
+            >
+              <span
+                className={`absolute top-0.5 size-4 rounded-full bg-card shadow transition-all ${dark ? "left-4.5" : "left-0.5"}`}
+              />
+            </span>
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
