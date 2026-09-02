@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { BookOpen, ChevronRight, Search, ArrowLeft } from "lucide-react";
-import { DashboardLayout, PageHeading } from "@/components/dashboard-page";
-import { SYLLABUS_NOTES, type SubjectNotes, type Chapter } from "@/lib/syllabus-notes";
+import { BookOpen, ChevronRight, Search, ArrowLeft, Loader2 } from "lucide-react";
+import { DashboardLayout } from "@/components/dashboard-page";
+import type { SubjectNotes, Chapter } from "@/lib/notes/types";
 
 export const Route = createFileRoute("/notes")({
   head: () => ({
@@ -254,8 +254,18 @@ function SubjectCard({ subject }: { subject: SubjectNotes }) {
 
 function NotesPage() {
   const [search, setSearch] = useState("");
+  const [notes, setNotes] = useState<SubjectNotes[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = SYLLABUS_NOTES.filter(s =>
+  // Dynamically import the notes data — keeps it out of the SSR bundle
+  useEffect(() => {
+    import("@/lib/syllabus-notes").then(m => {
+      setNotes(m.SYLLABUS_NOTES);
+      setLoading(false);
+    });
+  }, []);
+
+  const filtered = notes.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase()) || s.code.includes(search)
   );
 
@@ -274,7 +284,7 @@ function NotesPage() {
           <div className="flex shrink-0 items-center gap-2 rounded-2xl bg-card/70 px-5 py-3 backdrop-blur">
             <BookOpen className="size-5 text-muted-foreground" aria-hidden />
             <div>
-              <p className="text-xl font-bold">{SYLLABUS_NOTES.length}</p>
+              <p className="text-xl font-bold">{notes.length || "…"}</p>
               <p className="text-xs text-muted-foreground">Subjects</p>
             </div>
           </div>
@@ -294,11 +304,18 @@ function NotesPage() {
       </div>
 
       {/* Subject sections */}
-      <div className="space-y-4">
-        {filtered.map(s => (
-          <SubjectCard key={s.id} subject={s} />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center gap-3 py-20 text-muted-foreground">
+          <Loader2 className="size-5 animate-spin" />
+          Loading notes…
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filtered.map(s => (
+            <SubjectCard key={s.id} subject={s} />
+          ))}
+        </div>
+      )}
     </DashboardLayout>
   );
 }
