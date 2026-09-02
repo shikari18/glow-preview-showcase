@@ -14,6 +14,10 @@ import { LITERATURE_IN_ENGLISH } from "./notes/literature-in-english";
 import { ACCOUNTING } from "./notes/accounting";
 import { BUSINESS_STUDIES } from "./notes/business-studies";
 import { ECONOMICS } from "./notes/economics";
+import { HISTORY } from "./notes/history";
+import { GEOGRAPHY } from "./notes/geography";
+import { SOCIOLOGY } from "./notes/sociology";
+import { RELIGIOUS_STUDIES } from "./notes/religious-studies";
 import type { SubjectNotes } from "./notes/types";
 
 export {
@@ -29,6 +33,10 @@ export {
   ACCOUNTING,
   BUSINESS_STUDIES,
   ECONOMICS,
+  HISTORY,
+  GEOGRAPHY,
+  SOCIOLOGY,
+  RELIGIOUS_STUDIES,
 };
 
 export const SYLLABUS_NOTES: SubjectNotes[] = [
@@ -44,4 +52,8 @@ export const SYLLABUS_NOTES: SubjectNotes[] = [
   ACCOUNTING,
   BUSINESS_STUDIES,
   ECONOMICS,
+  HISTORY,
+  GEOGRAPHY,
+  SOCIOLOGY,
+  RELIGIOUS_STUDIES,
 ];
