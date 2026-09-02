@@ -10,8 +10,6 @@ import {
   X,
   GraduationCap,
   Users,
-  School,
-  Home as HomeIcon,
   BookOpenCheck,
   BadgeCheck,
   MoreHorizontal,
@@ -33,9 +31,7 @@ function applyTheme(dark: boolean) {
 
 const roles = [
   { label: "Student", Icon: GraduationCap },
-  { label: "Teacher", Icon: Users },
-  { label: "Professor", Icon: School },
-  { label: "Parent", Icon: HomeIcon },
+  { label: "Tutor", Icon: Users },
 ];
 
 const goals = [

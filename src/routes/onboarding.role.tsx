@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { GraduationCap, Users, School, Home } from "lucide-react";
+import { GraduationCap, Users } from "lucide-react";
 
 import { OnboardingShell } from "@/components/onboarding-shell";
 import { saveProfile } from "@/lib/onboarding";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/onboarding/role")({
         content: "Choose your role so ExamGlow can tailor your study experience.",
       },
       { property: "og:title", content: "Tell us who you are — ExamGlow" },
-      { property: "og:description", content: "Student, teacher, professor or parent?" },
+      { property: "og:description", content: "Student or tutor?" },
     ],
   }),
   component: RoleStep,
@@ -21,9 +21,7 @@ export const Route = createFileRoute("/onboarding/role")({
 
 const roles = [
   { label: "Student", Icon: GraduationCap },
-  { label: "Teacher", Icon: Users },
-  { label: "Professor", Icon: School },
-  { label: "Parent", Icon: Home },
+  { label: "Tutor", Icon: Users },
 ];
 
 function RoleStep() {
@@ -31,7 +29,7 @@ function RoleStep() {
 
   return (
     <OnboardingShell title="I'm a..." step={1}>
-      <div className="mx-auto grid max-w-2xl grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="mx-auto grid max-w-xl grid-cols-2 gap-5">
         {roles.map(({ label, Icon }) => (
           <button
             key={label}
