@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { BookOpen, ListChecks, Layers } from "lucide-react";
+import { BookOpen, ListChecks, Layers, X } from "lucide-react";
 
 import {
   Conversation,
@@ -24,7 +24,7 @@ const suggestions = [
   { label: "Generate flashcards for this set", Icon: Layers },
 ] as const;
 
-export function StudyChat() {
+export function StudyChat({ className = "", onClose }: { className?: string; onClose?: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<"ready" | "submitted">("ready");
@@ -61,7 +61,7 @@ export function StudyChat() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card">
+    <div className={`flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card ${className}`}>
       <header className="flex items-center gap-3 border-b border-border px-5 py-3.5">
         <img
           src={logoMark}
@@ -71,12 +71,18 @@ export function StudyChat() {
           className="size-9 rounded-full bg-lilac/60 p-0.5"
         />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">Whiskers</p>
-          <p className="truncate text-xs text-muted-foreground">Your AI study tutor</p>
+          <p className="truncate text-sm font-semibold">ExamGlow Tutor</p>
+          <p className="truncate text-xs text-muted-foreground">Always on, always on topic</p>
         </div>
-        <span className="ml-auto hidden rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground sm:block">
-          {messages.length ? `${messages.length} messages` : "New chat"}
-        </span>
+        {onClose ? (
+          <button type="button" onClick={onClose} aria-label="Close chat" className="ml-auto text-muted-foreground">
+            <X className="size-5" />
+          </button>
+        ) : (
+          <span className="ml-auto hidden rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground sm:block">
+            {messages.length ? `${messages.length} messages` : "New chat"}
+          </span>
+        )}
       </header>
 
       <Conversation className="flex-1">
@@ -85,7 +91,7 @@ export function StudyChat() {
             <div className="py-10 text-center">
               <img
                 src={logoMark}
-                alt="Whiskers the ExamGlow cat tutor"
+                alt="ExamGlow AI tutor"
                 loading="lazy"
                 width={512}
                 height={512}

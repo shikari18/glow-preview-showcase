@@ -27,8 +27,7 @@ export function FloatingChat() {
         aria-label={open ? "Close AI tutor chat" : "Open AI tutor chat"}
         className="pointer-events-auto flex size-14 items-center justify-center rounded-full bg-ink text-ink-foreground shadow-xl transition-transform hover:-translate-y-0.5"
       >
-        {open ? <MessageCircle className="size-6" aria-hidden /> : <MessageCircle className="size-6" aria-hidden />}
-        {open && <X className="sr-only" />}
+        {open ? <X className="size-6" aria-hidden /> : <MessageCircle className="size-6" aria-hidden />}
       </button>
     </div>
   );
