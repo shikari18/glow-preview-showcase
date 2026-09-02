@@ -284,9 +284,9 @@ function NotesPage() {
 
       {/* Available subjects */}
       <div className="mt-6 rounded-2xl border border-border bg-surface/60 p-5">
-        <p className="text-sm font-semibold">📚 Currently available: Biology (0610), Chemistry (0620), Physics (0625), Environmental Management (0680), Mathematics (0580), Additional Mathematics (0606)</p>
+        <p className="text-sm font-semibold">📚 Currently available: Biology (0610), Chemistry (0620), Physics (0625), Environmental Management (0680), Mathematics (0580), Additional Mathematics (0606), First Language English (0500), English as a Second Language (0510), Literature in English (0475), Accounting (0452), Business Studies (0450)</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Economics, Computer Science, English Language, and Business Studies notes coming soon.
+          Economics, Computer Science, Geography, and History notes coming soon.
         </p>
       </div>
     </DashboardLayout>
