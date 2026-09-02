@@ -7,7 +7,6 @@ import {
   Trash2,
   Search,
   Crown,
-  ShieldCheck,
   RefreshCw,
   X,
   Send,
@@ -335,19 +334,6 @@ function AdminPage() {
             <img src={logoMark} alt="ExamGlow" className="size-7 rounded-full" />
             <span className="text-[15px] font-bold">ExamGlow</span>
           </Link>
-          <div className="flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
-            <ShieldCheck className="size-3.5" />
-            Admin
-          </div>
-          {/* Supabase status */}
-          <div className={`hidden items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium sm:flex ${
-            supabaseConfigured
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-              : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-          }`}>
-            <span className={`size-1.5 rounded-full ${supabaseConfigured ? "bg-emerald-500" : "bg-amber-500"}`} />
-            {supabaseConfigured ? "Supabase connected" : "localStorage only — add Supabase env vars"}
-          </div>
           <div className="flex-1" />
           <button onClick={load} disabled={loading}
             className="flex items-center gap-1.5 rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800">
