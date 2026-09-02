@@ -15,7 +15,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search,
-  Upload,
   X,
 } from "lucide-react";
 
