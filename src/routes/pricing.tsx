@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 
 import balanceDoodle from "@/assets/balance-doodle.png";
 import avatar1 from "@/assets/avatar-1.jpg";
-import { saveProfile } from "@/lib/onboarding";
+import { saveProfile, readProfile } from "@/lib/onboarding";
 import {
   detectCurrency,
   loadPayPalSDK,
@@ -15,6 +15,11 @@ import {
   convertPrice,
   type CurrencyInfo,
 } from "@/lib/paypal";
+import {
+  loadPaystackSDK,
+  PAYSTACK_PUBLIC_KEY,
+  getPaystackCurrencyAndAmount,
+} from "@/lib/paystack";
 import { updateAccountPlan, type PlanLabel } from "@/lib/admin-store";
 
 export const Route = createFileRoute("/pricing")({
@@ -71,6 +76,16 @@ function PaymentModal({
   const paypalRef = useRef<HTMLDivElement>(null);
   const [sdkState, setSdkState] = useState<"loading" | "ready" | "error">("loading");
   const [payError, setPayError] = useState<string | null>(null);
+  const [paystackLoading, setPaystackLoading] = useState(false);
+  const [customerEmail, setCustomerEmail] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return (
+      window.localStorage.getItem("examglow.user_email") ||
+      readProfile()?.email ||
+      ""
+    );
+  });
+  const [showEmailPrompt, setShowEmailPrompt] = useState(false);
   const rendered = useRef(false);
 
   const amount = convertPrice(planId, currency);
@@ -83,6 +98,56 @@ function PaymentModal({
     if (userId) await updateAccountPlan(userId, planId as PlanLabel);
     onSuccess();
   }, [planId, onSuccess]);
+
+  const handlePaystackPay = useCallback(async (emailOverride?: string) => {
+    const emailToUse = (emailOverride || customerEmail).trim();
+    if (!emailToUse || !emailToUse.includes("@")) {
+      setShowEmailPrompt(true);
+      return;
+    }
+
+    setPaystackLoading(true);
+    setPayError(null);
+
+    try {
+      await loadPaystackSDK();
+      if (!window.PaystackPop) {
+        throw new Error("Paystack SDK could not be initialized");
+      }
+
+      const { currency: payCurrency, amountInKobo } = getPaystackCurrencyAndAmount(
+        amount,
+        currency.code
+      );
+
+      const handler = window.PaystackPop.setup({
+        key: PAYSTACK_PUBLIC_KEY,
+        email: emailToUse,
+        amount: amountInKobo,
+        currency: payCurrency,
+        ref: `EG_${planId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+        metadata: {
+          planId,
+          planName: planDisplay?.name,
+          currency: currency.code,
+        },
+        callback: async (response) => {
+          console.log("Paystack payment successful:", response);
+          await handleSuccess(response.reference || response.transaction || response.trxref);
+        },
+        onClose: () => {
+          setPaystackLoading(false);
+        },
+      });
+
+      handler.openIframe();
+    } catch (err: unknown) {
+      console.error("Paystack error:", err);
+      setPayError("Unable to open Paystack. Please try again or use PayPal.");
+    } finally {
+      setPaystackLoading(false);
+    }
+  }, [customerEmail, amount, currency.code, planId, planDisplay, handleSuccess]);
 
   // Lock body scroll
   useEffect(() => {
@@ -195,17 +260,84 @@ function PaymentModal({
             </div>
           </div>
 
+          {/* Paystack Checkout Button & Email Prompt */}
+          <div className="space-y-3">
+            {showEmailPrompt && (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5 dark:border-emerald-800/60 dark:bg-emerald-950/30">
+                <label className="block text-xs font-semibold text-emerald-900 dark:text-emerald-200">
+                  Enter your email address for the receipt:
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="student@example.com"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    className="flex-1 rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:ring-2 focus:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handlePaystackPay(customerEmail)}
+                    disabled={paystackLoading || !customerEmail.includes("@")}
+                    className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => handlePaystackPay()}
+              disabled={paystackLoading}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-60"
+            >
+              {paystackLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="size-4.5" />
+              )}
+              Pay with Card / Bank / Apple Pay (Paystack)
+            </button>
+
+            {/* Channels & Card badges */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+              {["Visa", "Mastercard", "Verve", "Apple Pay", "Bank Transfer"].map(channel => (
+                <span
+                  key={channel}
+                  className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                >
+                  {channel}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {payError && (
+            <p className="mt-3 rounded-xl bg-red-50 px-4 py-2.5 text-center text-xs text-red-600 dark:bg-red-950/30 dark:text-red-400">
+              {payError}
+            </p>
+          )}
+
+          {/* Divider */}
+          <div className="my-4 flex items-center gap-3 text-xs text-zinc-400">
+            <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+            or pay with PayPal
+            <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+          </div>
+
           {/* PayPal buttons */}
           {sdkState === "loading" && (
-            <div className="flex h-14 items-center justify-center gap-2 rounded-xl bg-zinc-100 text-sm text-zinc-500 dark:bg-zinc-800">
-              <Loader2 className="size-4 animate-spin" />
-              Loading payment options…
+            <div className="flex h-12 items-center justify-center gap-2 rounded-xl bg-zinc-100 text-xs text-zinc-500 dark:bg-zinc-800">
+              <Loader2 className="size-3.5 animate-spin" />
+              Loading PayPal options…
             </div>
           )}
 
           {sdkState === "error" && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400">
-              Failed to load PayPal. Please check your connection and try again.
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+              PayPal is not available. Please use the <strong>Paystack</strong> card/bank checkout above.
             </div>
           )}
 
@@ -214,44 +346,6 @@ function PaymentModal({
             ref={paypalRef}
             className={sdkState === "ready" ? "block" : "hidden"}
           />
-
-          {payError && (
-            <p className="mt-3 rounded-xl bg-red-50 px-4 py-2 text-center text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
-              {payError}
-            </p>
-          )}
-
-          {/* Divider */}
-          <div className="my-4 flex items-center gap-3 text-xs text-zinc-400">
-            <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
-            or pay with card
-            <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
-          </div>
-
-          {/* Card option info */}
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4 dark:border-zinc-700 dark:bg-zinc-800">
-            <div className="flex items-center gap-2 mb-3">
-              <CreditCard className="size-4 text-zinc-500" />
-              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Pay with card via PayPal
-              </span>
-            </div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Click the PayPal button above — on the PayPal page you can choose
-              "Pay with Debit or Credit Card" without needing a PayPal account.
-            </p>
-            {/* Card logos */}
-            <div className="mt-3 flex items-center gap-2">
-              {["Visa", "MC", "Amex", "Discover"].map(card => (
-                <span
-                  key={card}
-                  className="rounded border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-bold text-zinc-600 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
-                >
-                  {card}
-                </span>
-              ))}
-            </div>
-          </div>
 
           {/* Trust badges */}
           <div className="mt-4 flex items-center justify-center gap-4 text-xs text-zinc-400">
@@ -444,7 +538,7 @@ function PricingPage() {
             </button>
 
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              Cancel anytime · Secure checkout · PayPal &amp; all major cards
+              Cancel anytime · Secure checkout · Paystack, Apple Pay &amp; all cards
             </p>
           </div>
         </div>

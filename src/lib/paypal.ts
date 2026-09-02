@@ -5,9 +5,10 @@
  * - PayPal JS SDK loader
  */
 
+const envPaypalId = import.meta.env["VITE_PAYPAL_CLIENT_ID"] as string | undefined;
 export const PAYPAL_CLIENT_ID =
-  import.meta.env["VITE_PAYPAL_CLIENT_ID"] as string ||
-  "BAXrL_Pb2A66Zhr9asfXJBRIMuc7Ri5M9GzFDqDFBiwOcmMsNq4SOSAu1DLWkY1TwNPXs0G15bFKytpt4";
+  (envPaypalId && envPaypalId.trim().length > 60 ? envPaypalId.trim() : "") ||
+  "BAXrL_Pb2A66Zhr9asfXJBRIMuc7Ri5M9GzFDqDFBiwOcmMsNq4SOSAu1DLWkY1TWNPXs0G15bFKytpt4";
 
 // ─── Currency data ────────────────────────────────────────────────────────────
 
