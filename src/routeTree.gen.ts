@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArcadeRouteImport } from './routes/arcade'
 import { Route as AssignmentsRouteImport } from './routes/assignments'
+import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as FlashcardsRouteImport } from './routes/flashcards'
 import { Route as HomeRouteImport } from './routes/home'
@@ -26,6 +27,7 @@ import { Route as StudyPlanRouteImport } from './routes/study-plan'
 import { Route as SyllabusRouteImport } from './routes/syllabus'
 import { Route as TestRouteImport } from './routes/test'
 import { Route as TutorsRouteImport } from './routes/tutors'
+import { Route as ApiAssignmentRouteImport } from './routes/api/assignment'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as OnboardingGoalRouteImport } from './routes/onboarding.goal'
 import { Route as OnboardingRoleRouteImport } from './routes/onboarding.role'
@@ -44,6 +46,11 @@ const ArcadeRoute = ArcadeRouteImport.update({
 const AssignmentsRoute = AssignmentsRouteImport.update({
   id: '/assignments',
   path: '/assignments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -116,6 +123,11 @@ const TutorsRoute = TutorsRouteImport.update({
   path: '/tutors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAssignmentRoute = ApiAssignmentRouteImport.update({
+  id: '/api/assignment',
+  path: '/api/assignment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -141,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
   '/assignments': typeof AssignmentsRoute
+  '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
@@ -155,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/syllabus': typeof SyllabusRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
+  '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
@@ -164,6 +178,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
   '/assignments': typeof AssignmentsRoute
+  '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
@@ -178,6 +193,7 @@ export interface FileRoutesByTo {
   '/syllabus': typeof SyllabusRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
+  '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
@@ -188,6 +204,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
   '/assignments': typeof AssignmentsRoute
+  '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
@@ -202,6 +219,7 @@ export interface FileRoutesById {
   '/syllabus': typeof SyllabusRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
+  '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
@@ -213,6 +231,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arcade'
     | '/assignments'
+    | '/calendar'
     | '/chat'
     | '/flashcards'
     | '/home'
@@ -227,6 +246,7 @@ export interface FileRouteTypes {
     | '/syllabus'
     | '/test'
     | '/tutors'
+    | '/api/assignment'
     | '/api/chat'
     | '/onboarding/goal'
     | '/onboarding/role'
@@ -236,6 +256,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arcade'
     | '/assignments'
+    | '/calendar'
     | '/chat'
     | '/flashcards'
     | '/home'
@@ -250,6 +271,7 @@ export interface FileRouteTypes {
     | '/syllabus'
     | '/test'
     | '/tutors'
+    | '/api/assignment'
     | '/api/chat'
     | '/onboarding/goal'
     | '/onboarding/role'
@@ -259,6 +281,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arcade'
     | '/assignments'
+    | '/calendar'
     | '/chat'
     | '/flashcards'
     | '/home'
@@ -273,6 +296,7 @@ export interface FileRouteTypes {
     | '/syllabus'
     | '/test'
     | '/tutors'
+    | '/api/assignment'
     | '/api/chat'
     | '/onboarding/goal'
     | '/onboarding/role'
@@ -283,6 +307,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArcadeRoute: typeof ArcadeRoute
   AssignmentsRoute: typeof AssignmentsRoute
+  CalendarRoute: typeof CalendarRoute
   ChatRoute: typeof ChatRoute
   FlashcardsRoute: typeof FlashcardsRoute
   HomeRoute: typeof HomeRoute
@@ -297,6 +322,7 @@ export interface RootRouteChildren {
   SyllabusRoute: typeof SyllabusRoute
   TestRoute: typeof TestRoute
   TutorsRoute: typeof TutorsRoute
+  ApiAssignmentRoute: typeof ApiAssignmentRoute
   ApiChatRoute: typeof ApiChatRoute
   OnboardingGoalRoute: typeof OnboardingGoalRoute
   OnboardingRoleRoute: typeof OnboardingRoleRoute
@@ -324,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/assignments'
       fullPath: '/assignments'
       preLoaderRoute: typeof AssignmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -424,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TutorsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/assignment': {
+      id: '/api/assignment'
+      path: '/api/assignment'
+      fullPath: '/api/assignment'
+      preLoaderRoute: typeof ApiAssignmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -459,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArcadeRoute: ArcadeRoute,
   AssignmentsRoute: AssignmentsRoute,
+  CalendarRoute: CalendarRoute,
   ChatRoute: ChatRoute,
   FlashcardsRoute: FlashcardsRoute,
   HomeRoute: HomeRoute,
@@ -473,6 +514,7 @@ const rootRouteChildren: RootRouteChildren = {
   SyllabusRoute: SyllabusRoute,
   TestRoute: TestRoute,
   TutorsRoute: TutorsRoute,
+  ApiAssignmentRoute: ApiAssignmentRoute,
   ApiChatRoute: ApiChatRoute,
   OnboardingGoalRoute: OnboardingGoalRoute,
   OnboardingRoleRoute: OnboardingRoleRoute,

@@ -24,7 +24,7 @@ import logoMark from "@/assets/logo-mark.png";
 const primaryItems = [
   { label: "Home", to: "/home", Icon: Home },
   { label: "Notes", to: "/notes", Icon: FileText },
-  { label: "Calendar", to: "/assignments", Icon: CalendarDays },
+  { label: "Calendar", to: "/calendar", Icon: CalendarDays },
 ] as const;
 
 const studyItems = [

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { LayoutGrid, List, Plus, Search } from "lucide-react";
 
 import { DashboardLayout, EmptyState, SetFilterRow } from "@/components/dashboard-page";
-import catMascot from "@/assets/cat-mascot.png";
+import logoMark from "@/assets/logo-mark.png";
 
 export const Route = createFileRoute("/tutors")({
   head: () => ({
@@ -27,8 +27,8 @@ function TutorsPage() {
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-5">
         <div className="flex min-w-0 items-center gap-3">
           <img
-            src={catMascot}
-            alt="Whiskers the ExamGlow tutor"
+            src={logoMark}
+            alt="ExamGlow AI tutor"
             loading="lazy"
             width={512}
             height={512}
