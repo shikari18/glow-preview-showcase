@@ -1,8 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 
 import { AuthLayout } from "@/components/auth-layout";
-import { saveProfile } from "@/lib/onboarding";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -23,8 +22,10 @@ export const Route = createFileRoute("/signup")({
   component: SignUpPage,
 });
 
+const EMAIL_ERROR =
+  "We're experiencing a problem with email sign-up right now. Please use Google to continue — we'll have this fixed soon.";
+
 function SignUpPage() {
-  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,12 +33,7 @@ function SignUpPage() {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!email.includes("@") || password.length < 6) {
-      setError("Enter a valid email and a password of at least 6 characters.");
-      return;
-    }
-    saveProfile({ name: name.trim(), email: email.trim() });
-    navigate({ to: "/onboarding/role" });
+    setError(EMAIL_ERROR);
   }
 
   return (
@@ -85,7 +81,11 @@ function SignUpPage() {
           />
         </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
         <button
           type="submit"

@@ -6,6 +6,7 @@ import roomDoodle from "@/assets/room-doodle.png";
 import googleLogo from "@/assets/brands/google.svg";
 import { triggerGoogleSignIn, decodeGoogleJwt } from "@/lib/google-auth";
 import { saveProfile } from "@/lib/onboarding";
+import { registerAccount } from "@/lib/admin-store";
 
 export function AuthLayout({ title, children }: { title: string; children: ReactNode }) {
   const navigate = useNavigate();
@@ -19,14 +20,24 @@ export function AuthLayout({ title, children }: { title: string; children: React
       const credential = await triggerGoogleSignIn();
       const payload = decodeGoogleJwt(credential);
       saveProfile({ name: payload.name, email: payload.email });
-      // Persist profile picture separately so the avatar can display it
+      // Persist picture from Google so avatar always shows the real photo
       try {
         window.localStorage.setItem("examglow.google_picture", payload.picture);
+        window.localStorage.setItem("examglow.auth_method", "google");
       } catch { /* storage unavailable */ }
+      // Register in admin store
+      registerAccount({
+        id: payload.sub,
+        name: payload.name,
+        email: payload.email,
+        picture: payload.picture,
+        plan: "free",
+        role: "",
+        goal: "",
+      });
       navigate({ to: "/onboarding/role" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Google sign-in failed.";
-      // Ignore user-cancelled dismissals silently
       if (!message.toLowerCase().includes("cancel")) {
         setGoogleError(message);
       }
@@ -54,39 +65,35 @@ export function AuthLayout({ title, children }: { title: string; children: React
             {title}
           </h1>
 
-          <div className="mt-8 grid grid-cols-2 gap-4">
+          {/* Google — full width, only option */}
+          <div className="mt-8">
             <button
               type="button"
               onClick={handleGoogleSignIn}
               disabled={googleLoading}
-              className="rounded-full bg-secondary py-3.5 text-[15px] font-medium transition-colors hover:bg-muted disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full rounded-full bg-secondary py-3.5 text-[15px] font-medium transition-colors hover:bg-muted disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <span className="flex items-center justify-center gap-2">
+              <span className="flex items-center justify-center gap-2.5">
                 {googleLoading ? (
                   <svg className="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
                   </svg>
                 ) : (
-                  <img src={googleLogo} alt="" className="size-4" />
+                  <img src={googleLogo} alt="" className="size-5" />
                 )}
-                Google
+                Continue with Google
               </span>
-            </button>
-            <button
-              type="button"
-              className="rounded-full bg-secondary py-3.5 text-[15px] font-medium transition-colors hover:bg-muted"
-            >
-              Apple
             </button>
           </div>
 
           {googleError && (
             <p className="mt-3 text-center text-sm text-destructive">{googleError}</p>
           )}
+
           <div className="mt-6 flex items-center gap-4 text-sm text-muted-foreground">
             <span className="h-px flex-1 bg-border" />
-            or
+            or continue with email
             <span className="h-px flex-1 bg-border" />
           </div>
 

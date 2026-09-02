@@ -15,6 +15,7 @@ import {
   BookOpenCheck,
   BadgeCheck,
   MoreHorizontal,
+  LogOut,
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
@@ -183,14 +184,14 @@ export function ProfileAvatar({ className = "" }: { className?: string }) {
   const [showPersonalization, setShowPersonalization] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Read profile for picture + initials
-  const profile = readProfile();
-  const googlePicture = typeof window !== "undefined"
-    ? window.localStorage.getItem("examglow.google_picture")
-    : null;
-  const initials = profile.name
-    ? profile.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
-    : "?";
+  // Read profile for picture
+  const [profile, setProfile] = useState(() => readProfile());
+  const [googlePicture, setGooglePicture] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProfile(readProfile());
+    setGooglePicture(window.localStorage.getItem("examglow.google_picture"));
+  }, [open]); // re-read each time menu opens
 
   useEffect(() => {
     const stored = window.localStorage.getItem(THEME_KEY);
@@ -226,6 +227,15 @@ export function ProfileAvatar({ className = "" }: { className?: string }) {
     }
   }
 
+  function signOut() {
+    try {
+      window.localStorage.removeItem("examglow.profile");
+      window.localStorage.removeItem("examglow.google_picture");
+      window.localStorage.removeItem("examglow.auth_method");
+    } catch { /* storage unavailable */ }
+    window.location.href = "/login";
+  }
+
   return (
     <>
       {showPersonalization && (
@@ -247,12 +257,8 @@ export function ProfileAvatar({ className = "" }: { className?: string }) {
               referrerPolicy="no-referrer"
               width={36}
               height={36}
-              className="size-9 rounded-full object-cover"
+              className="size-9 rounded-full object-cover ring-2 ring-border"
             />
-          ) : profile.name ? (
-            <span className="flex size-9 items-center justify-center rounded-full bg-lavender text-sm font-bold text-white">
-              {initials}
-            </span>
           ) : (
             <img
               src={avatar1}
@@ -269,13 +275,25 @@ export function ProfileAvatar({ className = "" }: { className?: string }) {
           <div className="absolute right-0 top-11 z-50 w-64 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_18px_50px_-18px_rgba(0,0,0,0.35)]">
             {/* User info header */}
             {(profile.name || profile.email) && (
-              <div className="border-b border-border px-4 py-3">
-                {profile.name && (
-                  <p className="truncate text-sm font-semibold">{profile.name}</p>
+              <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+                {googlePicture && (
+                  <img
+                    src={googlePicture}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    width={36}
+                    height={36}
+                    className="size-9 shrink-0 rounded-full object-cover"
+                  />
                 )}
-                {profile.email && (
-                  <p className="truncate text-xs text-muted-foreground">{profile.email}</p>
-                )}
+                <div className="min-w-0">
+                  {profile.name && (
+                    <p className="truncate text-sm font-semibold">{profile.name}</p>
+                  )}
+                  {profile.email && (
+                    <p className="truncate text-xs text-muted-foreground">{profile.email}</p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -319,6 +337,18 @@ export function ProfileAvatar({ className = "" }: { className?: string }) {
                 />
               </span>
             </button>
+            <div className="border-t border-border">
+              <button
+                type="button"
+                onClick={signOut}
+                className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+              >
+                <span className="flex size-8 items-center justify-center rounded-full bg-destructive/10">
+                  <LogOut className="size-4" aria-hidden />
+                </span>
+                Sign out
+              </button>
+            </div>
           </div>
         )}
       </div>
