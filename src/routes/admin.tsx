@@ -248,7 +248,9 @@ function AdminPage() {
     try {
       setAccounts(await fetchAccounts());
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : "Failed to load accounts");
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("Admin fetch error:", e);
+      setLoadError(msg);
     } finally {
       setLoading(false);
     }
