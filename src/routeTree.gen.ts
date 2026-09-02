@@ -26,6 +26,7 @@ import { Route as StudyPlanRouteImport } from './routes/study-plan'
 import { Route as SyllabusRouteImport } from './routes/syllabus'
 import { Route as TestRouteImport } from './routes/test'
 import { Route as TutorsRouteImport } from './routes/tutors'
+import { Route as ApiAssignmentRouteImport } from './routes/api/assignment'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as OnboardingGoalRouteImport } from './routes/onboarding.goal'
 import { Route as OnboardingRoleRouteImport } from './routes/onboarding.role'
@@ -116,6 +117,11 @@ const TutorsRoute = TutorsRouteImport.update({
   path: '/tutors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAssignmentRoute = ApiAssignmentRouteImport.update({
+  id: '/api/assignment',
+  path: '/api/assignment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/syllabus': typeof SyllabusRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
+  '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/syllabus': typeof SyllabusRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
+  '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/syllabus': typeof SyllabusRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
+  '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/syllabus'
     | '/test'
     | '/tutors'
+    | '/api/assignment'
     | '/api/chat'
     | '/onboarding/goal'
     | '/onboarding/role'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/syllabus'
     | '/test'
     | '/tutors'
+    | '/api/assignment'
     | '/api/chat'
     | '/onboarding/goal'
     | '/onboarding/role'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/syllabus'
     | '/test'
     | '/tutors'
+    | '/api/assignment'
     | '/api/chat'
     | '/onboarding/goal'
     | '/onboarding/role'
@@ -297,6 +309,7 @@ export interface RootRouteChildren {
   SyllabusRoute: typeof SyllabusRoute
   TestRoute: typeof TestRoute
   TutorsRoute: typeof TutorsRoute
+  ApiAssignmentRoute: typeof ApiAssignmentRoute
   ApiChatRoute: typeof ApiChatRoute
   OnboardingGoalRoute: typeof OnboardingGoalRoute
   OnboardingRoleRoute: typeof OnboardingRoleRoute
@@ -424,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TutorsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/assignment': {
+      id: '/api/assignment'
+      path: '/api/assignment'
+      fullPath: '/api/assignment'
+      preLoaderRoute: typeof ApiAssignmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -473,6 +493,7 @@ const rootRouteChildren: RootRouteChildren = {
   SyllabusRoute: SyllabusRoute,
   TestRoute: TestRoute,
   TutorsRoute: TutorsRoute,
+  ApiAssignmentRoute: ApiAssignmentRoute,
   ApiChatRoute: ApiChatRoute,
   OnboardingGoalRoute: OnboardingGoalRoute,
   OnboardingRoleRoute: OnboardingRoleRoute,
