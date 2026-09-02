@@ -24,6 +24,7 @@ export function AuthLayout({ title, children }: { title: string; children: React
       try {
         window.localStorage.setItem("examglow.google_picture", payload.picture);
         window.localStorage.setItem("examglow.auth_method", "google");
+        window.localStorage.setItem("examglow.google_sub", payload.sub);
       } catch { /* storage unavailable */ }
       // Register in admin store (Supabase or localStorage fallback)
       await registerAccount({
