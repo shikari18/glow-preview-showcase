@@ -18,6 +18,7 @@ import { HISTORY } from "./notes/history";
 import { GEOGRAPHY } from "./notes/geography";
 import { SOCIOLOGY } from "./notes/sociology";
 import { RELIGIOUS_STUDIES } from "./notes/religious-studies";
+import { COMPUTER_SCIENCE } from "./notes/computer-science";
 import type { SubjectNotes } from "./notes/types";
 
 export {
@@ -37,6 +38,7 @@ export {
   GEOGRAPHY,
   SOCIOLOGY,
   RELIGIOUS_STUDIES,
+  COMPUTER_SCIENCE,
 };
 
 export const SYLLABUS_NOTES: SubjectNotes[] = [
@@ -56,4 +58,5 @@ export const SYLLABUS_NOTES: SubjectNotes[] = [
   GEOGRAPHY,
   SOCIOLOGY,
   RELIGIOUS_STUDIES,
+  COMPUTER_SCIENCE,
 ];
