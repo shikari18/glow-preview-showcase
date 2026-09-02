@@ -125,7 +125,7 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
             </Message>
           ))}
 
-          {status === "submitted" && <Shimmer>Whiskers is thinking...</Shimmer>}
+          {status === "submitted" && <Shimmer>Thinking...</Shimmer>}
           {error && <p className="text-sm text-destructive">{error}</p>}
         </ConversationContent>
         <ConversationScrollButton />

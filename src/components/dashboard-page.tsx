@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ChevronRight, Share2, Upload } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
-import catEmpty from "@/assets/cat-empty.png";
+import logoMark from "@/assets/logo-mark.png";
 import avatar1 from "@/assets/avatar-1.jpg";
 
 export function ProfileAvatar({ className = "" }: { className?: string }) {
@@ -119,8 +119,8 @@ export function EmptyState({
   return (
     <div className="rounded-3xl border border-border bg-surface/60 px-6 py-16 text-center">
       <img
-        src={catEmpty}
-        alt="Line drawing of a sitting cat"
+        src={logoMark}
+        alt="ExamGlow logo"
         loading="lazy"
         width={640}
         height={640}
