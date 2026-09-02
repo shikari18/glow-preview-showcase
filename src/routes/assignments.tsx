@@ -1,153 +1,248 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarDays, ChevronLeft, ChevronRight, GraduationCap, Plus, Settings2, Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import { ClipboardCheck, Copy, FileText, Loader2, Sparkles, Upload, X } from "lucide-react";
 
 import { DashboardLayout } from "@/components/dashboard-page";
 
 export const Route = createFileRoute("/assignments")({
   head: () => ({
     meta: [
-      { title: "Calendar — plan exams and study time | ExamGlow" },
+      { title: "Assignments — upload a brief, get it completed | ExamGlow" },
       {
         name: "description",
         content:
-          "See your week at a glance, add exam dates and let ExamGlow reserve study time in the hours you are free.",
+          "Upload or paste any assignment brief and ExamGlow writes a complete, structured answer with worked steps and explanations.",
       },
-      { property: "og:title", content: "Calendar | ExamGlow" },
-      { property: "og:description", content: "Plan exams and study sessions week by week." },
+      { property: "og:title", content: "Assignments | ExamGlow" },
+      { property: "og:description", content: "Upload or paste an assignment and let ExamGlow complete it for you." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: CalendarPage,
+  component: AssignmentsPage,
 });
 
-const days = [
-  { name: "SUN", date: 30, muted: true },
-  { name: "MON", date: 31, muted: true },
-  { name: "TUE", date: 1, today: true },
-  { name: "WED", date: 2 },
-  { name: "THU", date: 3 },
-  { name: "FRI", date: 4 },
-  { name: "SAT", date: 5 },
-];
+const styles = ["Academic essay", "Concise notes", "Step-by-step working", "Report"] as const;
+const lengths = ["Short", "Medium", "Detailed"] as const;
 
-const hours = ["7 AM", "8 AM", "9 AM", "10 AM", "11 AM", "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM"];
-const monthGrid = [
-  [30, 31, 1, 2, 3, 4, 5],
-  [6, 7, 8, 9, 10, 11, 12],
-  [13, 14, 15, 16, 17, 18, 19],
-  [20, 21, 22, 23, 24, 25, 26],
-  [27, 28, 29, 30, 1, 2, 3],
-];
+function AssignmentsPage() {
+  const [title, setTitle] = useState("");
+  const [brief, setBrief] = useState("");
+  const [style, setStyle] = useState<string>(styles[0]);
+  const [length, setLength] = useState<string>(lengths[1]);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [answer, setAnswer] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-function CalendarPage() {
+  async function handleFile(file: File) {
+    setError(null);
+    if (file.size > 1_000_000) {
+      setError("That file is too large — keep uploads under 1 MB or paste the text instead.");
+      return;
+    }
+    const text = await file.text();
+    const printable = text.replace(/[^\x09\x0a\x0d\x20-\x7e\u00a0-\uffff]/g, "");
+    if (printable.trim().length < 20) {
+      setError("We couldn't read text from that file. Try a .txt or .md file, or paste the brief below.");
+      return;
+    }
+    setFileName(file.name);
+    setBrief(printable.slice(0, 20000));
+    if (!title) setTitle(file.name.replace(/\.[^.]+$/, ""));
+  }
+
+  async function complete() {
+    if (!brief.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    setAnswer("");
+    try {
+      const res = await fetch("/api/assignment", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ prompt: brief, title, style, length }),
+      });
+      const data = (await res.json()) as { text?: string; error?: string };
+      if (!res.ok || !data.text) setError(data.error ?? "Something went wrong. Please try again.");
+      else setAnswer(data.text);
+    } catch {
+      setError("Network error — check your connection and try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <DashboardLayout crumbs={[{ label: "Calendar" }]}>
-      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <button type="button" className="rounded-full border border-border px-4 py-2 text-sm">Today</button>
-          <button type="button" className="text-muted-foreground" aria-label="Previous week"><ChevronLeft className="size-5" /></button>
-          <button type="button" className="text-muted-foreground" aria-label="Next week"><ChevronRight className="size-5" /></button>
-          <h1 className="min-w-0 truncate text-xl sm:text-2xl">Aug 30 – Sep 5, 2026</h1>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <div className="hidden rounded-full bg-secondary p-1 text-sm sm:flex">
-            <span className="rounded-full px-3 py-1.5 text-muted-foreground">Day</span>
-            <span className="rounded-full bg-card px-3 py-1.5 font-medium">Week</span>
-            <span className="rounded-full px-3 py-1.5 text-muted-foreground">Month</span>
-          </div>
-          <button type="button" className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-ink-foreground">
-            <Plus className="size-4" aria-hidden /> Add
-          </button>
-          <Settings2 className="hidden size-5 text-muted-foreground sm:block" aria-hidden />
+    <DashboardLayout crumbs={[{ label: "Assignments" }]}>
+      <header className="grid gap-4 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div className="min-w-0">
+          <span className="inline-flex items-center gap-2 rounded-full bg-lilac px-3 py-1 text-xs font-semibold text-ink">
+            <Sparkles className="size-3.5" aria-hidden /> AI assignment help
+          </span>
+          <h1 className="mt-3 text-[clamp(1.8rem,3.5vw,2.8rem)] leading-tight">
+            Upload it, and we'll <span className="display-italic">complete it</span>
+          </h1>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+            Drop in a brief, question sheet or essay prompt. You get a full worked answer with the reasoning laid out, so
+            you can learn from it as you go.
+          </p>
         </div>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="space-y-5">
-          <section>
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-              <h2 className="truncate text-lg">September 2026</h2>
-              <span className="flex shrink-0 gap-1 text-muted-foreground"><ChevronLeft className="size-4" /><ChevronRight className="size-4" /></span>
-            </div>
-            <div className="mt-3 grid grid-cols-7 gap-y-1 text-center text-xs text-muted-foreground">
-              {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                <span key={`${d}-${i}`}>{d}</span>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <section className="rounded-3xl border border-border bg-card p-5">
+          <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground" htmlFor="assignment-title">
+            Assignment title
+          </label>
+          <input
+            id="assignment-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Physiology lab report"
+            className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-lavender"
+          />
+
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              const file = e.dataTransfer.files?.[0];
+              if (file) void handleFile(file);
+            }}
+            className="mt-4 rounded-2xl border border-dashed border-border bg-surface/60 px-5 py-7 text-center"
+          >
+            <Upload className="mx-auto size-6 text-muted-foreground" aria-hidden />
+            <p className="mt-2 text-sm font-medium">Drag a file here, or</p>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="mt-2 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-ink-foreground"
+            >
+              Choose a file
+            </button>
+            <p className="mt-2 text-xs text-muted-foreground">Text-based files work best (.txt, .md, .csv)</p>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".txt,.md,.csv,.json,text/*"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleFile(file);
+                e.target.value = "";
+              }}
+            />
+          </div>
+
+          {fileName && (
+            <p className="mt-3 flex items-center gap-2 rounded-2xl bg-secondary px-3 py-2 text-sm">
+              <FileText className="size-4 shrink-0" aria-hidden />
+              <span className="min-w-0 flex-1 truncate">{fileName}</span>
+              <button type="button" aria-label="Remove file" onClick={() => setFileName(null)}>
+                <X className="size-4 text-muted-foreground" />
+              </button>
+            </p>
+          )}
+
+          <label className="mt-5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground" htmlFor="assignment-brief">
+            Or paste the assignment
+          </label>
+          <textarea
+            id="assignment-brief"
+            value={brief}
+            onChange={(e) => setBrief(e.target.value)}
+            rows={8}
+            placeholder="Paste the questions or brief here..."
+            className="mt-2 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-lavender"
+          />
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <Chips label="Style" options={styles} value={style} onChange={setStyle} />
+            <Chips label="Length" options={lengths} value={length} onChange={setLength} />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void complete()}
+            disabled={!brief.trim() || loading}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3.5 text-sm font-medium text-ink-foreground disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4" aria-hidden />}
+            {loading ? "Working on it..." : "Complete my assignment"}
+          </button>
+          {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+        </section>
+
+        <section className="min-h-[420px] rounded-3xl border border-border bg-surface/60 p-5">
+          <div className="flex items-center gap-3 border-b border-border pb-3">
+            <ClipboardCheck className="size-5" aria-hidden />
+            <h2 className="min-w-0 flex-1 truncate text-lg">{title || "Your completed answer"}</h2>
+            {answer && (
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(answer);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs"
+              >
+                <Copy className="size-3.5" aria-hidden /> {copied ? "Copied" : "Copy"}
+              </button>
+            )}
+          </div>
+
+          {answer ? (
+            <article className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">{answer}</article>
+          ) : loading ? (
+            <div className="mt-6 space-y-3">
+              {[90, 100, 75, 95, 60].map((w) => (
+                <div key={w} className="h-3 animate-pulse rounded-full bg-secondary" style={{ width: `${w}%` }} />
               ))}
             </div>
-            {monthGrid.map((week, wi) => (
-              <div key={wi} className="grid grid-cols-7 gap-y-1 text-center text-sm">
-                {week.map((d, di) => {
-                  const isToday = wi === 0 && d === 1;
-                  const outside = (wi === 0 && d > 20) || (wi === 4 && d < 5);
-                  return (
-                    <span
-                      key={`${wi}-${di}`}
-                      className={`mx-auto flex size-7 items-center justify-center rounded-full ${
-                        isToday ? "bg-ink font-semibold text-ink-foreground" : outside ? "text-muted-foreground/50" : ""
-                      }`}
-                    >
-                      {d}
-                    </span>
-                  );
-                })}
-              </div>
-            ))}
-          </section>
-
-          <section className="rounded-3xl bg-surface p-5">
-            <h2 className="text-lg">Upload your syllabus</h2>
-            <p className="mt-1 text-sm text-muted-foreground">We'll auto-fill your exam dates and tell you what to study</p>
-            <button type="button" className="mt-3 grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-2xl bg-card px-3 py-2.5 text-sm">
-              <span className="flex size-7 items-center justify-center rounded-md bg-mint text-ink">◧</span>
-              <span className="min-w-0 truncate text-left font-medium">My First Study Set</span>
-              <Upload className="size-4 text-muted-foreground" aria-hidden />
-            </button>
-          </section>
-        </aside>
-
-        <section className="min-w-0 overflow-hidden rounded-3xl border border-border">
-          <div className="grid grid-cols-[56px_repeat(7,minmax(0,1fr))] border-b border-border bg-surface/60 text-center">
-            <span />
-            {days.map((day) => (
-              <div key={day.name} className="py-3">
-                <span className={`block text-[11px] tracking-wide ${day.muted ? "text-muted-foreground/70" : "text-muted-foreground"}`}>{day.name}</span>
-                <span
-                  className={`mx-auto mt-1 flex size-9 items-center justify-center rounded-full text-lg ${
-                    day.today ? "bg-ink text-ink-foreground" : day.muted ? "text-muted-foreground" : ""
-                  }`}
-                >
-                  {day.date}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="relative">
-            {hours.map((hour) => (
-              <div key={hour} className="grid h-14 grid-cols-[56px_repeat(7,minmax(0,1fr))] border-b border-border/60">
-                <span className="pr-2 pt-1 text-right text-[11px] text-muted-foreground">{hour}</span>
-                {days.map((day) => (
-                  <span key={day.name} className={`border-l border-border/60 ${day.today ? "bg-highlight/10" : ""}`} />
-                ))}
-              </div>
-            ))}
-
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
-              <div className="pointer-events-auto max-w-md rounded-3xl bg-surface px-8 py-10 text-center shadow-lg">
-                <CalendarDays className="mx-auto size-7" aria-hidden />
-                <h2 className="mt-3 text-2xl">Add your first exam</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Tell us when your exam is and what it covers. We'll reserve study time for it in the hours you're free.
-                </p>
-                <button type="button" className="mt-5 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-medium text-ink-foreground">
-                  <GraduationCap className="size-4" aria-hidden /> Add an exam
-                </button>
-              </div>
-            </div>
-          </div>
+          ) : (
+            <p className="mt-6 max-w-sm text-sm text-muted-foreground">
+              Your finished assignment appears here — structured sections, worked steps and a checklist to review before
+              you hand it in.
+            </p>
+          )}
         </section>
       </div>
     </DashboardLayout>
+  );
+}
+
+function Chips({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: readonly string[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+              value === option ? "border-transparent bg-ink text-ink-foreground" : "border-border text-muted-foreground"
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

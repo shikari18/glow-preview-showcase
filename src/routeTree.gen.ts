@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArcadeRouteImport } from './routes/arcade'
 import { Route as AssignmentsRouteImport } from './routes/assignments'
+import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as FlashcardsRouteImport } from './routes/flashcards'
 import { Route as HomeRouteImport } from './routes/home'
@@ -45,6 +46,11 @@ const ArcadeRoute = ArcadeRouteImport.update({
 const AssignmentsRoute = AssignmentsRouteImport.update({
   id: '/assignments',
   path: '/assignments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatRoute = ChatRouteImport.update({
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
   '/assignments': typeof AssignmentsRoute
+  '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
   '/assignments': typeof AssignmentsRoute
+  '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
   '/assignments': typeof AssignmentsRoute
+  '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arcade'
     | '/assignments'
+    | '/calendar'
     | '/chat'
     | '/flashcards'
     | '/home'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arcade'
     | '/assignments'
+    | '/calendar'
     | '/chat'
     | '/flashcards'
     | '/home'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/'
     | '/arcade'
     | '/assignments'
+    | '/calendar'
     | '/chat'
     | '/flashcards'
     | '/home'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArcadeRoute: typeof ArcadeRoute
   AssignmentsRoute: typeof AssignmentsRoute
+  CalendarRoute: typeof CalendarRoute
   ChatRoute: typeof ChatRoute
   FlashcardsRoute: typeof FlashcardsRoute
   HomeRoute: typeof HomeRoute
@@ -337,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/assignments'
       fullPath: '/assignments'
       preLoaderRoute: typeof AssignmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat': {
@@ -479,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArcadeRoute: ArcadeRoute,
   AssignmentsRoute: AssignmentsRoute,
+  CalendarRoute: CalendarRoute,
   ChatRoute: ChatRoute,
   FlashcardsRoute: FlashcardsRoute,
   HomeRoute: HomeRoute,
