@@ -248,9 +248,13 @@ function AdminPage() {
     try {
       setAccounts(await fetchAccounts());
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = e instanceof Error
+        ? e.message
+        : (typeof e === "object" && e !== null && "message" in e)
+          ? String((e as { message: unknown }).message)
+          : JSON.stringify(e);
       console.error("Admin fetch error:", e);
-      setLoadError(msg);
+      setLoadError(msg || "Unknown error — check browser console");
     } finally {
       setLoading(false);
     }

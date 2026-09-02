@@ -111,7 +111,11 @@ export async function fetchAccounts(): Promise<AdminAccount[]> {
       .from("examglow_accounts")
       .select("*")
       .order("signed_in_at", { ascending: false });
-    if (error) throw error;
+    if (error) {
+      throw new Error(
+        `Supabase error ${error.code ?? ""}: ${error.message ?? JSON.stringify(error)}`
+      );
+    }
     return (data as DbRow[]).map(rowToAccount);
   }
   return localRead();
