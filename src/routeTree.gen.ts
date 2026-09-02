@@ -32,6 +32,7 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as OnboardingGoalRouteImport } from './routes/onboarding.goal'
 import { Route as OnboardingRoleRouteImport } from './routes/onboarding.role'
 import { Route as OnboardingSourceRouteImport } from './routes/onboarding.source'
+import { Route as ApiV1ChatCompletionsRouteImport } from './routes/api/v1/chat/completions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -148,6 +149,11 @@ const OnboardingSourceRoute = OnboardingSourceRouteImport.update({
   path: '/onboarding/source',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1ChatCompletionsRoute = ApiV1ChatCompletionsRouteImport.update({
+  id: '/api/v1/chat/completions',
+  path: '/api/v1/chat/completions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/source': typeof OnboardingSourceRoute
+  '/api/v1/chat/completions': typeof ApiV1ChatCompletionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/source': typeof OnboardingSourceRoute
+  '/api/v1/chat/completions': typeof ApiV1ChatCompletionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/source': typeof OnboardingSourceRoute
+  '/api/v1/chat/completions': typeof ApiV1ChatCompletionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/onboarding/goal'
     | '/onboarding/role'
     | '/onboarding/source'
+    | '/api/v1/chat/completions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/onboarding/goal'
     | '/onboarding/role'
     | '/onboarding/source'
+    | '/api/v1/chat/completions'
   id:
     | '__root__'
     | '/'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/onboarding/goal'
     | '/onboarding/role'
     | '/onboarding/source'
+    | '/api/v1/chat/completions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -327,6 +339,7 @@ export interface RootRouteChildren {
   OnboardingGoalRoute: typeof OnboardingGoalRoute
   OnboardingRoleRoute: typeof OnboardingRoleRoute
   OnboardingSourceRoute: typeof OnboardingSourceRoute
+  ApiV1ChatCompletionsRoute: typeof ApiV1ChatCompletionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -492,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingSourceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/chat/completions': {
+      id: '/api/v1/chat/completions'
+      path: '/api/v1/chat/completions'
+      fullPath: '/api/v1/chat/completions'
+      preLoaderRoute: typeof ApiV1ChatCompletionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -519,6 +539,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingGoalRoute: OnboardingGoalRoute,
   OnboardingRoleRoute: OnboardingRoleRoute,
   OnboardingSourceRoute: OnboardingSourceRoute,
+  ApiV1ChatCompletionsRoute: ApiV1ChatCompletionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

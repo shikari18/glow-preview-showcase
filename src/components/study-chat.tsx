@@ -72,17 +72,12 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
         />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">ExamGlow Tutor</p>
-          <p className="truncate text-xs text-muted-foreground">Always on, always on topic</p>
         </div>
         {onClose ? (
           <button type="button" onClick={onClose} aria-label="Close chat" className="ml-auto text-muted-foreground">
             <X className="size-5" />
           </button>
-        ) : (
-          <span className="ml-auto hidden rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground sm:block">
-            {messages.length ? `${messages.length} messages` : "New chat"}
-          </span>
-        )}
+        ) : null}
       </header>
 
       <Conversation className="flex-1">

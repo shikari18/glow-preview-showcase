@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Crown, Moon, Share2, SlidersHorizontal, Sun, Upload } from "lucide-react";
+import { ChevronRight, Crown, Moon, SlidersHorizontal, Sun } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import logoMark from "@/assets/logo-mark.png";
@@ -131,7 +131,7 @@ export function DashboardLayout({
       <DashboardSidebar />
       <main className="min-w-0 flex-1 overflow-y-auto">
         <TopBar crumbs={crumbs} />
-        <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-4 sm:px-6 lg:px-8">{children}</div>
+        <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-4 pl-14 sm:pl-4 sm:pr-4 lg:px-8">{children}</div>
       </main>
     </div>
   );
@@ -139,7 +139,7 @@ export function DashboardLayout({
 
 function TopBar({ crumbs }: { crumbs: { label: string; icon?: ReactNode }[] }) {
   return (
-    <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border/70 bg-background/85 px-4 py-3 pl-16 backdrop-blur md:pl-6">
+    <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border/70 bg-background/85 px-4 py-3 pl-14 backdrop-blur md:pl-6">
       <nav className="flex min-w-0 items-center gap-2 text-[15px]" aria-label="Breadcrumb">
         {crumbs.map((crumb, i) => (
           <span key={crumb.label} className="flex min-w-0 items-center gap-2">
@@ -157,15 +157,6 @@ function TopBar({ crumbs }: { crumbs: { label: string; icon?: ReactNode }[] }) {
       </nav>
 
       <div className="flex shrink-0 items-center gap-2">
-        <button
-          type="button"
-          className="hidden items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm md:flex"
-        >
-          <Share2 className="size-4" aria-hidden /> Share
-        </button>
-        <button type="button" className="hidden size-9 items-center justify-center rounded-full border border-border sm:flex" aria-label="Upload">
-          <Upload className="size-4" aria-hidden />
-        </button>
         <ProfileAvatar />
       </div>
     </header>

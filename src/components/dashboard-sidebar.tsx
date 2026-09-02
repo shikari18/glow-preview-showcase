@@ -7,6 +7,7 @@ import {
   CircleHelp,
   FileText,
   ClipboardCheck,
+  FileQuestion,
   Home,
   Menu,
   MessageCircle,
@@ -41,7 +42,8 @@ const practiceItems = [
 
 const courseItems = [
   { label: "Syllabus", to: "/syllabus", Icon: BookOpen },
-  { label: "Assignments", to: "/assignments", Icon: ClipboardCheck },
+  { label: "Syllabus Notes", to: "/notes", Icon: FileText },
+  { label: "Past Questions", to: "/past-questions", Icon: FileQuestion },
 ] as const;
 
 type NavItem = (typeof primaryItems)[number] | (typeof studyItems)[number] | (typeof practiceItems)[number] | (typeof courseItems)[number];
@@ -161,10 +163,10 @@ export function DashboardSidebar() {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed left-4 top-4 z-40 flex size-11 items-center justify-center rounded-xl bg-sidebar text-sidebar-foreground shadow-lg md:hidden"
+        className="fixed left-3 top-3 z-40 flex size-9 items-center justify-center rounded-xl border border-border/60 bg-background/90 text-foreground shadow-sm backdrop-blur md:hidden"
         aria-label="Open navigation"
       >
-        <Menu className="size-5" />
+        <Menu className="size-4" />
       </button>
       <div className="hidden md:block">{renderSidebar()}</div>
       <div
