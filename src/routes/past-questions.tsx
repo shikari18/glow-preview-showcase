@@ -118,6 +118,51 @@ const SUBJECTS: SubjectGroup[] = [
     years: juneYears("sociology","0495","Sociology",
       [[1,1,100],[1,2,100],[2,1,100],[2,2,100]]),
   },
+  {
+    subject: "Accounting", code: "0452", color: "bg-lime-600",
+    years: juneYears("accounting","0452","Accounting",
+      [[1,1,40],[1,2,40],[1,3,40],[2,1,100],[2,2,100],[2,3,100]]),
+  },
+  {
+    subject: "Additional Mathematics", code: "0606", color: "bg-purple-500",
+    years: juneYears("additional-mathematics","0606","Additional Mathematics",
+      [[1,1,80],[1,2,80],[1,3,80],[2,1,80],[2,2,80],[2,3,80]]),
+  },
+  {
+    subject: "Literature in English", code: "0475", color: "bg-pink-400",
+    years: juneYears("literature-in-english","0475","Literature in English",
+      [[1,1,50],[1,2,50],[2,1,50],[2,2,50]]),
+  },
+  {
+    subject: "Environmental Management", code: "0680", color: "bg-green-600",
+    years: juneYears("environmental-management","0680","Environmental Management",
+      [[1,1,80],[1,2,80],[2,1,80],[2,2,80]]),
+  },
+  {
+    subject: "Global Perspectives", code: "0457", color: "bg-cyan-600",
+    years: juneYears("global-perspectives","0457","Global Perspectives",
+      [[1,1,60],[1,2,60],[2,1,60],[2,2,60]]),
+  },
+  {
+    subject: "Travel & Tourism", code: "0471", color: "bg-orange-400",
+    years: juneYears("travel-tourism","0471","Travel & Tourism",
+      [[1,1,100],[1,2,100],[2,1,100],[2,2,100]]),
+  },
+  {
+    subject: "Religious Studies", code: "0490", color: "bg-violet-400",
+    years: juneYears("religious-studies","0490","Religious Studies",
+      [[1,1,75],[1,2,75],[2,1,75],[2,2,75]]),
+  },
+  {
+    subject: "French", code: "0520", color: "bg-blue-400",
+    years: juneYears("french","0520","French",
+      [[1,1,45],[1,2,45],[1,3,45],[3,1,45],[3,2,45],[3,3,45]]),
+  },
+  {
+    subject: "Spanish", code: "0530", color: "bg-red-400",
+    years: juneYears("spanish","0530","Spanish",
+      [[1,1,45],[1,2,45],[1,3,45],[3,1,45],[3,2,45],[3,3,45]]),
+  },
 ];
 
 // ─── Modal ────────────────────────────────────────────────────────────────────

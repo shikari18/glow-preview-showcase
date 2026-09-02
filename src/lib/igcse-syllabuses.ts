@@ -330,3 +330,118 @@ export const igcseSubjects: IgcseSubject[] = [
 
 export const igcseCategories = [...new Set(igcseSubjects.map((s) => s.category))];
 
+// ── Additional Languages (10 more subjects) ───────────────────────────────────
+
+igcseSubjects.push(
+  {
+    id: "french",
+    name: "French",
+    code: "0520",
+    category: "Languages",
+    color: "bg-blue-400",
+    syllabuses: [
+      { label: "2025 – 2027 Syllabus", url: `${BASE}/662476-2025-2027-syllabus.pdf` },
+      { label: "2028 – 2030 Syllabus", url: `${BASE}/745689-2028-2030-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "spanish",
+    name: "Spanish",
+    code: "0530",
+    category: "Languages",
+    color: "bg-red-400",
+    syllabuses: [
+      { label: "2025 – 2027 Syllabus", url: `${BASE}/662478-2025-2027-syllabus.pdf` },
+      { label: "2028 – 2030 Syllabus", url: `${BASE}/745691-2028-2030-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "arabic",
+    name: "Arabic",
+    code: "0508",
+    category: "Languages",
+    color: "bg-green-500",
+    syllabuses: [
+      { label: "2025 – 2027 Syllabus", url: `${BASE}/664580-2025-2027-syllabus.pdf` },
+      { label: "2028 – 2030 Syllabus", url: `${BASE}/745661-2028-2030-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "german",
+    name: "German",
+    code: "0525",
+    category: "Languages",
+    color: "bg-yellow-500",
+    syllabuses: [
+      { label: "2025 – 2027 Syllabus", url: `${BASE}/662480-2025-2027-syllabus.pdf` },
+      { label: "2028 – 2030 Syllabus", url: `${BASE}/745693-2028-2030-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "portuguese",
+    name: "Portuguese",
+    code: "0540",
+    category: "Languages",
+    color: "bg-emerald-500",
+    syllabuses: [
+      { label: "2025 – 2027 Syllabus", url: `${BASE}/662484-2025-2027-syllabus.pdf` },
+      { label: "2028 – 2030 Syllabus", url: `${BASE}/745697-2028-2030-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "malay",
+    name: "Malay",
+    code: "0546",
+    category: "Languages",
+    color: "bg-red-500",
+    syllabuses: [
+      { label: "2025 – 2027 Syllabus", url: `${BASE}/662486-2025-2027-syllabus.pdf` },
+      { label: "2028 – 2030 Syllabus", url: `${BASE}/745699-2028-2030-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "hindi",
+    name: "Hindi",
+    code: "0549",
+    category: "Languages",
+    color: "bg-orange-500",
+    syllabuses: [
+      { label: "2025 – 2027 Syllabus", url: `${BASE}/662488-2025-2027-syllabus.pdf` },
+      { label: "2028 – 2030 Syllabus", url: `${BASE}/745701-2028-2030-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "urdu",
+    name: "Urdu",
+    code: "0539",
+    category: "Languages",
+    color: "bg-teal-500",
+    syllabuses: [
+      { label: "2025 – 2027 Syllabus", url: `${BASE}/662490-2025-2027-syllabus.pdf` },
+      { label: "2028 – 2030 Syllabus", url: `${BASE}/745703-2028-2030-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "chinese",
+    name: "Chinese",
+    code: "0547",
+    category: "Languages",
+    color: "bg-rose-500",
+    syllabuses: [
+      { label: "2025 – 2027 Syllabus", url: `${BASE}/662492-2025-2027-syllabus.pdf` },
+      { label: "2028 – 2030 Syllabus", url: `${BASE}/745705-2028-2030-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "turkish",
+    name: "Turkish",
+    code: "0513",
+    category: "Languages",
+    color: "bg-red-600",
+    syllabuses: [
+      { label: "2025 – 2027 Syllabus", url: `${BASE}/662494-2025-2027-syllabus.pdf` },
+      { label: "2028 – 2030 Syllabus", url: `${BASE}/745707-2028-2030-syllabus.pdf` },
+    ],
+  },
+);
+

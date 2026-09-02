@@ -104,9 +104,14 @@ function ChapterDoc({ chapter, allChapters, color, onBack, onNext, onPrev }: {
                 {!isCollapsed && (
                   <>
                     {/* Body paragraph */}
-                    <p className="mt-4 text-[15px] leading-[1.8] text-black/70 dark:text-white/70">
-                      {sub.body}
-                    </p>
+                    <p className="mt-4 text-[15px] leading-[1.8] text-black/70 dark:text-white/70"
+                      dangerouslySetInnerHTML={{
+                        __html: sub.body
+                          .replace(/\*\*(.+?)\*\*/g, "<strong class='font-bold text-black dark:text-white'>$1</strong>")
+                          .replace(/\*(.+?)\*/g, "<em>$1</em>")
+                          .replace(/\$([^$]+)\$/g, "<code class='inline-block rounded bg-black/8 dark:bg-white/10 px-1.5 py-0.5 font-mono text-[13px] text-black dark:text-white'>$1</code>")
+                      }}
+                    />
 
                     {/* Bullet groups */}
                     {sub.groups.map((grp, gi) => (
@@ -122,8 +127,14 @@ function ChapterDoc({ chapter, allChapters, color, onBack, onNext, onPrev }: {
                               <span className="mt-[0.55rem] size-[5px] shrink-0 rounded-full bg-black/30 dark:bg-white/30" />
                               <span dangerouslySetInnerHTML={{
                                 __html: pt
+                                  // Bold
                                   .replace(/\*\*(.+?)\*\*/g, "<strong class='font-bold text-black dark:text-white'>$1</strong>")
+                                  // Italic
                                   .replace(/\*(.+?)\*/g, "<em>$1</em>")
+                                  // Inline math: $...$ → styled code block
+                                  .replace(/\$([^$]+)\$/g, "<code class='inline-block rounded bg-black/8 dark:bg-white/10 px-1.5 py-0.5 font-mono text-[13px] text-black dark:text-white'>$1</code>")
+                                  // Arrow →
+                                  .replace(/\$\\to\$/g, "<span class='mx-1 font-mono text-black/60 dark:text-white/60'>→</span>")
                               }} />
                             </li>
                           ))}
