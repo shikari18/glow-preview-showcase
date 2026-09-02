@@ -282,11 +282,11 @@ function NotesPage() {
         ))}
       </div>
 
-      {/* Coming soon */}
+      {/* Available subjects */}
       <div className="mt-6 rounded-2xl border border-border bg-surface/60 p-5">
-        <p className="text-sm font-semibold">📚 Currently available: Biology (0610), Chemistry (0620), Physics (0625)</p>
+        <p className="text-sm font-semibold">📚 Currently available: Biology (0610), Chemistry (0620), Physics (0625), Environmental Management (0680), Mathematics (0580), Additional Mathematics (0606)</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Mathematics, Economics, Computer Science, Environmental Management and English notes coming soon.
+          Economics, Computer Science, English Language, and Business Studies notes coming soon.
         </p>
       </div>
     </DashboardLayout>
