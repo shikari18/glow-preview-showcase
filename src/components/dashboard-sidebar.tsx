@@ -153,22 +153,6 @@ export function DashboardSidebar() {
         </nav>
       </div>
 
-      <div className="border-t border-sidebar-border p-2">
-        <Link
-          to="/syllabus"
-          className="flex h-10 items-center justify-center gap-2 rounded-xl bg-sidebar-hover font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-active"
-          title={!showLabels ? "Upload" : undefined}
-        >
-          <Upload className="size-4.5" aria-hidden />
-          {showLabels && <span>Upload</span>}
-        </Link>
-        {showLabels && (
-          <div className="mt-2 flex items-center justify-between px-2 py-1 text-sm text-sidebar-muted">
-            <span>Your Notes</span>
-            <Link to="/syllabus" className="hover:text-sidebar-foreground">View All</Link>
-          </div>
-        )}
-      </div>
     </aside>
   );
   };
