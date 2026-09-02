@@ -240,7 +240,7 @@ function AdminPage() {
   const [planFilter, setPlanFilter] = useState<PlanLabel | "all">("all");
   const [emailTarget, setEmailTarget] = useState<AdminAccount | null>(null);
 
-  const supabaseConfigured = !!getSupabase();
+  const supabaseConfigured = typeof window !== "undefined" && !!getSupabase();
 
   const load = useCallback(async () => {
     setLoading(true);
