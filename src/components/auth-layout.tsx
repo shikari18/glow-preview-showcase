@@ -35,7 +35,7 @@ export function AuthLayout({ title, children }: { title: string; children: React
         role: "",
         goal: "",
       });
-      navigate({ to: "/onboarding/role" });
+      navigate({ to: "/home" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Google sign-in failed.";
       if (!message.toLowerCase().includes("cancel")) {

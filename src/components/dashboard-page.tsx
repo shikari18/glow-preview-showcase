@@ -72,7 +72,7 @@ function PersonalizationModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label="Personalization settings"
@@ -84,10 +84,10 @@ function PersonalizationModal({ onClose }: { onClose: () => void }) {
         aria-hidden
       />
 
-      {/* Panel */}
-      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-card shadow-2xl">
+      {/* Panel — bottom sheet on mobile, centered modal on sm+ */}
+      <div className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-card shadow-2xl sm:rounded-3xl" style={{ maxHeight: "92dvh" }}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-3">
             <span className="flex size-8 items-center justify-center rounded-full bg-mint">
               <SlidersHorizontal className="size-4" aria-hidden />
@@ -104,8 +104,8 @@ function PersonalizationModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Body */}
-        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+        {/* Body — scrollable */}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
           {/* Role */}
           <p className="mb-3 text-sm font-semibold">I'm a…</p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -130,13 +130,13 @@ function PersonalizationModal({ onClose }: { onClose: () => void }) {
 
           {/* Goal */}
           <p className="mb-3 mt-6 text-sm font-semibold">What are you studying for?</p>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 pb-2">
             {goals.map(({ label, hint, Icon }) => (
               <button
                 key={label}
                 type="button"
                 onClick={() => setGoal(label)}
-                className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
+                className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
                   goal === label
                     ? "border-lavender bg-lilac/30"
                     : "border-border bg-background hover:bg-secondary"
@@ -155,7 +155,7 @@ function PersonalizationModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 border-t border-border px-6 py-4">
+        <div className="flex shrink-0 justify-end gap-3 border-t border-border px-6 py-4">
           <button
             type="button"
             onClick={onClose}
@@ -368,7 +368,7 @@ export function DashboardLayout({
       <DashboardSidebar />
       <main className="min-w-0 flex-1 overflow-y-auto">
         <TopBar crumbs={crumbs} />
-        <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-4 pl-14 sm:pl-4 sm:pr-4 lg:px-8">{children}</div>
+        <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-4 sm:px-6 lg:px-8">{children}</div>
       </main>
     </div>
   );
