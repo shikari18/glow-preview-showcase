@@ -1,79 +1,159 @@
 /**
- * Admin store — simulates a user registry using localStorage.
+ * Admin store — persists to Supabase so every user's sign-in appears
+ * in the admin panel regardless of device.
  *
- * In a real app this would be backed by a database. Here each user's
- * profile is written by auth-layout on Google sign-in.
- *
- * We keep a separate "examglow.accounts" array so the admin can see all
- * accounts that have ever signed in on this browser.
+ * Falls back to localStorage when Supabase env vars are not configured,
+ * so local development still works.
  */
+
+import { getSupabase } from "./supabase";
 
 export type PlanLabel = "free" | "weekly" | "monthly" | "termly" | "exam-pass";
 
 export type AdminAccount = {
-  id: string;               // google sub (unique ID) or email-derived ID
+  id: string;            // Google sub (unique user ID)
   name: string;
   email: string;
   picture: string;
   plan: PlanLabel;
   role: string;
   goal: string;
-  signedInAt: string;       // ISO date
+  signedInAt: string;    // ISO date string
   sessionActive: boolean;
 };
 
-const ACCOUNTS_KEY = "examglow.accounts";
+// ─── localStorage fallback (used when Supabase is not configured) ─────────────
 
-export function readAccounts(): AdminAccount[] {
+const LOCAL_KEY = "examglow.accounts";
+
+function localRead(): AdminAccount[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(ACCOUNTS_KEY);
+    const raw = window.localStorage.getItem(LOCAL_KEY);
     return raw ? (JSON.parse(raw) as AdminAccount[]) : [];
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
 
-export function writeAccounts(accounts: AdminAccount[]) {
+function localWrite(accounts: AdminAccount[]) {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-  } catch { /* storage unavailable */ }
+  try { window.localStorage.setItem(LOCAL_KEY, JSON.stringify(accounts)); }
+  catch { /* storage unavailable */ }
 }
 
-/** Called by auth-layout after a successful Google sign-in. */
-export function registerAccount(account: Omit<AdminAccount, "signedInAt" | "sessionActive">) {
-  const accounts = readAccounts();
-  const existing = accounts.findIndex(a => a.id === account.id);
-  const entry: AdminAccount = {
-    ...account,
-    signedInAt: new Date().toISOString(),
-    sessionActive: true,
+// ─── Supabase row shape ───────────────────────────────────────────────────────
+
+type DbRow = {
+  id: string;
+  name: string;
+  email: string;
+  picture: string;
+  plan: string;
+  role: string;
+  goal: string;
+  signed_in_at: string;
+  session_active: boolean;
+};
+
+function rowToAccount(r: DbRow): AdminAccount {
+  return {
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    picture: r.picture ?? "",
+    plan: r.plan as PlanLabel,
+    role: r.role ?? "",
+    goal: r.goal ?? "",
+    signedInAt: r.signed_in_at,
+    sessionActive: r.session_active,
   };
-  if (existing >= 0) {
-    accounts[existing] = entry;
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+/** Register or update a user in Supabase (called on every Google sign-in). */
+export async function registerAccount(
+  account: Omit<AdminAccount, "signedInAt" | "sessionActive">,
+) {
+  const sb = getSupabase();
+
+  const entry = {
+    id: account.id,
+    name: account.name,
+    email: account.email,
+    picture: account.picture,
+    plan: account.plan,
+    role: account.role,
+    goal: account.goal,
+    signed_in_at: new Date().toISOString(),
+    session_active: true,
+  };
+
+  if (sb) {
+    // upsert — insert if new, update signed_in_at + session_active if existing
+    await sb
+      .from("examglow_accounts")
+      .upsert(entry, { onConflict: "id" });
   } else {
-    accounts.push(entry);
+    // localStorage fallback
+    const accounts = localRead();
+    const idx = accounts.findIndex(a => a.id === account.id);
+    const localEntry: AdminAccount = { ...account, signedInAt: entry.signed_in_at, sessionActive: true };
+    if (idx >= 0) accounts[idx] = localEntry; else accounts.push(localEntry);
+    localWrite(accounts);
   }
-  writeAccounts(accounts);
 }
 
-export function logoutAccount(id: string) {
-  const accounts = readAccounts().map(a =>
-    a.id === id ? { ...a, sessionActive: false } : a
-  );
-  writeAccounts(accounts);
+/** Fetch all accounts (admin only). */
+export async function fetchAccounts(): Promise<AdminAccount[]> {
+  const sb = getSupabase();
+  if (sb) {
+    const { data, error } = await sb
+      .from("examglow_accounts")
+      .select("*")
+      .order("signed_in_at", { ascending: false });
+    if (error) throw error;
+    return (data as DbRow[]).map(rowToAccount);
+  }
+  return localRead();
 }
 
-export function updateAccountPlan(id: string, plan: PlanLabel) {
-  const accounts = readAccounts().map(a =>
-    a.id === id ? { ...a, plan } : a
-  );
-  writeAccounts(accounts);
+/** Mark a user's session as inactive (force sign-out from admin). */
+export async function logoutAccount(id: string) {
+  const sb = getSupabase();
+  if (sb) {
+    await sb
+      .from("examglow_accounts")
+      .update({ session_active: false })
+      .eq("id", id);
+  } else {
+    localWrite(localRead().map(a => a.id === id ? { ...a, sessionActive: false } : a));
+  }
 }
 
-export function deleteAccount(id: string) {
-  writeAccounts(readAccounts().filter(a => a.id !== id));
+/** Change a user's plan tier. */
+export async function updateAccountPlan(id: string, plan: PlanLabel) {
+  const sb = getSupabase();
+  if (sb) {
+    await sb
+      .from("examglow_accounts")
+      .update({ plan })
+      .eq("id", id);
+  } else {
+    localWrite(localRead().map(a => a.id === id ? { ...a, plan } : a));
+  }
+}
+
+/** Permanently delete an account from the registry. */
+export async function deleteAccount(id: string) {
+  const sb = getSupabase();
+  if (sb) {
+    await sb
+      .from("examglow_accounts")
+      .delete()
+      .eq("id", id);
+  } else {
+    localWrite(localRead().filter(a => a.id !== id));
+  }
 }
 
 export const PLAN_LABELS: Record<PlanLabel, string> = {
