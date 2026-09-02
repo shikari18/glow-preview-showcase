@@ -1,11 +1,36 @@
-import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useState, type ReactNode } from "react";
 
 import logoMark from "@/assets/logo-mark.png";
 import roomDoodle from "@/assets/room-doodle.png";
 import googleLogo from "@/assets/brands/google.svg";
+import { triggerGoogleSignIn, decodeGoogleJwt } from "@/lib/google-auth";
+import { saveProfile } from "@/lib/onboarding";
 
 export function AuthLayout({ title, children }: { title: string; children: ReactNode }) {
+  const navigate = useNavigate();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+
+  async function handleGoogleSignIn() {
+    setGoogleError(null);
+    setGoogleLoading(true);
+    try {
+      const credential = await triggerGoogleSignIn();
+      const payload = decodeGoogleJwt(credential);
+      saveProfile({ name: payload.name, email: payload.email });
+      navigate({ to: "/onboarding/role" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Google sign-in failed.";
+      // Ignore user-cancelled dismissals silently
+      if (!message.toLowerCase().includes("cancel")) {
+        setGoogleError(message);
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
   return (
     <div className="grid h-dvh overflow-hidden bg-background lg:grid-cols-2">
       <div className="relative flex min-h-0 flex-col px-6 py-5 sm:px-12 sm:py-6">
@@ -28,9 +53,21 @@ export function AuthLayout({ title, children }: { title: string; children: React
           <div className="mt-8 grid grid-cols-2 gap-4">
             <button
               type="button"
-              className="rounded-full bg-secondary py-3.5 text-[15px] font-medium transition-colors hover:bg-muted"
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+              className="rounded-full bg-secondary py-3.5 text-[15px] font-medium transition-colors hover:bg-muted disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <span className="flex items-center justify-center gap-2"><img src={googleLogo} alt="" className="size-4" />Google</span>
+              <span className="flex items-center justify-center gap-2">
+                {googleLoading ? (
+                  <svg className="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z" />
+                  </svg>
+                ) : (
+                  <img src={googleLogo} alt="" className="size-4" />
+                )}
+                Google
+              </span>
             </button>
             <button
               type="button"
@@ -39,6 +76,10 @@ export function AuthLayout({ title, children }: { title: string; children: React
               Apple
             </button>
           </div>
+
+          {googleError && (
+            <p className="mt-3 text-center text-sm text-destructive">{googleError}</p>
+          )}
           <div className="mt-6 flex items-center gap-4 text-sm text-muted-foreground">
             <span className="h-px flex-1 bg-border" />
             or
