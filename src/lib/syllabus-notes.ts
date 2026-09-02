@@ -13,6 +13,7 @@ import { ENGLISH_SECOND_LANGUAGE } from "./notes/english-second-language";
 import { LITERATURE_IN_ENGLISH } from "./notes/literature-in-english";
 import { ACCOUNTING } from "./notes/accounting";
 import { BUSINESS_STUDIES } from "./notes/business-studies";
+import { ECONOMICS } from "./notes/economics";
 import type { SubjectNotes } from "./notes/types";
 
 export {
@@ -26,7 +27,8 @@ export {
   ENGLISH_SECOND_LANGUAGE,
   LITERATURE_IN_ENGLISH,
   ACCOUNTING,
-  BUSINESS_STUDIES
+  BUSINESS_STUDIES,
+  ECONOMICS,
 };
 
 export const SYLLABUS_NOTES: SubjectNotes[] = [
@@ -41,4 +43,5 @@ export const SYLLABUS_NOTES: SubjectNotes[] = [
   LITERATURE_IN_ENGLISH,
   ACCOUNTING,
   BUSINESS_STUDIES,
+  ECONOMICS,
 ];
