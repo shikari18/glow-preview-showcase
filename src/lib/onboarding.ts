@@ -65,7 +65,8 @@ export function saveProfile(patch: OnboardingProfile) {
 export function isPaidUser(profile?: OnboardingProfile): boolean {
   const p = profile ?? readProfile();
   if (!p.plan || p.plan === "free") return false;
-  if (p.subscriptionStatus === "expired" || p.subscriptionStatus === "past_due") return false;
+  if (p.subscriptionStatus !== "active") return false;
+  if (!p.paidAt) return false;
   return true;
 }
 

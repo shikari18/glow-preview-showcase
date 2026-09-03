@@ -13,7 +13,39 @@ export const ENVIRONMENTAL_MANAGEMENT: SubjectNotes = {
       subheadings: [
         {
           title: "The Formation and Characteristics of Rocks",
-          body: "Rocks are natural solid aggregates of one or more minerals that constitute the lithosphere. Geologists classify rocks into three fundamental genetic groups based on their origin, texture, and mineral structure.",
+          body: `Rocks are natural solid aggregates of one or more minerals that constitute the lithosphere. Geologists classify rocks into three fundamental genetic groups based on their origin, texture, and mineral structure.
+
+\`\`\`diagram
+              ┌─────────────────────────────┐
+              │        MAGMA & LAVA         │
+              └──────────────┬──────────────┘
+                             │ Cooling & Crystallisation
+                             ▼
+              ┌─────────────────────────────┐
+              │        IGNEOUS ROCKS        │
+              │   (e.g. Granite, Basalt)    │
+              └──────────────┬──────────────┘
+                             │ Weathering, Erosion & Transport
+                             ▼
+              ┌─────────────────────────────┐
+              │     SEDIMENTS ACCUMULATE    │
+              └──────────────┬──────────────┘
+                             │ Compaction & Lithification
+                             ▼
+              ┌─────────────────────────────┐
+              │      SEDIMENTARY ROCKS      │
+              │  (e.g. Limestone, Sandstone)│
+              └──────────────┬──────────────┘
+                             │ Intense Heat & High Tectonic Pressure
+                             ▼
+              ┌─────────────────────────────┐
+              │      METAMORPHIC ROCKS      │
+              │     (e.g. Marble, Slate)    │
+              └──────────────┬──────────────┘
+                             │ Deep Subduction & Melting
+                             ▼
+                      [ Back to Magma ]
+\`\`\``,
           groups: [
             {
               subTitle: "Igneous Rocks",
@@ -43,7 +75,29 @@ export const ENVIRONMENTAL_MANAGEMENT: SubjectNotes = {
         },
         {
           title: "Methods of Mineral and Rock Extraction",
-          body: "Extraction techniques depend upon the depth, geometry, value, and structural integrity of the mineral ore body relative to the Earth's surface.",
+          body: `Extraction techniques depend upon the depth, geometry, value, and structural integrity of the mineral ore body relative to the Earth's surface.
+
+\`\`\`diagram
+┌────────────────────────────────────────────────────────────────────────┐
+│                        SURFACE MINING (OPEN-CAST)                      │
+│                                                                        │
+│   Vegetation / Topsoil Strip ──► [ Bench 1 (Overburden) ]              │
+│                                      [ Bench 2 (Low-grade ore) ]       │
+│                                          [ Bench 3 (Deep ore body) ]   │
+└────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                     UNDERGROUND MINING (DEEP SHAFT)                    │
+│                                                                        │
+│   Surface Headframe ───────┐                                           │
+│                            │ Vertical Hoist Shaft                      │
+│                            ├──► Horizontal Adit (Level 1: 300m)        │
+│                            │        ├── Room-and-Pillar extraction     │
+│                            └──► Deep Drift (Level 2: 700m)             │
+│                                     └── Longwall shearer               │
+└────────────────────────────────────────────────────────────────────────┘
+\`\`\``,
           groups: [
             {
               subTitle: "Surface Mining",

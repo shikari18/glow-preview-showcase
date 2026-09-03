@@ -13,7 +13,25 @@ export const MATHEMATICS: SubjectNotes = {
       subheadings: [
         {
           title: "Types of Numbers, Primes and Factorisation",
-          body: "Numbers are classified into distinct sets, each with unique mathematical properties and operations.",
+          body: `Numbers are classified into distinct sets, each with unique mathematical properties and operations.
+
+\`\`\`diagram
+┌───────────────────────────────────────────────────────────┐
+│                    REAL NUMBERS (ℝ)                       │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │              RATIONAL NUMBERS (ℚ)                   │  │
+│  │  ┌───────────────────────────────────────────────┐  │  │  IRRATIONALS
+│  │  │               INTEGERS (ℤ)                    │  │  │  (π, √2, e)
+│  │  │  ┌─────────────────────────────────────────┐  │  │  │
+│  │  │  │          NATURAL NUMBERS (ℕ)            │  │  │  │
+│  │  │  │             {1, 2, 3, 4, ...}           │  │  │  │
+│  │  │  └─────────────────────────────────────────┘  │  │  │
+│  │  │              {... -3, -2, -1, 0}              │  │  │
+│  │  └───────────────────────────────────────────────┘  │  │
+│  │                  Fractions (3/4, -5/8)              │  │
+│  └─────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────┘
+\`\`\``,
           groups: [
             {
               subTitle: "Number Classifications",
@@ -137,7 +155,22 @@ export const MATHEMATICS: SubjectNotes = {
         },
         {
           title: "Solving Equations and Inequalities",
-          body: "Methods for finding exact solutions to linear, quadratic, and simultaneous equations, and representing inequality solution sets.",
+          body: `Methods for finding exact solutions to linear, quadratic, and simultaneous equations, and representing inequality solution sets.
+
+\`\`\`diagram
+                 y ▲
+                   │           | Line of Symmetry: x = -b / (2a)
+             \\     │     /     |
+              \\    │    /
+               \\   │   /       y = ax² + bx + c  (a > 0)
+                \\  │  /
+        Root 1   \\ │ /   Root 2
+     ──────●───────┼──────●──────► x
+            \\      │      /
+             \\     │     /
+              \\____│____/  ◄ Minimum Vertex (-b/2a, c - b²/4a)
+                   │
+\`\`\``,
           groups: [
             {
               subTitle: "Quadratic Equations",

@@ -36,7 +36,23 @@ export const PHYSICS: SubjectNotes = {
         },
         {
           title: "Motion, Speed, Velocity and Acceleration",
-          body: "Kinematics describes the motion of bodies without considering the forces that cause them. Speed is the rate of change of distance, while velocity is speed in a given direction. Acceleration is the rate of change of velocity with time.",
+          body: `Kinematics describes the motion of bodies without considering the forces that cause them. Speed is the rate of change of distance, while velocity is speed in a given direction. Acceleration is the rate of change of velocity with time.
+
+\`\`\`diagram
+   Velocity (v) ▲
+                │         Constant Acceleration: Gradient = a = (v - u) / t
+              v ├─── ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─●
+                │                           / │
+                │                         /   │
+                │                       /     │
+              u ├─── ─ ─ ─ ─ ─ ─ ─ ─ ─●       │
+                │                     │   ▲   │
+                │       Area 1        │ Area 2│
+                │    (u × t rect)     │(½(v-u)t)
+              0 └─────────────────────┴───────┴──────► Time (t)
+                0                     t₁      t₂
+                ◄── Total Distance = Area Under Graph ──►
+\`\`\``,
           groups: [
             {
               subTitle: "Key Kinematics Equations",

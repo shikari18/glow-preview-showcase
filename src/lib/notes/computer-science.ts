@@ -112,7 +112,23 @@ export const COMPUTER_SCIENCE: SubjectNotes = {
       subheadings: [
         {
           title: "Methods of Data Transmission",
-          body: "Data can be transmitted bit-by-bit or in groups, and communication can be one-way or bidirectional. Understanding these distinctions is important for evaluating network performance and reliability.",
+          body: `Data can be transmitted bit-by-bit or in groups, and communication can be one-way or bidirectional. Understanding these distinctions is important for evaluating network performance and reliability.
+
+\`\`\`diagram
+┌────────────────────────────────────────────────────────┐
+│               SERIAL vs PARALLEL TRANSMISSION          │
+│                                                        │
+│  SERIAL (Single wire):                                 │
+│  Sender  ──[ 1 ]──[ 0 ]──[ 1 ]──[ 1 ]──► Receiver      │
+│  (Reliable, zero skew, used in USB & Internet)         │
+│                                                        │
+│  PARALLEL (Multiple synchronized wires):               │
+│  Sender  ─── Wire 1: [ 1 ] ────────────► Receiver      │
+│          ─── Wire 2: [ 0 ] ────────────►               │
+│          ─── Wire 3: [ 1 ] ────────────►               │
+│  (Fast over short distances, risk of data skew)        │
+└────────────────────────────────────────────────────────┘
+\`\`\``,
           groups: [
             {
               subTitle: "Serial vs Parallel Transmission",
