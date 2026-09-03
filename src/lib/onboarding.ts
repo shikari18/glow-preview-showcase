@@ -13,6 +13,7 @@ export type OnboardingProfile = {
   subscriptionStatus?: SubscriptionStatus;
   notesCount?: number;
   streakDays?: number;
+  curriculum?: string;
 };
 
 const KEY = "examglow.profile";
@@ -70,8 +71,11 @@ export function isPaidUser(profile?: OnboardingProfile): boolean {
   return true;
 }
 
-export function toggleAutoRenew(enabled: boolean) {
-  saveProfile({ autoRenew: enabled });
+export function toggleAutoRenew(enabled?: boolean): boolean {
+  const current = readProfile();
+  const next = enabled !== undefined ? enabled : !(current.autoRenew ?? true);
+  saveProfile({ autoRenew: next });
+  return next;
 }
 
 export function simulateRenewalFailure() {

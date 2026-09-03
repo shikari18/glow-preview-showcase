@@ -400,3 +400,40 @@ export const DIAGRAM_MAP: Record<string, string> = {
   </g>
 </svg>`,
 };
+
+/**
+ * Returns a guaranteed valid vector SVG diagram for any subject and chapter number.
+ */
+export function getChapterDiagramSvg(subjectId: string, chapterNumber: number): string {
+  const sid = (subjectId || "").toLowerCase();
+  if (sid.includes("bio")) {
+    return DIAGRAM_MAP["cell-structure.svg"]!;
+  }
+  if (sid.includes("chem")) {
+    return DIAGRAM_MAP["fractional-distillation.svg"]!;
+  }
+  if (sid.includes("geo")) {
+    return chapterNumber === 1
+      ? DIAGRAM_MAP["demographic-transition.svg"]!
+      : DIAGRAM_MAP["plate-tectonics.svg"]!;
+  }
+  if (sid.includes("econ") || sid.includes("business") || sid.includes("account")) {
+    return DIAGRAM_MAP["supply-demand.svg"]!;
+  }
+  if (sid.includes("math")) {
+    return DIAGRAM_MAP["quadratic-graph.svg"]!;
+  }
+  if (sid.includes("phys")) {
+    return chapterNumber === 1
+      ? DIAGRAM_MAP["quadratic-graph.svg"]!
+      : DIAGRAM_MAP["computer-architecture.svg"]!;
+  }
+  if (sid.includes("computer") || sid.includes("ict")) {
+    return DIAGRAM_MAP["computer-architecture.svg"]!;
+  }
+  if (sid.includes("environ")) {
+    return DIAGRAM_MAP["rock-cycle.svg"]!;
+  }
+  // Default for humanities and general subjects
+  return DIAGRAM_MAP["demographic-transition.svg"]!;
+}

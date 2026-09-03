@@ -18,6 +18,9 @@ import {
   CreditCard,
   AlertCircle,
   Check,
+  Headphones,
+  Info,
+  Settings,
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
@@ -455,6 +458,36 @@ export function ProfileAvatar({ className = "" }: { className?: string }) {
               </span>
               Personalization
             </button>
+            <Link
+              to="/customer-service"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              <span className="flex size-8 items-center justify-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                <Headphones className="size-4" aria-hidden />
+              </span>
+              Customer Service
+            </Link>
+            <Link
+              to="/about-us"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              <span className="flex size-8 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                <Info className="size-4" aria-hidden />
+              </span>
+              About Us
+            </Link>
+            <Link
+              to="/settings"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-secondary"
+            >
+              <span className="flex size-8 items-center justify-center rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                <Settings className="size-4" aria-hidden />
+              </span>
+              Settings
+            </Link>
             <button
               type="button"
               onClick={toggleDark}

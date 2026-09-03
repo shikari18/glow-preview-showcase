@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/dashboard-page";
 import type { SubjectNotes, Chapter } from "@/lib/notes/types";
 import { SYLLABUS_NOTES } from "@/lib/syllabus-notes";
 import { formatMathAndMarkdown } from "@/lib/render-math";
+import { getChapterDiagramSvg } from "@/lib/diagrams";
 import { isPaidUser } from "@/lib/onboarding";
 import { PaywallModal } from "@/components/paywall-modal";
 
@@ -36,6 +37,7 @@ function ChapterDoc({
   chapter,
   allChapters,
   color,
+  subjectId,
   onBack,
   onNext,
   onPrev,
@@ -43,6 +45,7 @@ function ChapterDoc({
   chapter: Chapter;
   allChapters: Chapter[];
   color: string;
+  subjectId: string;
   onBack: () => void;
   onNext: () => void;
   onPrev: () => void;
@@ -99,6 +102,18 @@ function ChapterDoc({
             <div
               className="text-[15px] leading-[1.8] text-foreground/80"
               dangerouslySetInnerHTML={{ __html: formatMathAndMarkdown(chapter.intro) }}
+            />
+          </div>
+
+          {/* Chapter Concept & Scientific Diagram */}
+          <div className="mt-8 overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-sm">
+            <div className="mb-3 flex items-center justify-between border-b border-border pb-2 text-xs font-semibold text-muted-foreground">
+              <span>Concept Diagram · Chapter {chapter.number}</span>
+              <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-bold text-foreground">Cambridge Syllabus Diagram</span>
+            </div>
+            <div
+              className="w-full overflow-x-auto"
+              dangerouslySetInnerHTML={{ __html: getChapterDiagramSvg(subjectId, chapter.number) }}
             />
           </div>
 
@@ -386,6 +401,7 @@ function SyllabusNotesPage() {
           chapter={activeChapter}
           allChapters={selectedSubject.chapters}
           color={selectedSubject.color}
+          subjectId={selectedSubject.id}
           onBack={() => setActiveChapter(null)}
           onNext={openNext}
           onPrev={openPrev}

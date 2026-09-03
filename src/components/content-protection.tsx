@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 
 /**
- * Content Protection & Screenshot Blackout Guard
+ * Hard Content Protection & Netflix-Style Screenshot Blocker
  * ─────────────────────────────────────────────────────────────────────────────
- * Prevents text copying & right-clicking across protected learning materials
- * (Syllabus, Syllabus Notes, Past Questions, Personal Notes).
- * Copying is allowed exclusively on /chat and assignment solver pages.
+ * Prevents text copying, right-clicking, and screenshots on protected pages.
+ * Copying is allowed ONLY on /chat and assignment solver pages.
  *
- * Netflix-style screenshot blackout:
- * Displays a pitch-black screen whenever screenshot shortcuts (PrintScreen,
- * Win+Shift+S, Cmd+Shift+3/4) or screen clipping focus loss are detected.
+ * How the Screenshot Blocker Works:
+ * 1. The millisecond any screenshot tool (Windows Snipping Tool, PrtScn, Win+Shift+S,
+ *    ShareX, Lightshot, Mac Grab) activates, the browser window loses focus ('blur').
+ * 2. While blurred, the entire page is blanked out to pitch black (#000000).
+ * 3. Any press of the PrintScreen key immediately wipes the system clipboard.
  */
 export function ContentProtectionGuard() {
   const routerState = useRouterState();
@@ -35,51 +36,79 @@ export function ContentProtectionGuard() {
       e.preventDefault();
     };
 
-    // 3. Detect screenshot keys
+    // 3. Detect screenshot keys and clear clipboard
     const handleKeyDown = (e: KeyboardEvent) => {
-      // PrintScreen key
+      // PrintScreen key (Windows / Linux)
       if (e.key === "PrintScreen" || e.keyCode === 44) {
-        triggerBlackout();
+        wipeClipboardAndBlackout();
       }
       // Windows Snipping Tool: Win + Shift + S or Ctrl + Shift + S
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "s" || e.key === "S")) {
-        triggerBlackout();
+        wipeClipboardAndBlackout();
       }
       // macOS Screenshot shortcuts: Cmd + Shift + 3, 4, 5
       if (e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key)) {
-        triggerBlackout();
+        wipeClipboardAndBlackout();
       }
       // Print shortcut: Ctrl + P / Cmd + P
       if ((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "P")) {
         e.preventDefault();
-        triggerBlackout();
+        wipeClipboardAndBlackout();
       }
     };
 
-    // 4. Detect window blur when screenshot tools capture the screen
-    const handleVisibilityOrBlur = () => {
-      if (document.hidden) {
-        // Trigger quick blackout
-        setBlackout(true);
-        setTimeout(() => setBlackout(false), 800);
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen" || e.keyCode === 44) {
+        wipeClipboardAndBlackout();
       }
     };
 
-    function triggerBlackout() {
+    function wipeClipboardAndBlackout() {
       setBlackout(true);
+      document.documentElement.classList.add("drm-blackout");
+      try {
+        navigator.clipboard.writeText("Screen capture is disabled on ExamGlow protected syllabus and exam materials.");
+      } catch {}
       setTimeout(() => {
-        setBlackout(false);
-      }, 1500);
+        if (document.hasFocus()) {
+          setBlackout(false);
+          document.documentElement.classList.remove("drm-blackout");
+        }
+      }, 2000);
     }
+
+    // 4. Window blur: Whenever Snipping Tool or external screenshot app opens
+    const handleBlur = () => {
+      setBlackout(true);
+      document.documentElement.classList.add("drm-blackout");
+      try {
+        navigator.clipboard.writeText("Screen capture is disabled on ExamGlow protected content.");
+      } catch {}
+    };
+
+    const handleFocus = () => {
+      setBlackout(false);
+      document.documentElement.classList.remove("drm-blackout");
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        handleBlur();
+      } else {
+        handleFocus();
+      }
+    };
 
     window.addEventListener("copy", handleCopy);
     window.addEventListener("cut", handleCopy);
     window.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("blur", handleVisibilityOrBlur);
-    document.addEventListener("visibilitychange", handleVisibilityOrBlur);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
 
-    // Apply unselectable style to body on protected pages
+    // Disable text selection on body
     document.body.style.userSelect = "none";
     document.body.style.webkitUserSelect = "none";
 
@@ -88,22 +117,33 @@ export function ContentProtectionGuard() {
       window.removeEventListener("cut", handleCopy);
       window.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("blur", handleVisibilityOrBlur);
-      document.removeEventListener("visibilitychange", handleVisibilityOrBlur);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
       document.body.style.userSelect = "";
       document.body.style.webkitUserSelect = "";
+      document.documentElement.classList.remove("drm-blackout");
     };
   }, [isProtectedPage]);
 
   // CSS print blackout protection
   useEffect(() => {
     const style = document.createElement("style");
-    style.id = "examglow-drm-print-protection";
+    style.id = "examglow-drm-css-protection";
     style.innerHTML = `
       @media print {
-        body {
+        body, html, * {
           display: none !important;
+          visibility: hidden !important;
         }
+      }
+      .drm-blackout body {
+        background: #000000 !important;
+      }
+      .drm-blackout body * {
+        visibility: hidden !important;
+        opacity: 0 !important;
       }
     `;
     document.head.appendChild(style);
@@ -112,16 +152,18 @@ export function ContentProtectionGuard() {
     };
   }, []);
 
-  if (!blackout || !isProtectedPage) return null;
+  if (!isProtectedPage || !blackout) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[9999999] flex flex-col items-center justify-center bg-black text-white select-none pointer-events-none"
+      className="fixed inset-0 z-[99999999] flex flex-col items-center justify-center bg-black text-white select-none pointer-events-none"
       aria-hidden="true"
     >
-      <div className="text-center">
+      <div className="text-center px-6">
         <p className="text-xs uppercase tracking-widest text-zinc-500 font-mono">ExamGlow Protected Content</p>
-        <p className="text-sm font-semibold text-zinc-400 mt-1">Screen capture is restricted on syllabus &amp; exam materials.</p>
+        <p className="text-sm font-semibold text-zinc-400 mt-2">
+          Screen capture is strictly restricted on syllabus notes, past questions, and learning materials.
+        </p>
       </div>
     </div>
   );

@@ -10,12 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutUsRouteImport } from './routes/about-us'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ArcadeRouteImport } from './routes/arcade'
 import { Route as AssignmentsRouteImport } from './routes/assignments'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CustomerServiceRouteImport } from './routes/customer-service'
 import { Route as FlashcardsRouteImport } from './routes/flashcards'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
@@ -24,6 +26,7 @@ import { Route as PastQuestionsRouteImport } from './routes/past-questions'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as QuizzesRouteImport } from './routes/quizzes'
 import { Route as RecordLectureRouteImport } from './routes/record-lecture'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as StudyPlanRouteImport } from './routes/study-plan'
 import { Route as SyllabusRouteImport } from './routes/syllabus'
@@ -42,6 +45,11 @@ import { Route as ApiV1ChatCompletionsRouteImport } from './routes/api/v1/chat/c
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutUsRoute = AboutUsRouteImport.update({
+  id: '/about-us',
+  path: '/about-us',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -72,6 +80,11 @@ const ChatRoute = ChatRouteImport.update({
 const CheckoutRoute = CheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomerServiceRoute = CustomerServiceRouteImport.update({
+  id: '/customer-service',
+  path: '/customer-service',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FlashcardsRoute = FlashcardsRouteImport.update({
@@ -112,6 +125,11 @@ const QuizzesRoute = QuizzesRouteImport.update({
 const RecordLectureRoute = RecordLectureRouteImport.update({
   id: '/record-lecture',
   path: '/record-lecture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -187,12 +205,14 @@ const ApiV1ChatCompletionsRoute = ApiV1ChatCompletionsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about-us': typeof AboutUsRoute
   '/admin': typeof AdminRoute
   '/arcade': typeof ArcadeRoute
   '/assignments': typeof AssignmentsRoute
   '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
   '/checkout': typeof CheckoutRoute
+  '/customer-service': typeof CustomerServiceRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -201,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/quizzes': typeof QuizzesRoute
   '/record-lecture': typeof RecordLectureRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/study-plan': typeof StudyPlanRoute
   '/syllabus': typeof SyllabusRoute
@@ -218,12 +239,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about-us': typeof AboutUsRoute
   '/admin': typeof AdminRoute
   '/arcade': typeof ArcadeRoute
   '/assignments': typeof AssignmentsRoute
   '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
   '/checkout': typeof CheckoutRoute
+  '/customer-service': typeof CustomerServiceRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -232,6 +255,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/quizzes': typeof QuizzesRoute
   '/record-lecture': typeof RecordLectureRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/study-plan': typeof StudyPlanRoute
   '/syllabus': typeof SyllabusRoute
@@ -250,12 +274,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about-us': typeof AboutUsRoute
   '/admin': typeof AdminRoute
   '/arcade': typeof ArcadeRoute
   '/assignments': typeof AssignmentsRoute
   '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
   '/checkout': typeof CheckoutRoute
+  '/customer-service': typeof CustomerServiceRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -264,6 +290,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/quizzes': typeof QuizzesRoute
   '/record-lecture': typeof RecordLectureRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/study-plan': typeof StudyPlanRoute
   '/syllabus': typeof SyllabusRoute
@@ -283,12 +310,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about-us'
     | '/admin'
     | '/arcade'
     | '/assignments'
     | '/calendar'
     | '/chat'
     | '/checkout'
+    | '/customer-service'
     | '/flashcards'
     | '/home'
     | '/login'
@@ -297,6 +326,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/quizzes'
     | '/record-lecture'
+    | '/settings'
     | '/signup'
     | '/study-plan'
     | '/syllabus'
@@ -314,12 +344,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about-us'
     | '/admin'
     | '/arcade'
     | '/assignments'
     | '/calendar'
     | '/chat'
     | '/checkout'
+    | '/customer-service'
     | '/flashcards'
     | '/home'
     | '/login'
@@ -328,6 +360,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/quizzes'
     | '/record-lecture'
+    | '/settings'
     | '/signup'
     | '/study-plan'
     | '/syllabus'
@@ -345,12 +378,14 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/about-us'
     | '/admin'
     | '/arcade'
     | '/assignments'
     | '/calendar'
     | '/chat'
     | '/checkout'
+    | '/customer-service'
     | '/flashcards'
     | '/home'
     | '/login'
@@ -359,6 +394,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/quizzes'
     | '/record-lecture'
+    | '/settings'
     | '/signup'
     | '/study-plan'
     | '/syllabus'
@@ -377,12 +413,14 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutUsRoute: typeof AboutUsRoute
   AdminRoute: typeof AdminRoute
   ArcadeRoute: typeof ArcadeRoute
   AssignmentsRoute: typeof AssignmentsRoute
   CalendarRoute: typeof CalendarRoute
   ChatRoute: typeof ChatRoute
   CheckoutRoute: typeof CheckoutRoute
+  CustomerServiceRoute: typeof CustomerServiceRoute
   FlashcardsRoute: typeof FlashcardsRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
@@ -391,6 +429,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   QuizzesRoute: typeof QuizzesRoute
   RecordLectureRoute: typeof RecordLectureRoute
+  SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   StudyPlanRoute: typeof StudyPlanRoute
   SyllabusRoute: typeof SyllabusRoute
@@ -414,6 +453,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about-us': {
+      id: '/about-us'
+      path: '/about-us'
+      fullPath: '/about-us'
+      preLoaderRoute: typeof AboutUsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -456,6 +502,13 @@ declare module '@tanstack/react-router' {
       path: '/checkout'
       fullPath: '/checkout'
       preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customer-service': {
+      id: '/customer-service'
+      path: '/customer-service'
+      fullPath: '/customer-service'
+      preLoaderRoute: typeof CustomerServiceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/flashcards': {
@@ -512,6 +565,13 @@ declare module '@tanstack/react-router' {
       path: '/record-lecture'
       fullPath: '/record-lecture'
       preLoaderRoute: typeof RecordLectureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -617,12 +677,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutUsRoute: AboutUsRoute,
   AdminRoute: AdminRoute,
   ArcadeRoute: ArcadeRoute,
   AssignmentsRoute: AssignmentsRoute,
   CalendarRoute: CalendarRoute,
   ChatRoute: ChatRoute,
   CheckoutRoute: CheckoutRoute,
+  CustomerServiceRoute: CustomerServiceRoute,
   FlashcardsRoute: FlashcardsRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
@@ -631,6 +693,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   QuizzesRoute: QuizzesRoute,
   RecordLectureRoute: RecordLectureRoute,
+  SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   StudyPlanRoute: StudyPlanRoute,
   SyllabusRoute: SyllabusRoute,
