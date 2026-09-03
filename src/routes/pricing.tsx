@@ -107,7 +107,7 @@ function PricingPage() {
                 <button key={plan.id} type="button" onClick={() => setSelected(plan.id)}
                   aria-pressed={active}
                   className={`w-full overflow-hidden rounded-2xl border text-left transition-colors ${active ? "border-foreground bg-secondary" : "border-border bg-card"}`}>
-                  {plan.badge && (
+                  {"badge" in plan && plan.badge && (
                     <span className="block bg-ink-foreground py-1 text-center text-[11px] font-semibold text-ink">
                       {plan.badge}
                     </span>
