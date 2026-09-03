@@ -245,11 +245,6 @@ function PayPalCardForm({
   if (state === "buttons") {
     return (
       <div className="space-y-3">
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
-          <strong>Card form</strong> is not enabled on this PayPal account.
-          Use the PayPal buttons below to pay by card (click PayPal →
-          "Pay with Debit or Credit Card").
-        </div>
         <PayPalButtonsFallback planId={planId} currency={currency} onSuccess={onSuccess} />
       </div>
     );
