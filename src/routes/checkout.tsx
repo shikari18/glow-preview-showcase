@@ -107,6 +107,7 @@ function PayPalCardForm({
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
   const cardFieldsRef = useRef<{
     isEligible: () => boolean;
     NumberField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
@@ -189,7 +190,7 @@ function PayPalCardForm({
         console.error("PayPal SDK load error:", err);
         setState("error");
       });
-  }, [currency.code, createOrder, handleApprove]);
+  }, [currency.code, createOrder, handleApprove, retryKey]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,7 +226,13 @@ function PayPalCardForm({
           Make sure pop-ups are not blocked.
         </p>
         <button
-          onClick={() => { _sdkPromise = null; mountedRef.current = false; setState("loading"); }}
+          onClick={() => {
+            _sdkPromise = null;
+            mountedRef.current = false;
+            setErrorMsg(null);
+            setState("loading");
+            setRetryKey(k => k + 1);
+          }}
           className="mt-3 rounded-full bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
         >
           Try again
