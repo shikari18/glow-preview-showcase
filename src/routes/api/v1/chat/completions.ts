@@ -1,12 +1,12 @@
 /**
  * /api/v1/chat/completions
  * ─────────────────────────────────────────────────────────────────────────────
- * OpenAI-compatible completions endpoint.
- * Accepts the standard ChatML request body and returns an OpenAI-style response.
- * Powers both the ExamGlow web app and any external developer API access.
+ * Standard OpenAI-compatible completions endpoint.
+ * Supports both standard JSON responses and real-time streaming (stream: true).
+ * Target Model: SHIKARI2/Malvos-32B-Merged with zero-downtime fallback pool.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { routeChat, type ChatMessage } from "@/lib/ai-router";
+import { routeChat, routeChatStream, type ChatMessage } from "@/lib/ai-router";
 
 type CompletionsRequest = {
   model?: string;
@@ -20,7 +20,6 @@ export const Route = createFileRoute("/api/v1/chat/completions")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // ── CORS preflight ──────────────────────────────────────────────────
         const corsHeaders = {
           "access-control-allow-origin": "*",
           "access-control-allow-methods": "POST, OPTIONS",
@@ -31,7 +30,6 @@ export const Route = createFileRoute("/api/v1/chat/completions")({
           return new Response(null, { status: 204, headers: corsHeaders });
         }
 
-        // ── Parse body ──────────────────────────────────────────────────────
         let body: CompletionsRequest;
         try {
           body = (await request.json()) as CompletionsRequest;
@@ -45,32 +43,43 @@ export const Route = createFileRoute("/api/v1/chat/completions")({
         const messages = Array.isArray(body.messages) ? body.messages : [];
         if (messages.length === 0) {
           return new Response(
-            JSON.stringify({ error: { message: "messages is required", type: "invalid_request_error" } }),
+            JSON.stringify({ error: { message: "messages array is required", type: "invalid_request_error" } }),
             { status: 400, headers: { "content-type": "application/json", ...corsHeaders } },
           );
         }
 
-        // Streaming not supported — inform caller
+        // ── Streaming response: stream: true ────────────────────────────────
         if (body.stream === true) {
-          return new Response(
-            JSON.stringify({ error: { message: "Streaming is not supported on this endpoint", type: "invalid_request_error" } }),
-            { status: 400, headers: { "content-type": "application/json", ...corsHeaders } },
-          );
+          try {
+            return await routeChatStream(messages, {
+              maxTokens: body.max_tokens ?? 1024,
+              temperature: body.temperature ?? 0.7,
+            });
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "Streaming failed";
+            console.error("v1/chat/completions stream error:", msg);
+            return new Response(
+              JSON.stringify({ error: { message: "AI stream temporarily unavailable", type: "server_error" } }),
+              { status: 503, headers: { "content-type": "application/json", ...corsHeaders } },
+            );
+          }
         }
 
-        // ── Route through AI pool ───────────────────────────────────────────
+        // ── Standard non-streaming JSON response ───────────────────────────
         try {
           const result = await routeChat(messages, {
             maxTokens: body.max_tokens ?? 1024,
             temperature: body.temperature ?? 0.7,
           });
 
-          // Return OpenAI-compatible response shape
+          const promptTokens = messages.reduce((n, m) => n + Math.ceil(m.content.length / 4), 0);
+          const completionTokens = Math.ceil(result.text.length / 4);
+
           const response = {
             id: `chatcmpl-${Date.now()}`,
             object: "chat.completion",
             created: Math.floor(Date.now() / 1000),
-            model: result.model,
+            model: result.model || "SHIKARI2/Malvos-32B-Merged",
             choices: [
               {
                 index: 0,
@@ -79,15 +88,12 @@ export const Route = createFileRoute("/api/v1/chat/completions")({
               },
             ],
             usage: {
-              // Approximate token counts — real counting requires a tokenizer
-              prompt_tokens: messages.reduce((n, m) => n + Math.ceil(m.content.length / 4), 0),
-              completion_tokens: Math.ceil(result.text.length / 4),
-              total_tokens: 0, // filled below
+              prompt_tokens: promptTokens,
+              completion_tokens: completionTokens,
+              total_tokens: promptTokens + completionTokens,
             },
             _examglow: { provider: result.provider },
           };
-          response.usage.total_tokens =
-            response.usage.prompt_tokens + response.usage.completion_tokens;
 
           return new Response(JSON.stringify(response), {
             headers: { "content-type": "application/json", ...corsHeaders },
@@ -96,15 +102,12 @@ export const Route = createFileRoute("/api/v1/chat/completions")({
           const msg = err instanceof Error ? err.message : "AI unavailable";
           console.error("v1/chat/completions error:", msg);
           return new Response(
-            JSON.stringify({
-              error: { message: "AI service temporarily unavailable", type: "server_error" },
-            }),
+            JSON.stringify({ error: { message: "AI service temporarily unavailable", type: "server_error" } }),
             { status: 503, headers: { "content-type": "application/json", ...corsHeaders } },
           );
         }
       },
 
-      // Handle CORS preflight
       OPTIONS: async () =>
         new Response(null, {
           status: 204,
