@@ -91,6 +91,7 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
   const [status, setStatus] = useState<"ready" | "submitted">("ready");
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [playingMsgIdx, setPlayingMsgIdx] = useState<number | null>(null);
 
   // Speech-to-Speech Hands-Free Voice Mode
   const [voiceMode, setVoiceMode] = useState(false);
@@ -296,8 +297,8 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
       const data = (await res.json()) as { text?: string; error?: string };
       let replyText = data.text;
 
-      // Fallback: If network or serverless worker returned null, call Gemini API directly in-browser!
-      if (!replyText || replyText.includes("restate or ask your question again")) {
+      // Fallback: If server returned nothing, error, or an extremely short reply, call Gemini API directly in-browser!
+      if (!replyText || data.error || replyText.trim().length < 20) {
         const clientRes = await callGemini([...messages, { role: "user", content: fullPrompt }]);
         if (clientRes?.text) {
           replyText = clientRes.text;
@@ -674,14 +675,51 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
                   {m.role === "assistant" ? (
                     <div className="relative group">
                       <MessageResponse>{m.content}</MessageResponse>
-                      <button
-                        type="button"
-                        onClick={() => speakResponse(m.content)}
-                        className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground hover:text-primary transition-colors opacity-80 group-hover:opacity-100"
-                      >
-                        <Volume2 className="size-3.5" />
-                        <span>Listen to explanation</span>
-                      </button>
+                      <div className="mt-2 flex items-center gap-2">
+                        {playingMsgIdx === i ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              window.speechSynthesis?.cancel();
+                              setPlayingMsgIdx(null);
+                            }}
+                            className="flex items-center gap-1.5 text-[11px] font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+                          >
+                            <VolumeX className="size-3.5" />
+                            <span>Stop</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              window.speechSynthesis?.cancel();
+                              setPlayingMsgIdx(i);
+                              const clean = cleanSpeechText(m.content);
+                              if (!clean.trim()) return;
+                              const utt = new SpeechSynthesisUtterance(clean);
+                              utt.rate = 1.05;
+                              utt.pitch = 1.0;
+                              const voices = window.speechSynthesis.getVoices();
+                              const preferred = voices.find(
+                                (v) =>
+                                  v.name.includes("Natural") ||
+                                  v.name.includes("Libby") ||
+                                  v.name.includes("Samantha") ||
+                                  v.name.includes("Google UK English Female") ||
+                                  (v.lang.startsWith("en") && v.name.toLowerCase().includes("female")),
+                              );
+                              if (preferred) utt.voice = preferred;
+                              utt.onend = () => setPlayingMsgIdx(null);
+                              utt.onerror = () => setPlayingMsgIdx(null);
+                              window.speechSynthesis.speak(utt);
+                            }}
+                            className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <Volume2 className="size-3.5" />
+                            <span>Listen</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     m.content

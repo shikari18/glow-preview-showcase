@@ -52,8 +52,19 @@ type NavItem = (typeof primaryItems)[number] | (typeof studyItems)[number] | (ty
 export function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [practiceOpen, setPracticeOpen] = useState(true);
+  const [practiceOpen, setPracticeOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const saved = localStorage.getItem("sidebar.practiceOpen");
+    return saved === null ? true : saved === "true";
+  });
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  // Persist practiceOpen to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem("sidebar.practiceOpen", String(practiceOpen));
+    } catch {}
+  }, [practiceOpen]);
 
   useEffect(() => {
     if (!mobileOpen) return;

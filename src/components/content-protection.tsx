@@ -17,9 +17,11 @@ export function ContentProtectionGuard() {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
-  // Allowed copy paths: /chat and /assignments
-  const isAllowedCopy = currentPath.startsWith("/chat") || currentPath.includes("assignment");
-  const isProtectedPage = !isAllowedCopy;
+  // Only protect notes, syllabus, and past-questions pages
+  const isProtectedPage =
+    currentPath.startsWith("/notes") ||
+    currentPath.startsWith("/syllabus") ||
+    currentPath.startsWith("/past-questions");
 
   const [blackout, setBlackout] = useState(false);
 
