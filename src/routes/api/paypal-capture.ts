@@ -29,7 +29,7 @@ export const Route = createFileRoute("/api/paypal-capture")({
 
         const clientId =
           (process.env["VITE_PAYPAL_CLIENT_ID"] as string | undefined) ??
-          "BAXrL_Pb2A66Zhr9asfXJBRIMuc7Ri5M9GzFDqDFBiwOcmMsNq4SOSAu1DLWkY1TWNPXs0G15bFKytpt4";
+          "BAAXrL_Pb2A66Zhr9asfXJBRIMuc7Ri5M9GzFDqDFBiwOcmMsNq4SOSAu1DLWkY1TwNPXs0G15bFKytpt4";
         const secret =
           (process.env["PAYPAL_CLIENT_SECRET"] as string | undefined) ?? "";
 
