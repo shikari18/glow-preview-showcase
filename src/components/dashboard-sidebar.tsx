@@ -42,7 +42,7 @@ const practiceItems = [
 
 const courseItems = [
   { label: "Syllabus", to: "/syllabus", Icon: BookOpen },
-  { label: "Syllabus Notes", to: "/notes", Icon: FileText },
+  { label: "Syllabus Notes", to: "/syllabus-notes", Icon: NotebookTabs },
   { label: "Past Questions", to: "/past-questions", Icon: FileQuestion },
 ] as const;
 

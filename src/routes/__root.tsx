@@ -104,6 +104,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&family=Figtree:wght@300..700&display=swap",
       },
+      {
+        rel: "stylesheet",
+        href: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+        crossOrigin: "anonymous",
+      },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
     ],
     scripts: [

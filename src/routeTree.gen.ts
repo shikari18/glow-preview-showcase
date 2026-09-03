@@ -15,6 +15,7 @@ import { Route as ArcadeRouteImport } from './routes/arcade'
 import { Route as AssignmentsRouteImport } from './routes/assignments'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ChatRouteImport } from './routes/chat'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as FlashcardsRouteImport } from './routes/flashcards'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
@@ -26,10 +27,13 @@ import { Route as RecordLectureRouteImport } from './routes/record-lecture'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as StudyPlanRouteImport } from './routes/study-plan'
 import { Route as SyllabusRouteImport } from './routes/syllabus'
+import { Route as SyllabusNotesRouteImport } from './routes/syllabus-notes'
 import { Route as TestRouteImport } from './routes/test'
 import { Route as TutorsRouteImport } from './routes/tutors'
 import { Route as ApiAssignmentRouteImport } from './routes/api/assignment'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiPaypalCaptureRouteImport } from './routes/api/paypal-capture'
+import { Route as ApiPaypalOrderRouteImport } from './routes/api/paypal-order'
 import { Route as OnboardingGoalRouteImport } from './routes/onboarding.goal'
 import { Route as OnboardingRoleRouteImport } from './routes/onboarding.role'
 import { Route as OnboardingSourceRouteImport } from './routes/onboarding.source'
@@ -63,6 +67,11 @@ const CalendarRoute = CalendarRouteImport.update({
 const ChatRoute = ChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FlashcardsRoute = FlashcardsRouteImport.update({
@@ -120,6 +129,11 @@ const SyllabusRoute = SyllabusRouteImport.update({
   path: '/syllabus',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SyllabusNotesRoute = SyllabusNotesRouteImport.update({
+  id: '/syllabus-notes',
+  path: '/syllabus-notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TestRoute = TestRouteImport.update({
   id: '/test',
   path: '/test',
@@ -138,6 +152,16 @@ const ApiAssignmentRoute = ApiAssignmentRouteImport.update({
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPaypalCaptureRoute = ApiPaypalCaptureRouteImport.update({
+  id: '/api/paypal-capture',
+  path: '/api/paypal-capture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPaypalOrderRoute = ApiPaypalOrderRouteImport.update({
+  id: '/api/paypal-order',
+  path: '/api/paypal-order',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingGoalRoute = OnboardingGoalRouteImport.update({
@@ -168,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/assignments': typeof AssignmentsRoute
   '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
+  '/checkout': typeof CheckoutRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -179,10 +204,13 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/study-plan': typeof StudyPlanRoute
   '/syllabus': typeof SyllabusRoute
+  '/syllabus-notes': typeof SyllabusNotesRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
   '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/paypal-capture': typeof ApiPaypalCaptureRoute
+  '/api/paypal-order': typeof ApiPaypalOrderRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/source': typeof OnboardingSourceRoute
@@ -195,6 +223,7 @@ export interface FileRoutesByTo {
   '/assignments': typeof AssignmentsRoute
   '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
+  '/checkout': typeof CheckoutRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -206,10 +235,13 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/study-plan': typeof StudyPlanRoute
   '/syllabus': typeof SyllabusRoute
+  '/syllabus-notes': typeof SyllabusNotesRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
   '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/paypal-capture': typeof ApiPaypalCaptureRoute
+  '/api/paypal-order': typeof ApiPaypalOrderRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/source': typeof OnboardingSourceRoute
@@ -223,6 +255,7 @@ export interface FileRoutesById {
   '/assignments': typeof AssignmentsRoute
   '/calendar': typeof CalendarRoute
   '/chat': typeof ChatRoute
+  '/checkout': typeof CheckoutRoute
   '/flashcards': typeof FlashcardsRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -234,10 +267,13 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/study-plan': typeof StudyPlanRoute
   '/syllabus': typeof SyllabusRoute
+  '/syllabus-notes': typeof SyllabusNotesRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
   '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/paypal-capture': typeof ApiPaypalCaptureRoute
+  '/api/paypal-order': typeof ApiPaypalOrderRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/source': typeof OnboardingSourceRoute
@@ -252,6 +288,7 @@ export interface FileRouteTypes {
     | '/assignments'
     | '/calendar'
     | '/chat'
+    | '/checkout'
     | '/flashcards'
     | '/home'
     | '/login'
@@ -263,10 +300,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/study-plan'
     | '/syllabus'
+    | '/syllabus-notes'
     | '/test'
     | '/tutors'
     | '/api/assignment'
     | '/api/chat'
+    | '/api/paypal-capture'
+    | '/api/paypal-order'
     | '/onboarding/goal'
     | '/onboarding/role'
     | '/onboarding/source'
@@ -279,6 +319,7 @@ export interface FileRouteTypes {
     | '/assignments'
     | '/calendar'
     | '/chat'
+    | '/checkout'
     | '/flashcards'
     | '/home'
     | '/login'
@@ -290,10 +331,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/study-plan'
     | '/syllabus'
+    | '/syllabus-notes'
     | '/test'
     | '/tutors'
     | '/api/assignment'
     | '/api/chat'
+    | '/api/paypal-capture'
+    | '/api/paypal-order'
     | '/onboarding/goal'
     | '/onboarding/role'
     | '/onboarding/source'
@@ -306,6 +350,7 @@ export interface FileRouteTypes {
     | '/assignments'
     | '/calendar'
     | '/chat'
+    | '/checkout'
     | '/flashcards'
     | '/home'
     | '/login'
@@ -317,10 +362,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/study-plan'
     | '/syllabus'
+    | '/syllabus-notes'
     | '/test'
     | '/tutors'
     | '/api/assignment'
     | '/api/chat'
+    | '/api/paypal-capture'
+    | '/api/paypal-order'
     | '/onboarding/goal'
     | '/onboarding/role'
     | '/onboarding/source'
@@ -334,6 +382,7 @@ export interface RootRouteChildren {
   AssignmentsRoute: typeof AssignmentsRoute
   CalendarRoute: typeof CalendarRoute
   ChatRoute: typeof ChatRoute
+  CheckoutRoute: typeof CheckoutRoute
   FlashcardsRoute: typeof FlashcardsRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
@@ -345,10 +394,13 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   StudyPlanRoute: typeof StudyPlanRoute
   SyllabusRoute: typeof SyllabusRoute
+  SyllabusNotesRoute: typeof SyllabusNotesRoute
   TestRoute: typeof TestRoute
   TutorsRoute: typeof TutorsRoute
   ApiAssignmentRoute: typeof ApiAssignmentRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiPaypalCaptureRoute: typeof ApiPaypalCaptureRoute
+  ApiPaypalOrderRoute: typeof ApiPaypalOrderRoute
   OnboardingGoalRoute: typeof OnboardingGoalRoute
   OnboardingRoleRoute: typeof OnboardingRoleRoute
   OnboardingSourceRoute: typeof OnboardingSourceRoute
@@ -397,6 +449,13 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/flashcards': {
@@ -476,6 +535,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SyllabusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/syllabus-notes': {
+      id: '/syllabus-notes'
+      path: '/syllabus-notes'
+      fullPath: '/syllabus-notes'
+      preLoaderRoute: typeof SyllabusNotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/test': {
       id: '/test'
       path: '/test'
@@ -502,6 +568,20 @@ declare module '@tanstack/react-router' {
       path: '/api/chat'
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/paypal-capture': {
+      id: '/api/paypal-capture'
+      path: '/api/paypal-capture'
+      fullPath: '/api/paypal-capture'
+      preLoaderRoute: typeof ApiPaypalCaptureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/paypal-order': {
+      id: '/api/paypal-order'
+      path: '/api/paypal-order'
+      fullPath: '/api/paypal-order'
+      preLoaderRoute: typeof ApiPaypalOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding/goal': {
@@ -542,6 +622,7 @@ const rootRouteChildren: RootRouteChildren = {
   AssignmentsRoute: AssignmentsRoute,
   CalendarRoute: CalendarRoute,
   ChatRoute: ChatRoute,
+  CheckoutRoute: CheckoutRoute,
   FlashcardsRoute: FlashcardsRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
@@ -553,10 +634,13 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   StudyPlanRoute: StudyPlanRoute,
   SyllabusRoute: SyllabusRoute,
+  SyllabusNotesRoute: SyllabusNotesRoute,
   TestRoute: TestRoute,
   TutorsRoute: TutorsRoute,
   ApiAssignmentRoute: ApiAssignmentRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiPaypalCaptureRoute: ApiPaypalCaptureRoute,
+  ApiPaypalOrderRoute: ApiPaypalOrderRoute,
   OnboardingGoalRoute: OnboardingGoalRoute,
   OnboardingRoleRoute: OnboardingRoleRoute,
   OnboardingSourceRoute: OnboardingSourceRoute,

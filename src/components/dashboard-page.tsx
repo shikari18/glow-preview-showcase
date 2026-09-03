@@ -15,12 +15,22 @@ import {
   MoreHorizontal,
   LogOut,
   School,
+  CreditCard,
+  Sparkles,
+  AlertCircle,
+  Check,
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import logoMark from "@/assets/logo-mark.png";
 import avatar1 from "@/assets/avatar-1.jpg";
-import { readProfile, saveProfile } from "@/lib/onboarding";
+import {
+  readProfile,
+  saveProfile,
+  isPaidUser,
+  simulateRenewalFailure,
+  toggleAutoRenew,
+} from "@/lib/onboarding";
 
 const THEME_KEY = "examglow.theme";
 
@@ -45,12 +55,18 @@ const goals = [
 
 function PersonalizationModal({ onClose }: { onClose: () => void }) {
   const profile = readProfile();
+  const [tab, setTab] = useState<"study" | "subscription">("study");
   const [role, setRole] = useState(profile.role ?? "");
   const [goal, setGoal] = useState(profile.goal ?? "");
+  const [autoRenew, setAutoRenew] = useState(profile.autoRenew ?? true);
+
+  const isPaid = isPaidUser(profile);
 
   // Trap focus and close on Escape
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
@@ -59,12 +75,27 @@ function PersonalizationModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, []);
 
   function save() {
-    saveProfile({ role, goal });
+    saveProfile({ role, goal, autoRenew });
     onClose();
+  }
+
+  function handleAutoRenewToggle(val: boolean) {
+    setAutoRenew(val);
+    toggleAutoRenew(val);
+  }
+
+  function handleTestInsufficientRenewal() {
+    if (confirm("Simulate renewal failure? This will set your account to unpaid and log you out.")) {
+      simulateRenewalFailure();
+      onClose();
+      window.location.href = "/pricing";
+    }
   }
 
   return (
@@ -72,24 +103,41 @@ function PersonalizationModal({ onClose }: { onClose: () => void }) {
       className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="Personalization settings"
+      aria-label="Settings"
     >
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden
-      />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} aria-hidden />
 
-      {/* Panel — bottom sheet on mobile, centered modal on sm+ */}
-      <div className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-card shadow-2xl sm:rounded-3xl" style={{ maxHeight: "92dvh" }}>
+      {/* Panel */}
+      <div
+        className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-card shadow-2xl sm:rounded-3xl"
+        style={{ maxHeight: "92dvh" }}
+      >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
-          <div className="flex items-center gap-3">
-            <span className="flex size-8 items-center justify-center rounded-full bg-mint">
-              <SlidersHorizontal className="size-4" aria-hidden />
-            </span>
-            <h2 className="text-lg font-semibold">Personalization</h2>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTab("study")}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                tab === "study"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              Personalization
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("subscription")}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                tab === "subscription"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              Subscription &amp; Billing
+            </button>
           </div>
           <button
             type="button"
@@ -101,54 +149,148 @@ function PersonalizationModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* Body — scrollable */}
+        {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {/* Role */}
-          <p className="mb-3 text-sm font-semibold">I'm a…</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {roles.map(({ label, Icon }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => setRole(label)}
-                className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition-colors ${
-                  role === label
-                    ? "border-lavender bg-lilac/30"
-                    : "border-border bg-background hover:bg-secondary"
-                }`}
-              >
-                <span className="flex size-10 items-center justify-center rounded-full bg-secondary">
-                  <Icon className="size-5" aria-hidden />
-                </span>
-                <span className="text-sm font-medium">{label}</span>
-              </button>
-            ))}
-          </div>
+          {tab === "study" ? (
+            <>
+              {/* Role */}
+              <p className="mb-3 text-sm font-semibold">I'm a…</p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {roles.map(({ label, Icon }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setRole(label)}
+                    className={`flex flex-col items-center gap-2 rounded-2xl border p-4 transition-colors ${
+                      role === label
+                        ? "border-lavender bg-lilac/30"
+                        : "border-border bg-background hover:bg-secondary"
+                    }`}
+                  >
+                    <span className="flex size-10 items-center justify-center rounded-full bg-secondary">
+                      <Icon className="size-5" aria-hidden />
+                    </span>
+                    <span className="text-sm font-medium">{label}</span>
+                  </button>
+                ))}
+              </div>
 
-          {/* Goal */}
-          <p className="mb-3 mt-6 text-sm font-semibold">What are you studying for?</p>
-          <div className="flex flex-col gap-2 pb-2">
-            {goals.map(({ label, hint, Icon }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={() => setGoal(label)}
-                className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
-                  goal === label
-                    ? "border-lavender bg-lilac/30"
-                    : "border-border bg-background hover:bg-secondary"
-                }`}
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary">
-                  <Icon className="size-4" aria-hidden />
-                </span>
-                <span>
-                  <span className="block text-sm font-semibold">{label}</span>
-                  {hint && <span className="block text-xs text-muted-foreground">{hint}</span>}
-                </span>
-              </button>
-            ))}
-          </div>
+              {/* Goal */}
+              <p className="mb-3 mt-6 text-sm font-semibold">What are you studying for?</p>
+              <div className="flex flex-col gap-2 pb-2">
+                {goals.map(({ label, hint, Icon }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setGoal(label)}
+                    className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
+                      goal === label
+                        ? "border-lavender bg-lilac/30"
+                        : "border-border bg-background hover:bg-secondary"
+                    }`}
+                  >
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary">
+                      <Icon className="size-4" aria-hidden />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold">{label}</span>
+                      {hint && <span className="block text-xs text-muted-foreground">{hint}</span>}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="space-y-5">
+              {/* Plan Card */}
+              <div className="rounded-2xl border border-border bg-secondary/30 p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                      Current Plan
+                    </span>
+                    <h3 className="text-lg font-bold capitalize text-foreground">
+                      {profile.plan ? `${profile.plan} Plan` : "Free Tier (Preview)"}
+                    </h3>
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      isPaid
+                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                        : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    }`}
+                  >
+                    {isPaid ? "Active" : "Unpaid / Preview"}
+                  </span>
+                </div>
+
+                <div className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground space-y-1.5">
+                  <p>• Notes access: {isPaid ? "Full access (all chapters unlocked)" : "Limited to Sections 1 & 2"}</p>
+                  <p>• 24/7 AI tutor: {isPaid ? "Unlimited queries" : "6 free messages total"}</p>
+                  <p>• Cambridge syllabuses: {isPaid ? "All 25+ PDF syllabuses open" : "Sciences & Math preview"}</p>
+                </div>
+
+                {!isPaid && (
+                  <Link
+                    to="/pricing"
+                    onClick={onClose}
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-2.5 text-xs font-semibold text-background shadow transition-transform hover:-translate-y-0.5"
+                  >
+                    <Sparkles className="size-3.5" /> Upgrade to Premium
+                  </Link>
+                )}
+              </div>
+
+              {/* Auto-renew switch */}
+              <div className="rounded-2xl border border-border p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-semibold text-sm text-foreground">Auto-renew subscription</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Automatically renews your plan each week. Turn off to stop renewal.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAutoRenewToggle(!autoRenew)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      autoRenew ? "bg-lavender" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        autoRenew ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {!autoRenew && (
+                  <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
+                    <AlertCircle className="size-4 shrink-0 mt-0.5" />
+                    <span>
+                      Auto-renew is OFF. When your billing period expires or if payment fails, your account will be locked until renewed.
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Simulate Insufficient Balance */}
+              <div className="rounded-2xl border border-border p-4 bg-card">
+                <span className="font-semibold text-sm text-foreground">Renewal Failure Simulator</span>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Test account lock when subscription renewal fails or balance is insufficient.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleTestInsufficientRenewal}
+                  className="mt-3 rounded-full border border-destructive/40 bg-destructive/10 px-4 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/20"
+                >
+                  Simulate Insufficient Balance &amp; Lock Account
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

@@ -12,11 +12,19 @@ import {
   Layers,
   MessageCircle,
   Sparkles,
+  Plus,
+  FileText,
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { ProfileAvatar } from "@/components/dashboard-page";
-import { readProfile, type OnboardingProfile } from "@/lib/onboarding";
+import {
+  readProfile,
+  isPaidUser,
+  getAiMessageCount,
+  FREE_AI_MESSAGE_LIMIT,
+  type OnboardingProfile,
+} from "@/lib/onboarding";
 import logoMark from "@/assets/logo-mark.png";
 
 export const Route = createFileRoute("/home")({
@@ -41,24 +49,83 @@ export const Route = createFileRoute("/home")({
 });
 
 const quickActions = [
-  { title: "Ask the tutor", meta: "Explain anything, instantly", to: "/chat", Icon: MessageCircle, tone: "bg-lilac" },
-  { title: "Complete an assignment", meta: "Upload or paste a brief", to: "/assignments", Icon: ClipboardCheck, tone: "bg-mint" },
-  { title: "Review flashcards", meta: "142 cards due today", to: "/flashcards", Icon: Layers, tone: "bg-surface" },
-  { title: "Practice questions", meta: "Past papers by topic", to: "/past-questions", Icon: BookOpen, tone: "bg-surface" },
+  { title: "Ask the tutor", meta: "Instant explanations & quiz", to: "/chat", Icon: MessageCircle, tone: "bg-lilac" },
+  { title: "My Notes", meta: "Write & edit rich notes", to: "/notes", Icon: FileText, tone: "bg-mint" },
+  { title: "Syllabus Notes", meta: "Full Cambridge chapters", to: "/syllabus-notes", Icon: BookOpen, tone: "bg-surface" },
+  { title: "Past Questions", meta: "Exam papers by topic", to: "/past-questions", Icon: Layers, tone: "bg-surface" },
 ] as const;
 
-const plan = [
-  ["Review cardiac anatomy", "25 min", true],
-  ["Complete blood flow quiz", "15 min", true],
-  ["Revise ECG flashcards", "20 min", true],
-  ["Practice cardiac cycle questions", "30 min", false],
-  ["Write a one-page recap", "15 min", false],
-] as const;
+type StudyTask = {
+  id: string;
+  title: string;
+  time: string;
+  done: boolean;
+};
 
-function HomePage() {
+const DEFAULT_TASKS: StudyTask[] = [
+  { id: "1", title: "Review Cambridge Math & Quadratic formulas", time: "25 min", done: true },
+  { id: "2", title: "Read Chapter 1 & 2 Syllabus Notes", time: "20 min", done: true },
+  { id: "3", title: "Practice 5 past question problems", time: "30 min", done: false },
+  { id: "4", title: "Summarize key definitions in My Notes", time: "15 min", done: false },
+];
+
+const TASKS_KEY = "examglow.home_study_tasks";
+
+export function HomePage() {
   const [profile, setProfile] = useState<OnboardingProfile>({});
-  useEffect(() => setProfile(readProfile()), []);
+  const [tasks, setTasks] = useState<StudyTask[]>(DEFAULT_TASKS);
+  const [notesCount, setNotesCount] = useState(1);
+  const [aiCount, setAiCount] = useState(0);
+
+  useEffect(() => {
+    setProfile(readProfile());
+    setAiCount(getAiMessageCount());
+
+    try {
+      const savedTasks = window.localStorage.getItem(TASKS_KEY);
+      if (savedTasks) setTasks(JSON.parse(savedTasks));
+
+      const rawNotes = window.localStorage.getItem("examglow.student_notes");
+      if (rawNotes) {
+        const list = JSON.parse(rawNotes);
+        if (Array.isArray(list)) setNotesCount(list.length);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const toggleTask = (id: string) => {
+    setTasks((prev) => {
+      const next = prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+      try {
+        window.localStorage.setItem(TASKS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
+  const isPaid = isPaidUser(profile);
   const firstName = profile.name?.split(" ")[0] ?? "there";
+  const completedTasks = tasks.filter((t) => t.done).length;
+
+  // Real dynamic date
+  const todayFormatted = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  // Dynamic next upcoming deadline day
+  const nextTargetDay = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+    weekday: "long",
+  });
+
+  const focusTitle = profile.goal
+    ? `${profile.goal} Focused Revision`
+    : "Cambridge IGCSE Curriculum Review";
 
   return (
     <div className="flex h-dvh overflow-hidden bg-background">
@@ -67,7 +134,7 @@ function HomePage() {
         <div className="mx-auto max-w-[1180px] px-5 pb-24 pt-20 md:px-8 md:pt-10 lg:px-12">
           <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
             <div className="min-w-0">
-              <p className="text-sm text-muted-foreground">Tuesday, 1 September</p>
+              <p className="text-sm font-medium text-muted-foreground">{todayFormatted}</p>
               <h1 className="mt-1 truncate text-[clamp(2rem,4vw,3.25rem)] leading-tight">
                 Good to see you, <span className="display-italic">{firstName}</span>
               </h1>
@@ -87,33 +154,50 @@ function HomePage() {
               <span className="inline-flex items-center gap-2 rounded-full bg-ink-foreground/10 px-3 py-1 text-xs font-semibold">
                 <Sparkles className="size-3.5" aria-hidden /> Today's focus
               </span>
-              <h2 className="mt-4 max-w-md text-[clamp(1.7rem,3vw,2.4rem)] leading-tight">
-                Cardiovascular Physiology, 2 units left
+              <h2 className="mt-4 max-w-md text-[clamp(1.7rem,3vw,2.4rem)] leading-tight font-bold">
+                {focusTitle}
               </h2>
-              <p className="mt-3 max-w-md text-sm text-ink-foreground/70">
-                One focused session now keeps your weekly plan comfortably on track.
+              <p className="mt-3 max-w-md text-sm text-ink-foreground/75 leading-relaxed">
+                {isPaid
+                  ? "Your Premium plan is active with unlimited notes, all 21 chapters, and 24/7 AI tutor guidance."
+                  : "Free Preview: Chapter sections 1 & 2 open. Upgrade to unlock all chapters and unlimited AI tutoring."}
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 <Link
-                  to="/study-plan"
-                  className="inline-flex items-center gap-2 rounded-full bg-ink-foreground px-5 py-3 text-sm font-medium text-ink"
+                  to="/syllabus-notes"
+                  className="inline-flex items-center gap-2 rounded-full bg-ink-foreground px-5 py-3 text-sm font-medium text-ink transition-transform hover:-translate-y-0.5"
                 >
-                  Continue studying <ArrowRight className="size-4" aria-hidden />
+                  Continue syllabus notes <ArrowRight className="size-4" aria-hidden />
                 </Link>
                 <Link
-                  to="/syllabus"
-                  className="inline-flex items-center gap-2 rounded-full border border-ink-foreground/25 px-5 py-3 text-sm font-medium"
+                  to="/notes"
+                  className="inline-flex items-center gap-2 rounded-full border border-ink-foreground/25 px-5 py-3 text-sm font-medium hover:bg-ink-foreground/10"
                 >
-                  Upload material
+                  Open my notes
                 </Link>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Stat value="68%" label="Syllabus covered" />
-              <Stat value="142" label="Cards due today" />
-              <Stat value="9" label="Day streak" icon={<Flame className="size-4 text-lavender" aria-hidden />} />
-              <Stat value="1,240" label="Arcade points" />
+              <Stat
+                value={isPaid ? "All Open" : "Preview"}
+                label="Syllabus Access"
+              />
+              <Stat
+                value={notesCount.toString()}
+                label="Personal Notes"
+                icon={<FileText className="size-4 text-lavender" />}
+              />
+              <Stat
+                value={profile.streakDays ? `${profile.streakDays}d` : "Active"}
+                label="Study Consistency"
+                icon={<Flame className="size-4 text-lavender" aria-hidden />}
+              />
+              <Stat
+                value={isPaid ? "Unlimited" : `${Math.max(0, FREE_AI_MESSAGE_LIMIT - aiCount)} left`}
+                label="AI Tutor Quota"
+                icon={<Sparkles className="size-4 text-emerald-500" />}
+              />
             </div>
           </section>
 
@@ -143,56 +227,74 @@ function HomePage() {
             <section>
               <div className="flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Today</p>
-                  <h2 className="mt-1 text-3xl">Your study plan</h2>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Today's Goals</p>
+                  <h2 className="mt-1 text-3xl font-bold">Your study checklist</h2>
                 </div>
-                <span className="text-sm text-muted-foreground">3 of 5 complete</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  {completedTasks} of {tasks.length} completed
+                </span>
               </div>
-              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-secondary">
-                <div className="h-full w-3/5 rounded-full bg-lavender" />
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full bg-lavender transition-all duration-300"
+                  style={{ width: `${tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0}%` }}
+                />
               </div>
-              <div className="mt-4 divide-y divide-border rounded-3xl border border-border px-5">
-                {plan.map(([title, time, done]) => (
-                  <div key={title} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 py-4">
-                    {done ? (
+              <div className="mt-4 divide-y divide-border rounded-3xl border border-border px-5 bg-card">
+                {tasks.map((task) => (
+                  <button
+                    key={task.id}
+                    type="button"
+                    onClick={() => toggleTask(task.id)}
+                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 py-4 text-left hover:bg-secondary/40 rounded-2xl px-2 transition-colors"
+                  >
+                    {task.done ? (
                       <CheckCircle2 className="size-5 shrink-0 text-lavender" />
                     ) : (
-                      <span className="size-5 shrink-0 rounded-full border border-border" />
+                      <span className="size-5 shrink-0 rounded-full border-2 border-muted-foreground/40" />
                     )}
-                    <span className={`min-w-0 truncate text-[15px] ${done ? "text-muted-foreground line-through" : "font-medium"}`}>
-                      {title}
+                    <span
+                      className={`min-w-0 truncate text-[15px] ${
+                        task.done ? "text-muted-foreground line-through" : "font-medium text-foreground"
+                      }`}
+                    >
+                      {task.title}
                     </span>
-                    <span className="flex shrink-0 items-center gap-1.5 text-sm text-muted-foreground">
+                    <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
                       <Clock3 className="size-3.5" />
-                      {time}
+                      {task.time}
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </section>
 
             <section>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Coming up</p>
-              <h2 className="mt-1 text-3xl">Next deadline</h2>
-              <div className="mt-4 rounded-3xl border border-border p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Upcoming Milestone</p>
+              <h2 className="mt-1 text-3xl font-bold">Next checkpoint</h2>
+              <div className="mt-4 rounded-3xl border border-border p-6 bg-card">
                 <div className="flex items-center gap-3">
                   <CalendarDays className="size-5 text-lavender" />
-                  <span className="text-sm font-medium">Friday</span>
+                  <span className="text-sm font-semibold">{nextTargetDay}</span>
                 </div>
-                <p className="mt-3 font-medium">Physiology lab report</p>
-                <p className="mt-1 text-sm text-muted-foreground">1,200 words · not started</p>
+                <p className="mt-3 font-semibold text-foreground">
+                  {profile.goal ? `${profile.goal} Mock Assessment` : "Cambridge IGCSE Mock Test"}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                  Prepare by testing past questions and reviewing your formula flashcards.
+                </p>
                 <Link
-                  to="/assignments"
-                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-ink-foreground"
+                  to="/test"
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-xs font-semibold text-ink-foreground transition-transform hover:-translate-y-0.5"
                 >
-                  Let AI draft it <ArrowRight className="size-4" />
+                  Start practice quiz <ArrowRight className="size-3.5" />
                 </Link>
               </div>
               <Link
                 to="/calendar"
-                className="mt-3 flex items-center justify-between rounded-3xl bg-surface px-5 py-4 text-sm font-medium"
+                className="mt-3 flex items-center justify-between rounded-3xl bg-surface px-5 py-4 text-sm font-medium hover:bg-secondary transition-colors"
               >
-                See full calendar <ArrowRight className="size-4" />
+                View full revision calendar <ArrowRight className="size-4" />
               </Link>
             </section>
           </div>
@@ -204,12 +306,12 @@ function HomePage() {
 
 function Stat({ value, label, icon }: { value: string; label: string; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-3xl border border-border px-5 py-6">
+    <div className="rounded-3xl border border-border bg-card px-5 py-6">
       <div className="flex items-center gap-2">
-        <strong className="font-display text-3xl font-normal">{value}</strong>
+        <strong className="font-display text-2xl font-normal text-foreground sm:text-3xl">{value}</strong>
         {icon}
       </div>
-      <span className="mt-1 block text-sm text-muted-foreground">{label}</span>
+      <span className="mt-1 block text-xs text-muted-foreground sm:text-sm">{label}</span>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { BookOpen, FileText, X, ExternalLink, Search, ChevronRight } from "lucide-react";
+import { BookOpen, FileText, X, ExternalLink, Search, ChevronRight, Lock } from "lucide-react";
 
 import { DashboardLayout, PageHeading } from "@/components/dashboard-page";
 import {
@@ -9,6 +9,8 @@ import {
   type IgcseSubject,
   type SyllabusDoc,
 } from "@/lib/igcse-syllabuses";
+import { isPaidUser } from "@/lib/onboarding";
+import { PaywallModal } from "@/components/paywall-modal";
 
 export const Route = createFileRoute("/syllabus")({
   head: () => ({
@@ -81,37 +83,75 @@ function PdfModal({ subject, doc, onClose }: {
 
 // ─── Subject row (collapsed by default) ──────────────────────────────────────
 
-function SubjectRow({ subject, onOpen }: {
-  subject: IgcseSubject; onOpen: (doc: SyllabusDoc) => void;
+const OPEN_FREE_SUBJECT_IDS = ["biology", "chemistry", "mathematics"];
+
+function SubjectRow({
+  subject,
+  isPaid,
+  onOpen,
+  onLockedClick,
+}: {
+  subject: IgcseSubject;
+  isPaid: boolean;
+  onOpen: (doc: SyllabusDoc) => void;
+  onLockedClick: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const isLocked = !isPaid && !OPEN_FREE_SUBJECT_IDS.includes(subject.id);
 
   return (
     <div>
       <button
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-3 border-b border-border py-3 text-sm hover:text-foreground text-muted-foreground"
       >
-        <ChevronRight className={`size-4 shrink-0 transition-transform duration-200 ${open ? "rotate-90" : ""}`} />
+        <ChevronRight
+          className={`size-4 shrink-0 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
+        />
         <span className="font-bold text-foreground">{subject.name}</span>
         <span className="font-mono text-xs">{subject.code}</span>
-        <span className="text-xs">{subject.syllabuses.length} syllabus{subject.syllabuses.length > 1 ? "es" : ""}</span>
+        <span className="text-xs">
+          {subject.syllabuses.length} syllabus{subject.syllabuses.length > 1 ? "es" : ""}
+        </span>
         <div className="flex-1" />
+        {isLocked && (
+          <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+            <Lock className="size-3" /> Locked
+          </span>
+        )}
       </button>
 
       {open && (
         <div className="pb-4 pt-3 pl-8 space-y-2">
-          {subject.syllabuses.map(doc => (
+          {subject.syllabuses.map((doc) => (
             <button
               key={doc.url}
               type="button"
-              onClick={() => onOpen(doc)}
+              onClick={() => {
+                if (isLocked) {
+                  onLockedClick();
+                } else {
+                  onOpen(doc);
+                }
+              }}
               className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
-              <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              {isLocked ? (
+                <Lock className="size-4 shrink-0 text-amber-500" aria-hidden />
+              ) : (
+                <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              )}
               <span className="flex-1 text-sm font-medium">{doc.label}</span>
-              <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 text-xs text-muted-foreground">PDF</span>
+              {isLocked ? (
+                <span className="shrink-0 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                  Upgrade
+                </span>
+              ) : (
+                <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 text-xs text-muted-foreground">
+                  PDF
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -126,6 +166,12 @@ function SyllabusPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [viewer, setViewer] = useState<{ subject: IgcseSubject; doc: SyllabusDoc } | null>(null);
+  const [isPaid, setIsPaid] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+
+  useEffect(() => {
+    setIsPaid(isPaidUser());
+  }, []);
 
   const categories = ["All", ...igcseCategories];
 
@@ -228,11 +274,13 @@ function SyllabusPage() {
               </div>
               {/* Subject rows */}
               <div className="px-5">
-                {subjects.map(subject => (
+                {subjects.map((subject) => (
                   <SubjectRow
                     key={subject.id}
                     subject={subject}
-                    onOpen={doc => setViewer({ subject, doc })}
+                    isPaid={isPaid}
+                    onOpen={(doc) => setViewer({ subject, doc })}
+                    onLockedClick={() => setPaywallOpen(true)}
                   />
                 ))}
               </div>
@@ -240,6 +288,13 @@ function SyllabusPage() {
           ))}
         </div>
       </DashboardLayout>
+
+      <PaywallModal
+        open={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        title="Unlock Official Cambridge Syllabuses"
+        subtitle="This syllabus is available on ExamGlow Premium. Upgrade to unlock all 25+ Cambridge syllabuses, exam specifications, marking schemes, and past papers."
+      />
     </>
   );
 }

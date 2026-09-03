@@ -37,30 +37,49 @@ const PLANS: Record<string, { name: string; period: string; features: string[] }
   weekly: {
     name: "Weekly Plan",
     period: "billed every week",
-    features: ["Full notes access", "Past papers", "AI chat", "Cancel anytime"],
+    features: [
+      "Full notes access",
+      "Past papers",
+      "AI chat & 24/7 Tutor",
+      "Syllabus & exam specs",
+      "Cancel anytime",
+    ],
   },
   monthly: {
     name: "Monthly Plan",
     period: "billed every month",
     features: [
-      "Full notes access", "Past papers", "AI chat",
-      "Priority support", "Cancel anytime",
+      "Full notes access",
+      "Past papers",
+      "AI chat & 24/7 Tutor",
+      "Syllabus & exam specs",
+      "Personalized study plan",
+      "Cancel anytime",
     ],
   },
   termly: {
     name: "Termly Plan",
     period: "billed every 3 months",
     features: [
-      "Full notes access", "Past papers", "AI chat",
-      "Priority support", "Study plan", "Cancel anytime",
+      "Full notes access",
+      "Past papers",
+      "AI chat & 24/7 Tutor",
+      "Syllabus & exam specs",
+      "Personalized study plan",
+      "Priority support",
+      "Cancel anytime",
     ],
   },
   "exam-pass": {
     name: "Exam Pass",
     period: "valid until end of exam season",
     features: [
-      "Full notes access", "Past papers", "AI chat",
-      "Priority support", "Study plan", "Exam prep toolkit",
+      "Full notes access",
+      "Past papers",
+      "AI chat & 24/7 Tutor",
+      "Syllabus & exam specs",
+      "Personalized study plan",
+      "Exam prep toolkit",
     ],
   },
 };
@@ -518,19 +537,6 @@ function CheckoutPage() {
                   </span>
                 </div>
               </div>
-            </div>
-
-            {/* Security note */}
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-500">
-              <p className="font-semibold text-zinc-700 flex items-center gap-2">
-                <ShieldCheck className="size-4 text-emerald-500" />
-                100% secure payment
-              </p>
-              <p className="mt-2">
-                Your card details are encrypted and processed by{" "}
-                <strong className="text-zinc-700">PayPal</strong> — one of the world's most
-                trusted payment platforms. We never store your card information.
-              </p>
             </div>
           </div>
         </div>

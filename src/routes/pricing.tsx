@@ -55,8 +55,8 @@ function PricingPage() {
           <ArrowLeft className="size-4" /> Back
         </button>
         <button type="button" onClick={() => { saveProfile({ plan: "free" }); navigate({ to: "/home" }); }}
-          className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-secondary">
-          Skip <ArrowRight className="size-4" />
+          className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
+          Skip for now <ArrowRight className="size-4" />
         </button>
       </div>
 
