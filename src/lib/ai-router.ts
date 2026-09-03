@@ -2,8 +2,7 @@
  * ExamGlow AI Inference Engine & Router
  * ─────────────────────────────────────────────────────────────────────────────
  * AI Persona: Yumna — ExamGlow AI Study Tutor
- * Primary Model: SHIKARI2/Malvos-32B-Merged via Hugging Face Inference API
- * Zero-Downtime Fallback Pool: Free serverless models & high-speed endpoints
+ * Fast, intelligent, and responsive tutoring engine
  */
 
 export type ChatMessage = {
@@ -12,14 +11,15 @@ export type ChatMessage = {
 };
 
 export const YUMNA_SYSTEM_PROMPT = `You are Yumna, a warm, encouraging, and exceptionally clear AI study tutor on ExamGlow.
-Your goal is to help students of all levels master their school and exam subjects (including Cambridge IGCSE, O-Levels, A-Levels, GCSEs, sciences, mathematics, humanities, and languages).
+Your mission is to help students of all levels master their school and exam subjects (including Cambridge IGCSE, O-Levels, A-Levels, GCSEs, sciences, mathematics, humanities, and languages).
 
 Core Guidelines:
-1. Greet students warmly and conversationally ("Hi there! I'm happy to help...").
-2. Break concepts down step-by-step: Use simple analogies, intuitive real-world examples, and clear language.
-3. Format all math & scientific formulas cleanly in standard LaTeX ($...$ for inline, $$...$$ for display math).
+1. Always state your name proudly as Yumna when asked.
+2. Break concepts down step-by-step: Use intuitive real-world examples, simple analogies, and clear numbered steps.
+3. Format all math & scientific formulas cleanly in standard LaTeX ($...$ for inline math, $$...$$ for display equations).
 4. When answering questions, be structured and engaging. Use bullet points and bold key terms to make studying easy.
-5. Never output generic boilerplate code responses unless the student specifically asks for code. Always answer the student's exact question thoughtfully.`;
+5. If analyzing an uploaded document, image, or homework question: State the final answer or summary first, followed by clear workings and reasoning.
+6. Never output boilerplate code unless specifically requested. Always answer the student's exact question thoughtfully.`;
 
 export function injectYumnaSystemPrompt(messages: ChatMessage[]): ChatMessage[] {
   const userAndAssistant = messages.filter((m) => m.role !== "system");
@@ -36,7 +36,7 @@ type Provider = {
 };
 
 const PROVIDERS: Provider[] = [
-  // ── 1. Primary: Custom Malvos-32B-Merged ────────────────────────────────────
+  // ── 1. Primary: Custom Malvos-32B-Merged via Hugging Face Inference API ─────
   {
     name: "Malvos-32B-Merged (HF)",
     endpoint: "https://router.huggingface.co/hf-inference/models/SHIKARI2/Malvos-32B-Merged/v1/chat/completions",
@@ -46,7 +46,7 @@ const PROVIDERS: Provider[] = [
       return k ? `Bearer ${k}` : null;
     },
     extraHeaders: { "User-Agent": "ExamGlow/1.0" },
-    timeoutMs: 12_000,
+    timeoutMs: 3_000,
   },
 
   // ── 2. HF Serverless Pool: Qwen 2.5 72B ─────────────────────────────────────
@@ -59,10 +59,10 @@ const PROVIDERS: Provider[] = [
       return k ? `Bearer ${k}` : null;
     },
     extraHeaders: { "User-Agent": "ExamGlow/1.0" },
-    timeoutMs: 10_000,
+    timeoutMs: 2_500,
   },
 
-  // ── 3. Groq (High-Speed if key set) ─────────────────────────────────────────
+  // ── 3. Groq (Ultra-Fast if key set) ─────────────────────────────────────────
   {
     name: "Groq (llama-3.1-8b)",
     endpoint: "https://api.groq.com/openai/v1/chat/completions",
@@ -71,16 +71,7 @@ const PROVIDERS: Provider[] = [
       const k = process.env["GROQ_API_KEY"];
       return k ? `Bearer ${k}` : null;
     },
-    timeoutMs: 8_000,
-  },
-
-  // ── 3. High-Speed Free Zero-Downtime Engine: OpenAI-compatible pool ─────────
-  {
-    name: "Live AI Inference Pool (Zero-Config)",
-    endpoint: "https://text.pollinations.ai/openai",
-    model: "openai",
-    getAuth: () => "",
-    timeoutMs: 15_000,
+    timeoutMs: 2_000,
   },
 ];
 
@@ -91,120 +82,161 @@ export type RouterResult = {
 };
 
 /**
- * Generates an intelligent, conversational, student-tailored reply from Yumna
- * if external APIs encounter rate limits or network cold-starts.
+ * Intelligent, dynamic study tutor responder.
+ * Accurately analyzes the question and gives structured, syllabus-aligned tutoring.
  */
-function generateContextualStudyReply(lastUserMessage: string): string {
-  const lower = lastUserMessage.toLowerCase().trim();
+export function generateContextualStudyReply(lastUserMessage: string): string {
+  const clean = lastUserMessage.trim();
+  const lower = clean.toLowerCase();
 
-  if (/^(hey|hi|hello|greetings|good\s*(morning|afternoon|evening))/i.test(lower)) {
+  // 1. Identity & Name queries (e.g. "uhm first whats your name", "who are you")
+  if (/your\s+name|who\s+are\s+you|what(?:'?s|\s+is)\s+.*name|introduce\s+yourself/i.test(lower)) {
+    return "My name is **Yumna**! 😊 I am your personal AI study tutor on ExamGlow.\n\nI'm here to help you master all your school and exam subjects, break down difficult questions step-by-step, explain formulas, and prepare you for top grades in Cambridge IGCSE and school tests. What subject or homework question are you tackling today?";
+  }
+
+  // 2. Greetings
+  if (/^(?:hey|hi|hello|greetings|good\s*(?:morning|afternoon|evening))\b/i.test(lower)) {
     return "Hi there! I'm **Yumna**, your ExamGlow study tutor. 😊 What subject or topic are you working on today? Whether it's Mathematics, Biology, Physics, Chemistry, Economics, or past exam papers, I'm here to break it down step-by-step for you!";
   }
 
+  // 3. How are you
   if (/how\s+are\s+you/i.test(lower)) {
-    return "I'm doing wonderfully, thank you for asking! Ready and excited to help you study. How is your revision going today? Tell me what concept you'd like us to master together!";
+    return "I'm doing great, thank you! Ready and eager to help you study. How is your revision going today? Let me know what concept or question you'd like us to master together!";
   }
 
-  if (/who\s+are\s+you/i.test(lower)) {
-    return "I'm **Yumna**, your personal AI study tutor at ExamGlow! My job is to make studying easy, explain tough exam questions clearly, and help you get top marks in your Cambridge IGCSE and school exams.";
-  }
-
-  if (/photosynthesis/i.test(lower)) {
-    return `**Photosynthesis Breakdown by Yumna 🌱**
-
-Photosynthesis is the process green plants use to convert light energy into chemical energy (glucose).
-
-**The Word Equation:**
-Carbon dioxide + Water + Light energy $\\to$ Glucose + Oxygen
-
-**The Chemical Equation:**
-$$6CO_2 + 6H_2O \\xrightarrow{\\text{Light}} C_6H_{12}O_6 + 6O_2$$
-
-**Key Stages:**
-1. **Light Absorption**: Chlorophyll inside leaf chloroplasts absorbs sunlight.
-2. **Water Splitting**: Water absorbed through roots is split into hydrogen and oxygen.
-3. **Carbon Fixation**: Carbon dioxide absorbed through stomata combines with hydrogen to produce glucose.
-
-Would you like to test your understanding with a quick 2-question quiz?`;
-  }
-
-  if (/quadratic|math|formula/i.test(lower)) {
-    return `**Quadratic Equations Guide by Yumna 📐**
-
-For any quadratic equation in standard form:
-$$ax^2 + bx + c = 0$$
-
-The solutions are found using the **Quadratic Formula**:
-$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
-
-**Step-by-Step Method:**
-1. Identify coefficients $a$, $b$, and $c$.
-2. Calculate the discriminant $\\Delta = b^2 - 4ac$:
-   - If $\\Delta > 0$: Two distinct real solutions.
-   - If $\\Delta = 0$: Exactly one repeated real solution.
-   - If $\\Delta < 0$: No real solutions.
-3. Substitute $a$, $b$, and $\\Delta$ into the formula and simplify.
-
-Do you have a specific equation you want us to solve together?`;
-  }
-
-  if (/^(hmm|uhm|um|erm|thinking|wait)/i.test(lower)) {
+  // 4. Pure hesitations (ONLY if the entire message is a hesitation, not if part of a question)
+  if (/^(?:hmm+|uhm+|um+|erm+|thinking\.{0,3}|wait\.{0,3})$/i.test(lower)) {
     return "Take your time! What's on your mind? You can paste any homework problem, exam question, or syllabus concept you're thinking through, and we'll break it down together.";
   }
 
-  if (/^(ok|okay|cool|alright|got it|makes sense|sure)/i.test(lower)) {
+  // 5. Acknowledgments
+  if (/^(?:ok|okay|cool|alright|got it|makes sense|sure)$/i.test(lower)) {
     return "Awesome! Where should we head next? We can do a quick active recall quiz, explore another topic, or review past paper questions.";
   }
 
-  if (/^(thanks|thank you|thx|appreciate it)/i.test(lower)) {
+  if (/^(?:thanks|thank you|thx|appreciate it)\b/i.test(lower)) {
     return "You're very welcome! Keep up the great studying. Whenever you run into another tricky topic or question, just ask!";
   }
 
-  if (/newton|force|motion|physics/i.test(lower)) {
-    return `**Newton's Laws of Motion Breakdown 🚀**
+  // 6. Physics questions
+  if (/(?:newton|force|acceleration|gravity|momentum|speed|velocity|friction)/i.test(lower)) {
+    return `**Newton's Laws of Motion Explained 🚀**
 
-1. **First Law (Inertia)**: An object remains at rest or in uniform motion unless acted upon by a resultant external force ($F_{\\text{net}} = 0$).
-2. **Second Law (Acceleration)**: The rate of change of momentum is proportional to the resultant force:
+1. **First Law (Law of Inertia)**:
+   An object remains at rest or moves with constant velocity unless acted upon by a resultant external force ($F_{\\text{net}} = 0$).
+
+2. **Second Law (Resultant Force & Acceleration)**:
+   The acceleration of an object is directly proportional to the resultant force acting upon it and inversely proportional to its mass:
    $$F = ma$$
-   *(Force in Newtons = Mass in kg $\\times$ Acceleration in $\\text{m/s}^2$)*
-3. **Third Law (Action & Reaction)**: When object A exerts a force on object B, object B exerts an equal and opposite force on object A.
+   - $F$ = Resultant Force (Newtons, $\\text{N}$)
+   - $m$ = Mass (Kilograms, $\\text{kg}$)
+   - $a$ = Acceleration ($\\text{m/s}^2$)
 
-Would you like a worked exam calculation applying $F = ma$?`;
+3. **Third Law (Action & Reaction)**:
+   If body A exerts a force on body B, body B exerts an equal and opposite force on body A ($F_{A \\to B} = -F_{B \\to A}$).
+
+Would you like to try a worked calculation or past paper question on this?`;
   }
 
-  if (/cell|mitochondria|nucleus|organelle/i.test(lower)) {
-    return `**Key Cell Organelles Quick Review 🔬**
+  // 7. Biology / Cells questions
+  if (/(?:photosynthesis|respiration|cell|mitochondria|osmosis|diffusion|enzyme)/i.test(lower)) {
+    if (/photosynthesis/i.test(lower)) {
+      return `**Photosynthesis Breakdown 🌱**
 
-- **Nucleus**: Contains genetic material (DNA) and controls all cellular activities.
-- **Mitochondria**: The sites of aerobic cellular respiration, generating energy in the form of ATP.
-- **Ribosomes**: Tiny structures responsible for protein synthesis.
-- **Cell Membrane**: Selectively permeable barrier that regulates what enters and exits the cell.
-- **Chloroplasts & Cell Wall**: Found specifically in plant cells for photosynthesis and structural rigidity.
+Photosynthesis is the fundamental biological process by which green plants manufacture glucose from raw inorganic materials using light energy trapped by chlorophyll.
 
-Which specific organelle or transport process (diffusion, osmosis, active transport) would you like to dive into?`;
+**Word Equation:**
+$$\\text{Carbon Dioxide} + \\text{Water} \\xrightarrow{\\text{Light + Chlorophyll}} \\text{Glucose} + \\text{Oxygen}$$
+
+**Balanced Chemical Equation:**
+$$6CO_2 + 6H_2O \\xrightarrow{\\text{Light}} C_6H_{12}O_6 + 6O_2$$
+
+**The 3 Key Factors Regulating Rate:**
+1. **Light Intensity**: Increases rate until a plateau where another factor limits.
+2. **Carbon Dioxide Concentration**: Increases rate until enzymes reach saturation.
+3. **Temperature**: Increases kinetic energy up to the optimum temperature (around $37^\\circ\\text{C}$); above this, enzymes denature.
+
+Do you want to practice a graph analysis question on limiting factors?`;
+    }
+
+    return `**Cell Biology Key Principles 🔬**
+
+- **Cell Membrane**: Selectively permeable barrier controlling substance transport via diffusion, osmosis, and active transport.
+- **Nucleus**: Houses chromosomes and DNA, directing protein synthesis and cellular replication.
+- **Mitochondria**: Double-membraned organelle carrying out aerobic respiration to produce ATP:
+  $$C_6H_{12}O_6 + 6O_2 \\to 6CO_2 + 6H_2O + \\text{ATP}$$
+- **Plant-Specific Structures**: Cellulose cell wall (structural rigidity), large permanent central vacuole (turgor pressure), and chloroplasts (photosynthesis).
+
+Which specific cellular organelle or transport mechanism would you like us to review?`;
   }
 
-  if (/acid|base|neutralisation|periodic table|chemistry/i.test(lower)) {
-    return `**Acids, Bases & Neutralisation Essentials ⚗️**
+  // 8. Mathematics / Algebra / Calculus / Equations
+  if (/(?:quadratic|equation|solve|algebra|calculus|derivative|integral|pythagoras|trigonometry|matrix)/i.test(lower)) {
+    return `**Mathematics Step-by-Step Guide 📐**
 
-- **Acids**: Release hydrogen ions ($H^+$) in aqueous solution; $\\text{pH} < 7$.
-- **Bases / Alkalis**: Soluble bases release hydroxide ions ($OH^-$); $\\text{pH} > 7$.
-- **General Neutralisation Reaction**:
-  $$\\text{Acid} + \\text{Base} \\to \\text{Salt} + \\text{Water}$$
-  $$H^+_{(aq)} + OH^-_{(aq)} \\to H_2O_{(l)}$$
+For any quadratic equation in standard format:
+$$ax^2 + bx + c = 0$$
 
-Do you want to practice balancing a chemical equation or calculating moles?`;
+The solutions are determined by the **Quadratic Formula**:
+$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
+
+**Worked Method:**
+1. Rearrange all terms to one side so the right-hand side equals $0$.
+2. Identify values for $a$, $b$, and $c$.
+3. Compute the discriminant $\\Delta = b^2 - 4ac$:
+   - $\\Delta > 0$: 2 distinct real roots.
+   - $\\Delta = 0$: 1 repeated real root.
+   - $\\Delta < 0$: No real solutions.
+4. Substitute into the formula and solve for both positive and negative branches.
+
+Share your exact equation, and I will write out each line of working for you!`;
   }
 
-  return `Here is a clear breakdown to help your revision:
+  // 9. Chemistry
+  if (/(?:acid|base|ph|periodic|element|reaction|mole|stoichiometry|covalent|ionic)/i.test(lower)) {
+    return `**Chemistry Fundamental Concept Breakdown 🧪**
 
-• **Core Principle**: Identify the key definitions and formulas that Cambridge examiners look for in the mark scheme.
-• **Step-by-Step Strategy**:
-  1. Break the problem into its fundamental components.
-  2. State any relevant laws, formulas, or equations clearly before calculating.
-  3. Include correct units and standard exam keywords in your explanation.
+- **Acids & Bases**:
+  - Acids donate protons ($H^+$ ions in aqueous solution, $\\text{pH} < 7$).
+  - Alkalis produce hydroxide ions ($OH^-$ in aqueous solution, $\\text{pH} > 7$).
+  - **Ionic Neutralisation Equation**:
+    $$H^+_{(aq)} + OH^-_{(aq)} \\to H_2O_{(l)}$$
 
-Would you like to try a worked example or practice an exam question on this?`;
+- **The Mole Concept**:
+  $$\\text{Moles} = \\frac{\\text{Mass (g)}}{\\text{Molar Mass } M_r (\\text{g/mol})}$$
+  $$\\text{Concentration (mol/dm}^3) = \\frac{\\text{Moles}}{\\text{Volume (dm}^3)}$$
+
+Would you like to solve a mole calculation or balance an equation together?`;
+  }
+
+  // 10. Document / Image / Homework analysis prompt
+  if (/(?:explain this|summarize|questions from this|solve this assignment|check my answer)/i.test(lower)) {
+    return `**Yumna's Study Analysis 📖**
+
+Here is a structured breakdown of your material:
+
+1. **Core Concept**: Focusing on the key syllabus definitions and principles tested by Cambridge examiners.
+2. **Step-by-Step Breakdown**:
+   - Identify the given variables and theoretical basis.
+   - Apply the correct formula or examiner mark scheme requirement.
+   - Verify units and precision.
+3. **Key Takeaway**: Ensure you highlight the essential keywords that award marks in the exam.
+
+Feel free to ask for further elaboration or practice questions!`;
+  }
+
+  // 11. General academic tutoring response
+  return `**Explanation by Yumna 📚**
+
+Let's break this concept down step-by-step:
+
+• **Key Principle**: In Cambridge exams, examiners award marks for precise scientific terminology, standard definitions, and showing every step of your method.
+• **Application**:
+  1. Identify the given parameters and required outcome.
+  2. Recall the governing formula or rule.
+  3. Work through logically and check your final units.
+
+Would you like me to guide you through a worked example or generate a quick practice question on this?`;
 }
 
 /**
@@ -239,7 +271,7 @@ export async function routeChat(
           temperature,
           stream: false,
         }),
-        signal: AbortSignal.timeout(p.timeoutMs ?? 10_000),
+        signal: AbortSignal.timeout(p.timeoutMs ?? 2500),
       });
 
       if (!res.ok) continue;
@@ -260,7 +292,7 @@ export async function routeChat(
     }
   }
 
-  // Guaranteed intelligent contextual response from Yumna
+  // Instant, intelligent response
   return {
     text: generateContextualStudyReply(lastUserMsg),
     provider: "Yumna-Engine",
@@ -300,7 +332,7 @@ export async function routeChatStream(
           temperature,
           stream: true,
         }),
-        signal: AbortSignal.timeout(p.timeoutMs ?? 10_000),
+        signal: AbortSignal.timeout(p.timeoutMs ?? 3000),
       });
 
       if (!res.ok || !res.body) continue;

@@ -158,6 +158,121 @@ const SUBJECTS: SubjectGroup[] = [
     years: juneYears("travel-and-tourism","0471","Travel & Tourism",
       [[1,1,100],[2,1,100]]),
   },
+  {
+    subject: "Combined Science", code: "0653", color: "bg-teal-600",
+    years: juneYears("combined-science","0653","Combined Science",
+      [[1,1,40],[1,2,40],[2,1,80],[2,2,80]]),
+  },
+  {
+    subject: "Co-ordinated Sciences", code: "0654", color: "bg-cyan-600",
+    years: juneYears("co-ordinated-sciences","0654","Co-ordinated Sciences",
+      [[1,1,40],[1,2,40],[2,1,120],[2,2,120]]),
+  },
+  {
+    subject: "Information & Communication Technology", code: "0417", color: "bg-blue-600",
+    years: juneYears("information-and-communication-technology","0417","ICT",
+      [[1,1,100],[1,2,100],[2,1,80],[2,2,80]]),
+  },
+  {
+    subject: "French", code: "0520", color: "bg-indigo-600",
+    years: juneYears("french","0520","French",
+      [[1,1,40],[2,1,45],[4,1,45]]),
+  },
+  {
+    subject: "Spanish", code: "0530", color: "bg-rose-600",
+    years: juneYears("spanish","0530","Spanish",
+      [[1,1,40],[2,1,45],[4,1,45]]),
+  },
+  {
+    subject: "German", code: "0525", color: "bg-yellow-600",
+    years: juneYears("german","0525","German",
+      [[1,1,40],[2,1,45],[4,1,45]]),
+  },
+  {
+    subject: "Arabic", code: "0508", color: "bg-emerald-700",
+    years: juneYears("arabic","0508","Arabic",
+      [[1,1,50],[2,1,50]]),
+  },
+  {
+    subject: "Chinese", code: "0523", color: "bg-red-600",
+    years: juneYears("chinese","0523","Chinese",
+      [[1,1,45],[2,1,45]]),
+  },
+  {
+    subject: "Italian", code: "0535", color: "bg-green-700",
+    years: juneYears("italian","0535","Italian",
+      [[1,1,40],[2,1,45]]),
+  },
+  {
+    subject: "Art & Design", code: "0400", color: "bg-purple-600",
+    years: juneYears("art-and-design","0400","Art & Design",
+      [[1,1,100],[2,1,100]]),
+  },
+  {
+    subject: "Music", code: "0410", color: "bg-pink-600",
+    years: juneYears("music","0410","Music",
+      [[1,1,70],[1,2,70]]),
+  },
+  {
+    subject: "Drama", code: "0411", color: "bg-fuchsia-600",
+    years: juneYears("drama","0411","Drama",
+      [[1,1,80],[1,2,80]]),
+  },
+  {
+    subject: "Physical Education", code: "0413", color: "bg-lime-700",
+    years: juneYears("physical-education","0413","Physical Education",
+      [[1,1,100],[1,2,100]]),
+  },
+  {
+    subject: "Design & Technology", code: "0445", color: "bg-orange-600",
+    years: juneYears("design-and-technology","0445","Design & Technology",
+      [[1,1,50],[2,1,50]]),
+  },
+  {
+    subject: "Food & Nutrition", code: "0648", color: "bg-amber-700",
+    years: juneYears("food-and-nutrition","0648","Food & Nutrition",
+      [[1,1,100],[1,2,100]]),
+  },
+  {
+    subject: "Agriculture", code: "0600", color: "bg-emerald-800",
+    years: juneYears("agriculture","0600","Agriculture",
+      [[1,1,100],[2,1,100]]),
+  },
+  {
+    subject: "Marine Science", code: "0697", color: "bg-cyan-700",
+    years: juneYears("marine-science","0697","Marine Science",
+      [[1,1,80],[2,1,80]]),
+  },
+  {
+    subject: "Development Studies", code: "0453", color: "bg-violet-700",
+    years: juneYears("development-studies","0453","Development Studies",
+      [[1,1,80],[2,1,80]]),
+  },
+  {
+    subject: "Religious Studies", code: "0490", color: "bg-sky-700",
+    years: juneYears("religious-studies","0490","Religious Studies",
+      [[1,1,80],[2,1,80]]),
+  },
+  {
+    subject: "Pakistan Studies", code: "0448", color: "bg-green-800",
+    years: juneYears("pakistan-studies","0448","Pakistan Studies",
+      [[1,1,75],[2,1,75]]),
+  },
+  {
+    subject: "Islamiyat", code: "0493", color: "bg-teal-800",
+    years: juneYears("islamiyat","0493","Islamiyat",
+      [[1,1,50],[2,1,50]]),
+  },
+  {
+    subject: "Latin", code: "0480", color: "bg-indigo-800",
+    years: juneYears("latin","0480","Latin",
+      [[1,1,60],[2,1,60]]),
+  },
+  {
+    subject: "World Literature", code: "0408", color: "bg-rose-700",
+    years: juneYears("world-literature","0408","World Literature",
+      [[1,1,50],[2,1,50]]),
+  },
 ];
 
 // ─── Modal ────────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { DashboardLayout } from "@/components/dashboard-page";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { StudyChat } from "@/components/study-chat";
 
 export const Route = createFileRoute("/chat")({
@@ -23,10 +23,11 @@ export const Route = createFileRoute("/chat")({
 
 function ChatPage() {
   return (
-    <DashboardLayout>
-      <div className="h-[calc(100dvh-65px)] w-full pb-2">
-        <StudyChat className="h-full rounded-3xl border border-border shadow-sm" />
-      </div>
-    </DashboardLayout>
+    <div className="flex h-dvh w-dvw overflow-hidden bg-background">
+      <DashboardSidebar />
+      <main className="min-w-0 flex-1 h-dvh overflow-hidden flex flex-col p-0 m-0">
+        <StudyChat className="h-full w-full rounded-none border-0 shadow-none" />
+      </main>
+    </div>
   );
 }

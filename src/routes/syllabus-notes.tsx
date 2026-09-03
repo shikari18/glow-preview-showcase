@@ -393,7 +393,7 @@ function SyllabusNotesPage() {
       )}
 
       <DashboardLayout crumbs={[{ label: "Course" }, { label: "Syllabus Notes" }]}>
-        <div className="mx-auto max-w-4xl py-2">
+        <div className="w-full py-2">
           {/* Hero banner matching syllabus & past-questions */}
           <div className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-lavender/60 via-lilac/40 to-mint/50 px-6 py-8 sm:px-10">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

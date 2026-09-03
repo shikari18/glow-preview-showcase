@@ -34,7 +34,7 @@ const studyItems = [
 ] as const;
 
 const practiceItems = [
-  { label: "QuizFetch", to: "/quizzes", Icon: ClipboardCheck },
+  { label: "Quiz", to: "/quizzes", Icon: ClipboardCheck },
   { label: "Test", to: "/test", Icon: CircleHelp },
   { label: "Flashcards", to: "/flashcards", Icon: NotebookTabs },
 ] as const;
