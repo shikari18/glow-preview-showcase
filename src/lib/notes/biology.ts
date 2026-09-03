@@ -93,22 +93,7 @@ export const BIOLOGY: SubjectNotes = {
           "title": "Cell Ultrastructure and Organelles",
           "body": `Cells contain specialized subcellular structures (organelles) suspended within the cytoplasm, each performing specific biochemical functions.
 
-\`\`\`diagram
-┌──────────────────────────────────────┐  ┌──────────────────────────────────────┐
-│             ANIMAL CELL              │  │              PLANT CELL              │
-│                                      │  │  ┌────────────────────────────────┐  │
-│      (Irregular flexible shape)      │  │  │ Cell Wall (Rigid Cellulose)    │  │
-│                                      │  │  │ ┌────────────────────────────┐ │  │
-│   ● Cell Membrane (Outer boundary)   │  │  │ │ Cell Membrane              │ │  │
-│   ● Cytoplasm (Metabolic site)       │  │  │ │ Cytoplasm                  │ │  │
-│   ● Nucleus (Encloses genetic DNA)   │  │  │ │ Nucleus                    │ │  │
-│   ● Mitochondria (Aerobic ATP)       │  │  │ │ Mitochondria               │ │  │
-│   ● Ribosomes (Protein synthesis)    │  │  │ │ Chloroplasts (Photosynth.) │ │  │
-│   ● Small temporary vesicles         │  │  │ │ LARGE Permanent Vacuole    │ │  │
-│                                      │  │  │ └────────────────────────────┘ │  │
-│                                      │  │  └────────────────────────────────┘  │
-└──────────────────────────────────────┘  └──────────────────────────────────────┘
-\`\`\``,
+![Ultrastructure Comparison: Animal Cell vs. Plant Cell](/diagrams/cell-structure.svg)`,
           "groups": [
             {
               "subTitle": "Universal Organelles in Plant and Animal Cells",

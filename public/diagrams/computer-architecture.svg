@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 480" width="100%" height="100%" class="rounded-2xl bg-white shadow-sm border border-slate-200">
+  <defs>
+    <linearGradient id="cpuGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="memGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="ioGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <marker id="busArrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 2 L 8 5 L 0 8 z" fill="#64748b" />
+    </marker>
+  </defs>
+
+  <!-- Title Banner -->
+  <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+  <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
+    Cambridge IGCSE 0478 / 0417 · Von Neumann Computer Architecture &amp; System Buses
+  </text>
+
+  <!-- ── 1. Central Processing Unit (CPU) Block (Left) ── -->
+  <g transform="translate(60, 90)">
+    <rect x="0" y="0" width="240" height="280" rx="18" fill="#f8fafc" stroke="#2563eb" stroke-width="2.5" />
+    <rect x="0" y="0" width="240" height="42" rx="18" fill="url(#cpuGrad)" />
+    <text x="120" y="26" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff">
+      CENTRAL PROCESSING UNIT
+    </text>
+
+    <!-- ALU -->
+    <rect x="20" y="55" width="200" height="50" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5" />
+    <text x="120" y="77" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#1e40af">
+      Arithmetic Logic Unit (ALU)
+    </text>
+    <text x="120" y="93" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#3b82f6">
+      Calculations &amp; Logical comparisons
+    </text>
+
+    <!-- Control Unit -->
+    <rect x="20" y="115" width="200" height="50" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5" />
+    <text x="120" y="137" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#1e40af">
+      Control Unit (CU)
+    </text>
+    <text x="120" y="153" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#3b82f6">
+      Fetches, decodes &amp; synchronizes clocks
+    </text>
+
+    <!-- Registers -->
+    <rect x="20" y="175" width="200" height="90" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5" />
+    <text x="120" y="195" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#334155">
+      High-Speed Internal Registers
+    </text>
+    <text x="30" y="218" font-family="monospace" font-size="11" fill="#0f172a">• PC (Program Counter)</text>
+    <text x="30" y="236" font-family="monospace" font-size="11" fill="#0f172a">• MAR &amp; MDR (Memory Registers)</text>
+    <text x="30" y="254" font-family="monospace" font-size="11" fill="#0f172a">• ACC (Accumulator)</text>
+  </g>
+
+  <!-- ── 2. Primary Memory (RAM & ROM) (Center-Right) ── -->
+  <g transform="translate(540, 90)">
+    <rect x="0" y="0" width="240" height="130" rx="18" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5" />
+    <rect x="0" y="0" width="240" height="42" rx="18" fill="url(#memGrad)" />
+    <text x="120" y="26" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff">
+      PRIMARY MEMORY (RAM &amp; ROM)
+    </text>
+    <text x="120" y="70" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#14532d">
+      RAM: Volatile Working Memory
+    </text>
+    <text x="120" y="88" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#15803d">
+      Stores active OS, applications &amp; data
+    </text>
+    <text x="120" y="112" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#047857">
+      ROM: Non-volatile BIOS / Boot code
+    </text>
+  </g>
+
+  <!-- ── 3. Input & Output (I/O) Controllers (Bottom Right) ── -->
+  <g transform="translate(540, 240)">
+    <rect x="0" y="0" width="240" height="130" rx="18" fill="#fffbeb" stroke="#d97706" stroke-width="2.5" />
+    <rect x="0" y="0" width="240" height="42" rx="18" fill="url(#ioGrad)" />
+    <text x="120" y="26" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff">
+      INPUT / OUTPUT &amp; STORAGE
+    </text>
+    <text x="120" y="70" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#78350f">
+      Input: Keyboard, Mouse, Sensors
+    </text>
+    <text x="120" y="90" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#92400e">
+      Output: Displays, Actuators, Sound
+    </text>
+    <text x="120" y="110" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#b45309">
+      Secondary Storage: SSD, HDD, Flash
+    </text>
+  </g>
+
+  <!-- ── 4. System Buses (Center Highway) ── -->
+  <g transform="translate(300, 100)">
+    <!-- Address Bus (Uni-directional from CPU to Memory/IO) -->
+    <rect x="20" y="40" width="200" height="20" rx="6" fill="#fecdd3" stroke="#e11d48" stroke-width="1.5" />
+    <text x="120" y="54" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#9f1239">
+      Address Bus (Uni-directional →)
+    </text>
+
+    <!-- Data Bus (Bi-directional) -->
+    <rect x="20" y="110" width="200" height="20" rx="6" fill="#bfdbfe" stroke="#2563eb" stroke-width="1.5" />
+    <text x="120" y="124" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#1e40af">
+      Data Bus (Bi-directional ↔)
+    </text>
+
+    <!-- Control Bus (Bi-directional signals) -->
+    <rect x="20" y="180" width="200" height="20" rx="6" fill="#fef08a" stroke="#ca8a04" stroke-width="1.5" />
+    <text x="120" y="194" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#854d0e">
+      Control Bus (Read/Write Timing ↔)
+    </text>
+  </g>
+
+  <!-- Bottom Explanatory Banner -->
+  <g transform="translate(60, 420)">
+    <rect x="0" y="0" width="720" height="34" rx="17" fill="#f1f5f9" />
+    <text x="360" y="21" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#475569">
+      <tspan font-weight="700" fill="#0f172a">Von Neumann Principle: </tspan>
+      Data and program instructions are stored together in the same memory address space and transferred across common system buses.
+    </text>
+  </g>
+</svg>

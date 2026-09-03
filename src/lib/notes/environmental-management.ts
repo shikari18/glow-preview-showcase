@@ -15,37 +15,7 @@ export const ENVIRONMENTAL_MANAGEMENT: SubjectNotes = {
           title: "The Formation and Characteristics of Rocks",
           body: `Rocks are natural solid aggregates of one or more minerals that constitute the lithosphere. Geologists classify rocks into three fundamental genetic groups based on their origin, texture, and mineral structure.
 
-\`\`\`diagram
-              ┌─────────────────────────────┐
-              │        MAGMA & LAVA         │
-              └──────────────┬──────────────┘
-                             │ Cooling & Crystallisation
-                             ▼
-              ┌─────────────────────────────┐
-              │        IGNEOUS ROCKS        │
-              │   (e.g. Granite, Basalt)    │
-              └──────────────┬──────────────┘
-                             │ Weathering, Erosion & Transport
-                             ▼
-              ┌─────────────────────────────┐
-              │     SEDIMENTS ACCUMULATE    │
-              └──────────────┬──────────────┘
-                             │ Compaction & Lithification
-                             ▼
-              ┌─────────────────────────────┐
-              │      SEDIMENTARY ROCKS      │
-              │  (e.g. Limestone, Sandstone)│
-              └──────────────┬──────────────┘
-                             │ Intense Heat & High Tectonic Pressure
-                             ▼
-              ┌─────────────────────────────┐
-              │      METAMORPHIC ROCKS      │
-              │     (e.g. Marble, Slate)    │
-              └──────────────┬──────────────┘
-                             │ Deep Subduction & Melting
-                             ▼
-                      [ Back to Magma ]
-\`\`\``,
+![The Geological Rock Cycle: Magma, Igneous, Sedimentary, and Metamorphic Rocks](/diagrams/rock-cycle.svg)`,
           groups: [
             {
               subTitle: "Igneous Rocks",

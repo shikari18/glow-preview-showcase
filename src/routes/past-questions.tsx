@@ -138,6 +138,26 @@ const SUBJECTS: SubjectGroup[] = [
     years: juneYears("environmental-management","0680","Environmental Management",
       [[1,1,80],[1,2,80],[2,1,80],[2,2,80]]),
   },
+  {
+    subject: "First Language English", code: "0500", color: "bg-rose-600",
+    years: juneYears("english-first-language","0500","First Language English",
+      [[1,1,80],[1,2,80],[2,1,80],[2,2,80]]),
+  },
+  {
+    subject: "Global Perspectives", code: "0457", color: "bg-sky-600",
+    years: juneYears("global-perspectives","0457","Global Perspectives",
+      [[1,1,70],[1,2,70]]),
+  },
+  {
+    subject: "Enterprise", code: "0454", color: "bg-amber-600",
+    years: juneYears("enterprise","0454","Enterprise",
+      [[1,1,100],[1,2,100]]),
+  },
+  {
+    subject: "Travel & Tourism", code: "0471", color: "bg-emerald-600",
+    years: juneYears("travel-and-tourism","0471","Travel & Tourism",
+      [[1,1,100],[2,1,100]]),
+  },
 ];
 
 // ─── Modal ────────────────────────────────────────────────────────────────────

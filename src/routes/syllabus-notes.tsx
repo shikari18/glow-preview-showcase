@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { BookOpen, ChevronRight, Search, ArrowLeft, Lock, Sparkles, Check } from "lucide-react";
+import { BookOpen, ChevronRight, Search, ArrowLeft, Lock, FileText, Check } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-page";
 import type { SubjectNotes, Chapter } from "@/lib/notes/types";
 import { SYLLABUS_NOTES } from "@/lib/syllabus-notes";
@@ -30,7 +30,7 @@ const catDot: Record<string, string> = {
   Technology:             "bg-cyan-500",
 };
 
-// ─── Full chapter document ────────────────────────────────────────────────────
+// ─── Full chapter document reader ─────────────────────────────────────────────
 
 function ChapterDoc({
   chapter,
@@ -110,7 +110,6 @@ function ChapterDoc({
 
             return (
               <section key={si} className="mb-12">
-                {/* Section header */}
                 <div className="flex items-start justify-between gap-4 border-b border-border/60 pb-3">
                   <h2 className="font-serif text-[1.45rem] font-bold leading-snug text-foreground sm:text-[1.65rem]">
                     {sub.title}
@@ -126,13 +125,11 @@ function ChapterDoc({
 
                 {!isCollapsed && (
                   <>
-                    {/* Body paragraph */}
                     <div
                       className="mt-4 text-[15px] leading-[1.8] text-foreground/85"
                       dangerouslySetInnerHTML={{ __html: formatMathAndMarkdown(sub.body) }}
                     />
 
-                    {/* Bullet groups */}
                     {sub.groups.map((grp, gi) => (
                       <div key={gi} className="mt-6">
                         {grp.subTitle && (
@@ -186,124 +183,113 @@ function ChapterDoc({
   );
 }
 
-// ─── Subject chapter list view (Matches media_1788464621130.png) ──────────────
+// ─── Horizontal Line Row Component (Matches syllabus & past-questions line UI) ─
 
-function SubjectView({
+function SubjectNoteRow({
   subject,
   isPaid,
   onSelectChapter,
-  onLockedChapterClick,
-  onBack,
+  onLockedClick,
 }: {
   subject: SubjectNotes;
   isPaid: boolean;
   onSelectChapter: (c: Chapter) => void;
-  onLockedChapterClick: (c: Chapter) => void;
-  onBack: () => void;
+  onLockedClick: (ch: Chapter) => void;
 }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="mx-auto max-w-4xl py-2">
-      {/* Back button */}
+    <div className="border-b border-border/80 last:border-b-0">
+      {/* Clickable horizontal line row */}
       <button
-        onClick={onBack}
-        className="mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-3 py-3.5 text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
       >
-        <ArrowLeft className="size-4" /> Back to all subjects
+        <ChevronRight
+          className={`size-4 shrink-0 transition-transform duration-200 ${open ? "rotate-90 text-foreground" : ""}`}
+        />
+        <div className={`size-2.5 rounded-full ${subject.color}`} />
+        <span className="font-bold text-foreground">{subject.name}</span>
+        <span className="font-mono text-xs">{subject.code}</span>
+        <span className="text-xs">
+          {subject.chapters.length} comprehensive chapter{subject.chapters.length > 1 ? "s" : ""}
+        </span>
+        <div className="flex-1" />
+        <span className="text-xs font-semibold text-muted-foreground/70">
+          {open ? "Hide chapters" : "View chapters"}
+        </span>
       </button>
 
-      {/* Subject Header */}
-      <div className="mb-8 flex items-start gap-4">
-        <div className={`flex size-14 shrink-0 items-center justify-center rounded-2xl ${subject.color} text-white shadow-md`}>
-          <BookOpen className="size-7" />
-        </div>
-        <div>
-          <span className="font-mono text-xs font-semibold text-muted-foreground">
-            Cambridge IGCSE {subject.code}
-          </span>
-          <h1 className="font-serif text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            {subject.name}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {subject.chapters.length} chapters · complete curriculum coverage
-          </p>
-        </div>
-      </div>
+      {/* Expanded chapter list in clean horizontal lines */}
+      {open && (
+        <div className="pb-4 pt-2 pl-6 sm:pl-8 space-y-2">
+          {subject.chapters.map((ch) => {
+            const isLocked = !isPaid && ch.number >= 3;
 
-      {/* Chapter cards list */}
-      <div className="space-y-3">
-        {subject.chapters.map((ch) => {
-          // Chapter 1 & 2 are free. Chapter 3 and beyond are locked for unpaid users.
-          const isLocked = !isPaid && ch.number >= 3;
-
-          return (
-            <button
-              key={ch.number}
-              type="button"
-              onClick={() => {
-                if (isLocked) {
-                  onLockedChapterClick(ch);
-                } else {
-                  onSelectChapter(ch);
-                }
-              }}
-              className={`flex w-full items-start gap-4 rounded-[22px] border p-5 text-left transition-all hover:shadow-sm ${
-                isLocked
-                  ? "border-amber-500/30 bg-card/60 hover:bg-amber-500/[0.03]"
-                  : "border-border bg-card hover:-translate-y-0.5 hover:border-foreground/30"
-              }`}
-            >
-              {/* Left icon circle */}
-              <div
-                className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold shadow-sm ${
+            return (
+              <button
+                key={ch.number}
+                type="button"
+                onClick={() => {
+                  if (isLocked) {
+                    onLockedClick(ch);
+                  } else {
+                    onSelectChapter(ch);
+                  }
+                }}
+                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
                   isLocked
-                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                    : `${subject.color} text-white`
+                    ? "border-amber-500/25 bg-secondary/30 hover:bg-amber-500/[0.04]"
+                    : "border-border bg-card hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-sm"
                 }`}
               >
-                {isLocked ? <Lock className="size-4.5" /> : ch.number}
-              </div>
-
-              {/* Text content */}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-serif text-base font-bold text-foreground sm:text-lg">
-                    {ch.title}
-                  </h2>
-                  {isLocked && (
-                    <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-                      <Lock className="size-2.5" /> Locked
-                    </span>
-                  )}
+                {/* Chapter number or Lock icon */}
+                <div
+                  className={`flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                    isLocked
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      : `${subject.color} text-white`
+                  }`}
+                >
+                  {isLocked ? <Lock className="size-3.5" /> : ch.number}
                 </div>
 
-                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                  {ch.intro}
-                </p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {ch.title}
+                    </p>
+                    {isLocked && (
+                      <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                        Locked
+                      </span>
+                    )}
+                  </div>
+                  <p className="truncate text-xs text-muted-foreground mt-0.5">
+                    {ch.subheadings.length} sections · {ch.subheadings.map((s) => s.title).slice(0, 3).join(", ")}...
+                  </p>
+                </div>
 
-                <p className="mt-2 text-[11px] font-medium text-muted-foreground/80">
-                  {ch.subheadings.length} sections: {ch.subheadings.map((s) => s.title).join(" · ")}
-                </p>
-              </div>
-
-              {/* Right icon */}
-              <div className="shrink-0 pt-1">
                 {isLocked ? (
                   <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background shadow-sm">
                     Unlock
                   </span>
                 ) : (
-                  <ChevronRight className="size-5 text-muted-foreground/60" />
+                  <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground">
+                    Read note →
+                  </span>
                 )}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Main page (Matches media_1788464574449.png) ──────────────────────────────
+// ─── Main Syllabus Notes Page ─────────────────────────────────────────────────
 
 function SyllabusNotesPage() {
   const [selectedSubject, setSelectedSubject] = useState<SubjectNotes | null>(null);
@@ -338,6 +324,15 @@ function SyllabusNotesPage() {
     return matchCat && matchSearch;
   });
 
+  // Group by category like syllabus.tsx
+  const grouped = categories
+    .filter((c) => c !== "All")
+    .map((cat) => ({
+      cat,
+      subjects: filtered.filter((s) => getSubjectCategory(s.code) === cat),
+    }))
+    .filter((g) => g.subjects.length > 0);
+
   const openNext = () => {
     if (!selectedSubject || !activeChapter) return;
     const idx = selectedSubject.chapters.findIndex((c) => c.number === activeChapter.number);
@@ -369,7 +364,7 @@ function SyllabusNotesPage() {
     setPaywallData({
       title: `Unlock Chapter ${ch.number}: ${ch.title}`,
       subtitle:
-        "Chapters 1 & 2 are free to preview. Upgrade to ExamGlow Premium to unlock all chapters, diagrams, formulas, and mark schemes.",
+        "Chapters 1 & 2 are free to preview. Upgrade to ExamGlow Premium to unlock all chapters, complete diagrams, and mark schemes.",
     });
     setPaywallOpen(true);
   };
@@ -398,109 +393,94 @@ function SyllabusNotesPage() {
       )}
 
       <DashboardLayout crumbs={[{ label: "Course" }, { label: "Syllabus Notes" }]}>
-        {selectedSubject ? (
-          <SubjectView
-            subject={selectedSubject}
-            isPaid={isPaid}
-            onSelectChapter={(c) => setActiveChapter(c)}
-            onLockedChapterClick={handleLockedChapterClick}
-            onBack={() => {
-              setSelectedSubject(null);
-              setActiveChapter(null);
-            }}
-          />
-        ) : (
-          <div className="mx-auto max-w-6xl py-2">
-            {/* Hero banner matching syllabus & past-questions */}
-            <div className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-lavender/60 via-lilac/40 to-mint/50 px-6 py-8 sm:px-10">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto max-w-4xl py-2">
+          {/* Hero banner matching syllabus & past-questions */}
+          <div className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-br from-lavender/60 via-lilac/40 to-mint/50 px-6 py-8 sm:px-10">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Cambridge IGCSE
+                </p>
+                <h1 className="mt-1 font-serif text-3xl font-bold sm:text-4xl text-foreground">
+                  Syllabus Notes
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {SYLLABUS_NOTES.length} subjects · click any line to view comprehensive chapter notes
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2 rounded-2xl bg-card/70 px-5 py-3 backdrop-blur shadow-sm">
+                <BookOpen className="size-5 text-muted-foreground" aria-hidden />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    Cambridge IGCSE
-                  </p>
-                  <h1 className="mt-1 font-serif text-3xl font-bold sm:text-4xl text-foreground">
-                    Syllabus Notes
-                  </h1>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {SYLLABUS_NOTES.length} subjects · complete chapter notes with KaTeX formulas and diagrams
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2 rounded-2xl bg-card/70 px-5 py-3 backdrop-blur shadow-sm">
-                  <BookOpen className="size-5 text-muted-foreground" aria-hidden />
-                  <div>
-                    <p className="text-xl font-bold">{SYLLABUS_NOTES.length}</p>
-                    <p className="text-xs text-muted-foreground">Subjects</p>
-                  </div>
+                  <p className="text-xl font-bold">{SYLLABUS_NOTES.length}</p>
+                  <p className="text-xs text-muted-foreground">Subjects</p>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Search + Category Filter Bar */}
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative flex-1 sm:max-w-xs">
-                <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search subjects or codes…"
-                  className="w-full rounded-2xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm outline-none focus:border-lavender focus:ring-2 focus:ring-lavender/20"
-                />
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-0.5">
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
-                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                      activeCategory === cat
-                        ? "bg-ink text-ink-foreground"
-                        : "bg-card text-muted-foreground hover:bg-secondary hover:text-foreground border border-border"
-                    }`}
-                  >
-                    {cat !== "All" && catDot[cat] && (
-                      <span className={`size-2 rounded-full ${catDot[cat]}`} />
-                    )}
-                    {cat}
-                  </button>
-                ))}
-              </div>
+          {/* Search + Category Filter Bar */}
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1 sm:max-w-xs">
+              <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search subjects or codes…"
+                className="w-full rounded-2xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm outline-none focus:border-lavender focus:ring-2 focus:ring-lavender/20"
+              />
             </div>
-
-            {/* Subject grid matching media_1788464574449.png */}
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((subject) => (
+            <div className="flex gap-2 overflow-x-auto pb-0.5">
+              {categories.map((cat) => (
                 <button
-                  key={subject.id}
-                  type="button"
-                  onClick={() => setSelectedSubject(subject)}
-                  className="group flex flex-col items-start rounded-[26px] border border-border/80 bg-card p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-foreground/30 hover:shadow-md text-left"
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    activeCategory === cat
+                      ? "bg-ink text-ink-foreground"
+                      : "bg-card text-muted-foreground hover:bg-secondary hover:text-foreground border border-border"
+                  }`}
                 >
-                  <div className="flex w-full items-center justify-between">
-                    <div className={`flex size-12 items-center justify-center rounded-full ${subject.color} text-white shadow-sm`}>
-                      <BookOpen className="size-5.5" />
-                    </div>
-                    <span className="rounded-full bg-secondary px-2.5 py-0.5 font-mono text-xs font-semibold text-muted-foreground">
-                      {subject.code}
-                    </span>
-                  </div>
-
-                  <h2 className="mt-4 font-serif text-xl font-bold tracking-tight text-foreground">
-                    {subject.name}
-                  </h2>
-
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {subject.chapters.length} comprehensive chapters
-                  </p>
-
-                  <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
-                    Open notes <ChevronRight className="size-3.5" />
-                  </span>
+                  {cat !== "All" && catDot[cat] && (
+                    <span className={`size-2 rounded-full ${catDot[cat]}`} />
+                  )}
+                  {cat}
                 </button>
               ))}
             </div>
           </div>
-        )}
+
+          {/* Line-by-line accordion rows grouped by category (Matches syllabus & past-questions line UI) */}
+          {grouped.length === 0 ? (
+            <div className="mt-20 text-center">
+              <BookOpen className="mx-auto size-12 text-muted-foreground/50" />
+              <p className="mt-4 text-base font-semibold">No notes found</p>
+              <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or category filter.</p>
+            </div>
+          ) : (
+            grouped.map(({ cat, subjects }) => (
+              <div key={cat} className="mb-8">
+                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {cat}
+                </h2>
+                <div className="divide-y divide-border rounded-2xl border border-border bg-card px-5">
+                  {subjects.map((subject) => (
+                    <SubjectNoteRow
+                      key={subject.id}
+                      subject={subject}
+                      isPaid={isPaid}
+                      onSelectChapter={(c) => {
+                        setSelectedSubject(subject);
+                        setActiveChapter(c);
+                      }}
+                      onLockedClick={handleLockedChapterClick}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </DashboardLayout>
     </>
   );

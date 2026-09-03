@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, Mic, Save, Sparkles, Square, Trash2 } from "lucide-react";
+import { FileText, Loader2, Mic, Save, Square, Trash2 } from "lucide-react";
 
 import { DashboardLayout, EmptyState, PageHeading, PrimaryButton } from "@/components/dashboard-page";
 import {
@@ -287,7 +287,7 @@ function RecordLecturePage() {
                   {askingId === item.id ? (
                     <Loader2 className="size-4 animate-spin" aria-hidden />
                   ) : (
-                    <Sparkles className="size-4" aria-hidden />
+                    <FileText className="size-4" aria-hidden />
                   )}
                   Summarise with AI
                 </button>

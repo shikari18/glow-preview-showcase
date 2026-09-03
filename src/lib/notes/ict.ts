@@ -19,24 +19,7 @@ export const ICT: SubjectNotes = {
           title: "Hardware and Software",
           body: `Hardware is any physical part of a computer system that you can see and touch, while software is the set of programs (instructions) that tell the hardware what to do. Neither is useful on its own — software controls hardware and hardware runs software.
 
-\`\`\`diagram
-┌────────────────────────────────────────────────────────┐
-│               COMPUTER SYSTEM ARCHITECTURE             │
-│                                                        │
-│  ┌────────────────┐     ┌────────────────┐             │
-│  │ INPUT DEVICES  │ ──► │  CENTRAL CPU   │ ──► OUTPUT  │
-│  │ (Keyboard,     │     │  (Control Unit │     (Screen,│
-│  │  Mouse, Mic)   │     │   & ALU Core)  │      Audio) │
-│  └────────────────┘     └───────┬────────┘             │
-│                                 │                      │
-│                         Bidirectional Bus              │
-│                                 ▼                      │
-│                         ┌────────────────┐             │
-│                         │ MEMORY/STORAGE │             │
-│                         │ (RAM, ROM, SSD)│             │
-│                         └────────────────┘             │
-└────────────────────────────────────────────────────────┘
-\`\`\``,
+![Von Neumann Computer Architecture & System Buses: CPU, Memory, and I/O](/diagrams/computer-architecture.svg)`,
           groups: [
             {
               subTitle: "Hardware",

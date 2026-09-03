@@ -11,7 +11,7 @@ import {
   Flame,
   Layers,
   MessageCircle,
-  Sparkles,
+  Bot,
   Plus,
   FileText,
 } from "lucide-react";
@@ -152,7 +152,7 @@ export function HomePage() {
                 className="pointer-events-none absolute -right-8 -top-10 size-52 opacity-10 invert"
               />
               <span className="inline-flex items-center gap-2 rounded-full bg-ink-foreground/10 px-3 py-1 text-xs font-semibold">
-                <Sparkles className="size-3.5" aria-hidden /> Today's focus
+                Today's focus
               </span>
               <h2 className="mt-4 max-w-md text-[clamp(1.7rem,3vw,2.4rem)] leading-tight font-bold">
                 {focusTitle}
@@ -196,7 +196,7 @@ export function HomePage() {
               <Stat
                 value={isPaid ? "Unlimited" : `${Math.max(0, FREE_AI_MESSAGE_LIMIT - aiCount)} left`}
                 label="AI Tutor Quota"
-                icon={<Sparkles className="size-4 text-emerald-500" />}
+                icon={<Bot className="size-4 text-emerald-500" />}
               />
             </div>
           </section>

@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 500" width="100%" height="100%" class="rounded-2xl bg-white shadow-sm border border-slate-200">
+  <defs>
+    <linearGradient id="magmaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#991b1b" />
+    </linearGradient>
+    <linearGradient id="igneousGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </linearGradient>
+    <linearGradient id="sedimentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+    <linearGradient id="metaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#5b21b6" />
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#475569" />
+    </marker>
+  </defs>
+
+  <!-- Title Banner -->
+  <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+  <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
+    Cambridge IGCSE 0680 Environmental Management · The Geological Rock Cycle
+  </text>
+
+  <!-- Magma Node (Bottom Center) -->
+  <g transform="translate(320, 380)">
+    <rect x="0" y="0" width="200" height="65" rx="16" fill="url(#magmaGrad)" stroke="#7f1d1d" stroke-width="2" />
+    <text x="100" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff">
+      MAGMA &amp; LAVA
+    </text>
+    <text x="100" y="48" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#fef2f2">
+      Molten rock deep in mantle/crust
+    </text>
+  </g>
+
+  <!-- Igneous Node (Top Left) -->
+  <g transform="translate(60, 150)">
+    <rect x="0" y="0" width="220" height="75" rx="16" fill="url(#igneousGrad)" stroke="#9a3412" stroke-width="2" />
+    <text x="110" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff">
+      IGNEOUS ROCKS
+    </text>
+    <text x="110" y="48" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#fff7ed">
+      Granite (intrusive) · Basalt (extrusive)
+    </text>
+    <text x="110" y="64" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#ffedd5">
+      Interlocking crystalline texture
+    </text>
+  </g>
+
+  <!-- Sedimentary Node (Top Right) -->
+  <g transform="translate(560, 150)">
+    <rect x="0" y="0" width="220" height="75" rx="16" fill="url(#sedimentGrad)" stroke="#78350f" stroke-width="2" />
+    <text x="110" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff">
+      SEDIMENTARY ROCKS
+    </text>
+    <text x="110" y="48" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#fefce8">
+      Limestone · Sandstone · Shale
+    </text>
+    <text x="110" y="64" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#fef9c3">
+      Layered strata &amp; preserved fossils
+    </text>
+  </g>
+
+  <!-- Metamorphic Node (Top Center) -->
+  <g transform="translate(310, 70)">
+    <rect x="0" y="0" width="220" height="70" rx="16" fill="url(#metaGrad)" stroke="#4c1d95" stroke-width="2" />
+    <text x="110" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#ffffff">
+      METAMORPHIC ROCKS
+    </text>
+    <text x="110" y="48" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#ede9fe">
+      Marble (from limestone) · Slate · Gneiss
+    </text>
+  </g>
+
+  <!-- Connecting Cycle Paths with Arrows -->
+  <!-- 1. Magma to Igneous: Cooling & Crystallisation -->
+  <path d="M 340 380 Q 200 320 170 230" fill="none" stroke="#475569" stroke-width="2.5" marker-end="url(#arrow)" />
+  <rect x="180" y="300" width="140" height="22" rx="6" fill="#f8fafc" stroke="#cbd5e1" />
+  <text x="250" y="315" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#334155">
+    Cooling &amp; Solidification
+  </text>
+
+  <!-- 2. Igneous to Sedimentary: Weathering & Lithification -->
+  <path d="M 285 185 L 555 185" fill="none" stroke="#475569" stroke-width="2.5" marker-end="url(#arrow)" />
+  <rect x="330" y="172" width="180" height="26" rx="6" fill="#f8fafc" stroke="#cbd5e1" />
+  <text x="420" y="189" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#334155">
+    Weathering, Transport &amp; Deposition
+  </text>
+
+  <!-- 3. Sedimentary to Metamorphic: Heat & Pressure -->
+  <path d="M 640 150 Q 560 90 535 95" fill="none" stroke="#475569" stroke-width="2.5" marker-end="url(#arrow)" />
+  <rect x="520" y="70" width="130" height="22" rx="6" fill="#f8fafc" stroke="#cbd5e1" />
+  <text x="585" y="85" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#334155">
+    Heat &amp; Tectonic Pressure
+  </text>
+
+  <!-- 4. Metamorphic to Magma: Melting -->
+  <path d="M 420 145 L 420 375" fill="none" stroke="#475569" stroke-width="2.5" marker-end="url(#arrow)" />
+  <rect x="365" y="250" width="110" height="22" rx="6" fill="#f8fafc" stroke="#cbd5e1" />
+  <text x="420" y="265" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#334155">
+    Deep Subduction &amp; Melting
+  </text>
+
+  <!-- 5. Igneous to Metamorphic -->
+  <path d="M 220 150 Q 260 100 305 100" fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrow)" />
+</svg>

@@ -16,7 +16,6 @@ import {
   LogOut,
   School,
   CreditCard,
-  Sparkles,
   AlertCircle,
   Check,
 } from "lucide-react";
@@ -236,7 +235,7 @@ function PersonalizationModal({ onClose }: { onClose: () => void }) {
                     onClick={onClose}
                     className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-2.5 text-xs font-semibold text-background shadow transition-transform hover:-translate-y-0.5"
                   >
-                    <Sparkles className="size-3.5" /> Upgrade to Premium
+                    Upgrade to Premium
                   </Link>
                 )}
               </div>
@@ -496,10 +495,10 @@ export function ProfileAvatar({ className = "" }: { className?: string }) {
 }
 
 export function DashboardLayout({
-  crumbs,
+  crumbs = [],
   children,
 }: {
-  crumbs: { label: string; icon?: ReactNode }[];
+  crumbs?: { label: string; icon?: ReactNode }[];
   children: ReactNode;
 }) {
   return (
@@ -513,9 +512,9 @@ export function DashboardLayout({
   );
 }
 
-function TopBar({ crumbs }: { crumbs: { label: string; icon?: ReactNode }[] }) {
+function TopBar({ crumbs = [] }: { crumbs?: { label: string; icon?: ReactNode }[] }) {
   return (
-    <header className="sticky top-0 z-30 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border/70 bg-background/85 px-4 py-3 pl-14 backdrop-blur md:pl-6">
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border/70 bg-background/85 px-4 py-3 pl-14 backdrop-blur md:pl-6">
       <nav className="flex min-w-0 items-center gap-2 text-[15px]" aria-label="Breadcrumb">
         {crumbs.map((crumb, i) => (
           <span key={crumb.label} className="flex min-w-0 items-center gap-2">

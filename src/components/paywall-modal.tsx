@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Check, Lock, Sparkles, X } from "lucide-react";
-import logoMark from "@/assets/logo-mark.png";
+import { Check, Lock, X, ShieldCheck, ArrowRight } from "lucide-react";
 import { detectCurrency, formatPrice, type CurrencyInfo } from "@/lib/paypal";
 
 export function PaywallModal({
   open,
   onClose,
-  title = "Unlock ExamGlow Premium",
-  subtitle = "You've reached the free tier limit. Upgrade for unlimited access to all notes, syllabuses, and AI tutoring.",
+  title = "Unlock Full Access",
+  subtitle = "You have reached the free preview limit. Upgrade to ExamGlow Premium to unlock all notes, diagrams, and full syllabus content.",
 }: {
   open: boolean;
   onClose: () => void;
@@ -40,60 +39,54 @@ export function PaywallModal({
   if (!open) return null;
 
   const plans = [
-    { id: "weekly" as const, name: "Weekly Plan", desc: "Billed weekly", badge: "Flexible" },
-    { id: "monthly" as const, name: "Monthly Plan", desc: "Billed monthly", badge: "Most Popular" },
-    { id: "termly" as const, name: "Termly Plan", desc: "Every 3 months", badge: "Best Value" },
+    { id: "weekly" as const, name: "Weekly Plan", desc: "Billed weekly, cancel anytime", badge: "Flexible" },
+    { id: "monthly" as const, name: "Monthly Plan", desc: "Most popular for students", badge: "Popular" },
+    { id: "termly" as const, name: "Termly Plan", desc: "Every 3 months · best value", badge: "Best Value" },
   ];
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4" role="dialog" aria-modal="true">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-2xl sm:p-8">
+      {/* Modal Container */}
+      <div className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-border bg-card p-6 shadow-2xl sm:p-7">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground"
+          className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
         >
           <X className="size-4" />
         </button>
 
-        <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-500">
-            <Lock className="size-5" />
+        {/* Header */}
+        <div className="text-center pt-2">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 mb-3">
+            <Lock className="size-6" />
           </div>
-          <div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-lavender/20 px-2.5 py-0.5 text-xs font-semibold text-lavender">
-              <Sparkles className="size-3" /> Premium Feature
-            </span>
-            <h2 className="mt-0.5 text-xl font-bold tracking-tight text-foreground sm:text-2xl">{title}</h2>
-          </div>
+          <h2 className="font-serif text-2xl font-bold tracking-tight text-foreground">{title}</h2>
+          <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed px-2">{subtitle}</p>
         </div>
 
-        <p className="mt-3 text-sm text-muted-foreground">{subtitle}</p>
-
-        {/* Feature List */}
-        <div className="mt-5 space-y-2 rounded-2xl bg-secondary/50 p-4">
+        {/* Benefits */}
+        <div className="mt-5 space-y-2 rounded-2xl border border-border/80 bg-secondary/40 p-3.5 text-xs">
           {[
-            "Full access to all 21+ chapters in every subject",
-            "Unlimited 24/7 AI tutor chat & explanations",
-            "Complete Cambridge IGCSE syllabuses & past papers",
-            "Personal rich notes workspace & study tools",
-            "Cancel anytime with one click in settings",
-          ].map((f) => (
-            <div key={f} className="flex items-center gap-2.5 text-xs font-medium text-foreground sm:text-sm">
-              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-500">
+            "Unrestricted access to all chapters and subjects",
+            "High-resolution scientific diagrams and formulas",
+            "Full Cambridge IGCSE past papers & mark schemes",
+            "Cancel subscription anytime in account settings",
+          ].map((item) => (
+            <div key={item} className="flex items-center gap-2 text-foreground/90 font-medium">
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                 <Check className="size-2.5 stroke-[3]" />
               </span>
-              <span>{f}</span>
+              <span>{item}</span>
             </div>
           ))}
         </div>
 
         {/* Plan Selectors */}
-        <div className="mt-5 space-y-2">
+        <div className="mt-4 space-y-2">
           {plans.map((p) => {
             const active = selectedPlan === p.id;
             return (
@@ -103,23 +96,23 @@ export function PaywallModal({
                 onClick={() => setSelectedPlan(p.id)}
                 className={`flex w-full items-center justify-between rounded-2xl border p-3.5 text-left transition-all ${
                   active
-                    ? "border-lavender bg-lavender/10 ring-1 ring-lavender"
-                    : "border-border bg-background hover:bg-secondary/70"
+                    ? "border-foreground bg-secondary/80 ring-1 ring-foreground"
+                    : "border-border bg-card hover:bg-secondary/40"
                 }`}
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground text-sm">{p.name}</span>
+                    <span className="font-bold text-foreground text-sm">{p.name}</span>
                     {p.badge && (
-                      <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <span className="rounded-full bg-foreground px-2 py-0.5 text-[10px] font-bold text-background uppercase tracking-wider">
                         {p.badge}
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-muted-foreground">{p.desc}</span>
+                  <span className="text-[11px] text-muted-foreground">{p.desc}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-base font-bold text-foreground sm:text-lg">
+                  <span className="text-base font-bold text-foreground">
                     {currency ? formatPrice(p.id, currency) : "…"}
                   </span>
                 </div>
@@ -135,14 +128,15 @@ export function PaywallModal({
             onClose();
             navigate({ to: "/checkout", search: { plan: selectedPlan } });
           }}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-3.5 text-sm font-semibold text-background shadow-lg transition-transform hover:-translate-y-0.5 active:scale-[0.99]"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-3.5 text-sm font-semibold text-background shadow-lg transition-transform hover:-translate-y-0.5 active:scale-[0.99]"
         >
-          <Lock className="size-4" />
-          Continue to Secure Checkout · {currency ? formatPrice(selectedPlan, currency) : "…"}
+          <span>Continue to Payment</span>
+          <ArrowRight className="size-4" />
         </button>
 
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          Debit, Credit Card & PayPal accepted · Instant access
+        <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+          <ShieldCheck className="size-3.5 text-emerald-500" />
+          <span>Encrypted PayPal & Card Checkout · Instant Access</span>
         </p>
       </div>
     </div>

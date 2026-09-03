@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ClipboardCheck, Copy, FileText, Loader2, Sparkles, Upload, X } from "lucide-react";
+import { ClipboardCheck, Copy, FileText, Loader2, Upload, X } from "lucide-react";
 
 import { DashboardLayout } from "@/components/dashboard-page";
 
@@ -80,7 +80,7 @@ function AssignmentsPage() {
       <header className="grid gap-4 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <div className="min-w-0">
           <span className="inline-flex items-center gap-2 rounded-full bg-lilac px-3 py-1 text-xs font-semibold text-ink">
-            <Sparkles className="size-3.5" aria-hidden /> AI assignment help
+            AI assignment help
           </span>
           <h1 className="mt-3 text-[clamp(1.8rem,3.5vw,2.8rem)] leading-tight">
             Upload it, and we'll <span className="display-italic">complete it</span>
@@ -170,7 +170,7 @@ function AssignmentsPage() {
             disabled={!brief.trim() || loading}
             className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3.5 text-sm font-medium text-ink-foreground disabled:opacity-50"
           >
-            {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4" aria-hidden />}
+            {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
             {loading ? "Working on it..." : "Complete my assignment"}
           </button>
           {error && <p className="mt-3 text-sm text-destructive">{error}</p>}

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { BookOpen, ListChecks, Layers, X, Sparkles } from "lucide-react";
+import { BookOpen, ListChecks, Layers, X } from "lucide-react";
 
 import {
   Conversation,

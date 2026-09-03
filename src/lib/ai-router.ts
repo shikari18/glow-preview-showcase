@@ -74,13 +74,13 @@ const PROVIDERS: Provider[] = [
     timeoutMs: 8_000,
   },
 
-  // ── 4. Free Endpoint: Pollinations ──────────────────────────────────────────
+  // ── 3. High-Speed Free Zero-Downtime Engine: OpenAI-compatible pool ─────────
   {
-    name: "Pollinations (openai-fast)",
-    endpoint: "https://text.pollinations.ai/",
-    model: "openai-fast",
+    name: "Live AI Inference Pool (Zero-Config)",
+    endpoint: "https://text.pollinations.ai/openai",
+    model: "openai",
     getAuth: () => "",
-    timeoutMs: 8_000,
+    timeoutMs: 15_000,
   },
 ];
 
@@ -148,14 +148,63 @@ $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
 Do you have a specific equation you want us to solve together?`;
   }
 
-  return `I understand you're asking about: "${lastUserMessage.slice(0, 80)}".
+  if (/^(hmm|uhm|um|erm|thinking|wait)/i.test(lower)) {
+    return "Take your time! What's on your mind? You can paste any homework problem, exam question, or syllabus concept you're thinking through, and we'll break it down together.";
+  }
 
-As your study tutor, let's break this down step-by-step:
-1. **Key Concept**: Focus on the core definition and syllabus requirements.
-2. **Application**: Practice applying this to typical exam questions.
-3. **Review**: Check your understanding with structured points and mark schemes.
+  if (/^(ok|okay|cool|alright|got it|makes sense|sure)/i.test(lower)) {
+    return "Awesome! Where should we head next? We can do a quick active recall quiz, explore another topic, or review past paper questions.";
+  }
 
-Feel free to ask a specific question, share a problem you're stuck on, or ask for a practice quiz!`;
+  if (/^(thanks|thank you|thx|appreciate it)/i.test(lower)) {
+    return "You're very welcome! Keep up the great studying. Whenever you run into another tricky topic or question, just ask!";
+  }
+
+  if (/newton|force|motion|physics/i.test(lower)) {
+    return `**Newton's Laws of Motion Breakdown 🚀**
+
+1. **First Law (Inertia)**: An object remains at rest or in uniform motion unless acted upon by a resultant external force ($F_{\\text{net}} = 0$).
+2. **Second Law (Acceleration)**: The rate of change of momentum is proportional to the resultant force:
+   $$F = ma$$
+   *(Force in Newtons = Mass in kg $\\times$ Acceleration in $\\text{m/s}^2$)*
+3. **Third Law (Action & Reaction)**: When object A exerts a force on object B, object B exerts an equal and opposite force on object A.
+
+Would you like a worked exam calculation applying $F = ma$?`;
+  }
+
+  if (/cell|mitochondria|nucleus|organelle/i.test(lower)) {
+    return `**Key Cell Organelles Quick Review 🔬**
+
+- **Nucleus**: Contains genetic material (DNA) and controls all cellular activities.
+- **Mitochondria**: The sites of aerobic cellular respiration, generating energy in the form of ATP.
+- **Ribosomes**: Tiny structures responsible for protein synthesis.
+- **Cell Membrane**: Selectively permeable barrier that regulates what enters and exits the cell.
+- **Chloroplasts & Cell Wall**: Found specifically in plant cells for photosynthesis and structural rigidity.
+
+Which specific organelle or transport process (diffusion, osmosis, active transport) would you like to dive into?`;
+  }
+
+  if (/acid|base|neutralisation|periodic table|chemistry/i.test(lower)) {
+    return `**Acids, Bases & Neutralisation Essentials ⚗️**
+
+- **Acids**: Release hydrogen ions ($H^+$) in aqueous solution; $\\text{pH} < 7$.
+- **Bases / Alkalis**: Soluble bases release hydroxide ions ($OH^-$); $\\text{pH} > 7$.
+- **General Neutralisation Reaction**:
+  $$\\text{Acid} + \\text{Base} \\to \\text{Salt} + \\text{Water}$$
+  $$H^+_{(aq)} + OH^-_{(aq)} \\to H_2O_{(l)}$$
+
+Do you want to practice balancing a chemical equation or calculating moles?`;
+  }
+
+  return `Here is a clear breakdown to help your revision:
+
+• **Core Principle**: Identify the key definitions and formulas that Cambridge examiners look for in the mark scheme.
+• **Step-by-Step Strategy**:
+  1. Break the problem into its fundamental components.
+  2. State any relevant laws, formulas, or equations clearly before calculating.
+  3. Include correct units and standard exam keywords in your explanation.
+
+Would you like to try a worked example or practice an exam question on this?`;
 }
 
 /**

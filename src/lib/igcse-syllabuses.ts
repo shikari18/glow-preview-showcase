@@ -85,6 +85,7 @@ export const igcseSubjects: IgcseSubject[] = [
     category: "Mathematics",
     color: "bg-lavender",
     syllabuses: [
+      { label: "2023 – 2025 Syllabus", url: `${BASE}/595434-2023-2025-syllabus.pdf` },
       { label: "2025 – 2027 Syllabus", url: `${BASE}/662466-2025-2027-syllabus.pdf` },
       { label: "2028 – 2030 Syllabus", url: `${BASE}/745681-2028-2030-syllabus.pdf` },
     ],
@@ -322,13 +323,52 @@ export const igcseSubjects: IgcseSubject[] = [
     category: "Humanities",
     color: "bg-lavender",
     syllabuses: [
+      { label: "2023 – 2025 Syllabus", url: `${BASE}/595436-2023-2025-syllabus.pdf` },
       { label: "2025 – 2027 Syllabus", url: `${BASE}/662457-2025-2027-syllabus.pdf` },
       { label: "2028 Syllabus",         url: `${BASE}/744776-2028-syllabus.pdf` },
     ],
   },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    code: "0454",
+    category: "Business & Economics",
+    color: "bg-amber-500",
+    syllabuses: [
+      { label: "2023 – 2025 Syllabus", url: `${BASE}/595438-2023-2025-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "agriculture",
+    name: "Agriculture",
+    code: "0600",
+    category: "Sciences",
+    color: "bg-green-600",
+    syllabuses: [
+      { label: "2023 – 2025 Syllabus", url: `${BASE}/595424-2023-2025-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "marine-science",
+    name: "Marine Science",
+    code: "0697",
+    category: "Sciences",
+    color: "bg-cyan-600",
+    syllabuses: [
+      { label: "2023 – 2025 Syllabus", url: `${BASE}/595442-2023-2025-syllabus.pdf` },
+    ],
+  },
+  {
+    id: "development-studies",
+    name: "Development Studies",
+    code: "0453",
+    category: "Humanities",
+    color: "bg-rose-500",
+    syllabuses: [
+      { label: "2023 – 2025 Syllabus", url: `${BASE}/595444-2023-2025-syllabus.pdf` },
+    ],
+  },
 ];
-
-export const igcseCategories = [...new Set(igcseSubjects.map((s) => s.category))];
 
 // ── Additional Languages (10 more subjects) ───────────────────────────────────
 
@@ -444,4 +484,6 @@ igcseSubjects.push(
     ],
   },
 );
+
+export const igcseCategories = [...new Set(igcseSubjects.map((s) => s.category))];
 

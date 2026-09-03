@@ -7,7 +7,6 @@ import {
   Layers,
   Loader2,
   NotebookTabs,
-  Sparkles,
   Upload,
   X,
 } from "lucide-react";
@@ -57,7 +56,7 @@ function FlashcardsPage() {
             activeTab === "assignment" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <Sparkles className="size-4" aria-hidden /> Assignment Help
+          Assignment Help
         </button>
       </div>
 
@@ -212,7 +211,7 @@ function AssignmentHelp() {
           disabled={!brief.trim() || loading}
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3.5 text-sm font-medium text-ink-foreground disabled:opacity-50"
         >
-          {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+          {loading && <Loader2 className="size-4 animate-spin" />}
           {loading ? "Working on it..." : "Complete my assignment"}
         </button>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}

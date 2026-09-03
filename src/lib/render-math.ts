@@ -2,7 +2,7 @@ import katex from "katex";
 
 /**
  * Formats notes text by converting:
- * - Code blocks / Diagrams ```...``` to formatted diagrams
+ * - Markdown images ![alt](url) to styled responsive figures
  * - Display math $$...$$ to KaTeX display block
  * - Inline math $...$ to KaTeX inline math
  * - Markdown bold **...** to <strong>
@@ -12,19 +12,39 @@ import katex from "katex";
 export function formatMathAndMarkdown(text: string): string {
   if (!text) return "";
 
-  // 1. Extract and format multi-line diagrams / code blocks ```diagram ... ``` or ``` ... ```
-  let result = text.replace(/```(?:diagram|ascii|mermaid)?\n?([\s\S]+?)```/g, (_, code) => {
+  // 1. Markdown images ![alt](url) -> High-res responsive visual image cards
+  let result = text.replace(/!\[(.*?)\]\((.*?)\)/g, (_, alt, src) => {
+    return `
+      <figure class="my-6 overflow-hidden rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-5">
+        <div class="mb-3 flex items-center justify-between border-b border-border/60 pb-2.5">
+          <div class="flex items-center gap-2 text-xs font-bold text-foreground">
+            <span class="size-2 rounded-full bg-emerald-500"></span>
+            <span>${alt || "Scientific Diagram"}</span>
+          </div>
+          <span class="rounded-md bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            Vector Diagram
+          </span>
+        </div>
+        <div class="flex justify-center overflow-x-auto py-2">
+          <img src="${src}" alt="${alt}" class="w-full max-w-2xl rounded-xl object-contain" loading="lazy" />
+        </div>
+      </figure>
+    `;
+  });
+
+  // 2. Extract and format multi-line diagrams / code blocks ```diagram ... ``` or ``` ... ```
+  result = result.replace(/```(?:diagram|ascii|mermaid)?\n?([\s\S]+?)```/g, (_, code) => {
     return `
       <div class="my-5 overflow-x-auto rounded-2xl border border-black/10 bg-black/[0.03] p-4 text-xs dark:border-white/15 dark:bg-white/[0.04]">
         <div class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-          <span class="size-2 rounded-full bg-emerald-500"></span> Diagram
+          <span class="size-2 rounded-full bg-emerald-500"></span> Technical Specification
         </div>
         <pre class="font-mono text-[12px] leading-relaxed text-foreground whitespace-pre">${code.trim()}</pre>
       </div>
     `;
   });
 
-  // 2. Extract and replace display math $$...$$
+  // 3. Extract and replace display math $$...$$
   result = result.replace(/\$\$(.+?)\$\$/gs, (_, eq) => {
     try {
       const rendered = katex.renderToString(eq.trim(), {
@@ -37,7 +57,7 @@ export function formatMathAndMarkdown(text: string): string {
     }
   });
 
-  // 3. Extract and replace inline math $...$
+  // 4. Extract and replace inline math $...$
   result = result.replace(/\$([^$]+?)\$/g, (_, eq) => {
     try {
       const cleaned = eq.trim();
@@ -50,14 +70,14 @@ export function formatMathAndMarkdown(text: string): string {
     }
   });
 
-  // 4. Bold
-  result = result.replace(/\*\*(.+?)\*\*/g, "<strong class='font-bold text-black dark:text-white'>$1</strong>");
+  // 5. Bold
+  result = result.replace(/\*\*(.+?)\*\*/g, "<strong class='font-bold text-foreground'>$1</strong>");
 
-  // 5. Italic
+  // 6. Italic
   result = result.replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, "<em>$1</em>");
 
-  // 6. Inline code backticks
-  result = result.replace(/`([^`]+?)`/g, "<code class='inline-block rounded bg-black/8 dark:bg-white/10 px-1.5 py-0.5 font-mono text-[13px]'>$1</code>");
+  // 7. Inline code backticks
+  result = result.replace(/`([^`]+?)`/g, "<code class='inline-block rounded bg-secondary px-1.5 py-0.5 font-mono text-[13px]'>$1</code>");
 
   return result;
 }

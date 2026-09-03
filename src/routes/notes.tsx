@@ -19,16 +19,17 @@ import {
   Printer,
   Maximize2,
   Minimize2,
-  Sparkles,
+  Bot,
   FilePlus,
   Trash2,
   ChevronDown,
   Check,
-  Save,
-  BookOpen,
+  FolderOpen,
+  X,
+  Search,
+  Calendar,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-page";
-import { isPaidUser, canSendAiMessage, incrementAiMessageCount } from "@/lib/onboarding";
 import { PaywallModal } from "@/components/paywall-modal";
 
 export const Route = createFileRoute("/notes")({
@@ -63,7 +64,6 @@ function loadNotes(): NoteItem[] {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [DEFAULT_NOTE];
     const parsed = JSON.parse(raw) as NoteItem[];
-    // Remove any previously stored hardcoded behavioral economics note
     const filtered = parsed.filter(
       (n) =>
         !n.title.toLowerCase().includes("behavioral economics") &&
@@ -80,105 +80,114 @@ function saveNotes(notes: NoteItem[]) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
   } catch {
-    /* ignore */
+    /* storage unavailable */
   }
 }
 
 function NotesEditorPage() {
-  const [notes, setNotes] = useState<NoteItem[]>([DEFAULT_NOTE]);
-  const [activeId, setActiveId] = useState<string>(DEFAULT_NOTE.id);
-  const [fontFamily, setFontFamily] = useState("Inter");
+  const [notes, setNotes] = useState<NoteItem[]>([]);
+  const [activeId, setActiveId] = useState<string>("");
+  const [fontFamily, setFontFamily] = useState("Inter, sans-serif");
   const [fontSize, setFontSize] = useState("15");
   const [fullscreen, setFullscreen] = useState(false);
   const [savedStatus, setSavedStatus] = useState<"saved" | "saving">("saved");
   const [aiPromptOpen, setAiPromptOpen] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
-  const [paywallOpen, setPaywallOpen] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+  const [savedDrawerOpen, setSavedDrawerOpen] = useState(false);
+  const [searchNotes, setSearchNotes] = useState("");
 
   const editorRef = useRef<HTMLDivElement>(null);
+  const saveTimeoutRef = useRef<any>(null);
 
+  // Initialize from localStorage
   useEffect(() => {
-    const list = loadNotes();
-    setNotes(list);
-    if (list[0]) setActiveId(list[0].id);
+    const loaded = loadNotes();
+    setNotes(loaded);
+    setActiveId(loaded[0]?.id || DEFAULT_NOTE.id);
   }, []);
 
-  const activeNote = notes.find((n) => n.id === activeId) ?? notes[0] ?? DEFAULT_NOTE;
+  const activeNote = notes.find((n) => n.id === activeId) || notes[0] || DEFAULT_NOTE;
 
   // Sync editor content when active note changes
   useEffect(() => {
-    if (editorRef.current && activeNote) {
-      editorRef.current.innerHTML = activeNote.content;
+    if (editorRef.current) {
+      editorRef.current.innerHTML = activeNote.content || "";
     }
   }, [activeId]);
 
-  const exec = (cmd: string, val: string = "") => {
-    document.execCommand(cmd, false, val);
+  const exec = (command: string, value: string | undefined = undefined) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
     triggerAutoSave();
   };
 
   const triggerAutoSave = () => {
     setSavedStatus("saving");
-    if (!editorRef.current) return;
-    const newContent = editorRef.current.innerHTML;
-    setNotes((prev) => {
-      const updated = prev.map((n) =>
-        n.id === activeId ? { ...n, content: newContent, updatedAt: Date.now() } : n
-      );
-      saveNotes(updated);
-      return updated;
-    });
-    setTimeout(() => setSavedStatus("saved"), 400);
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      if (!editorRef.current) return;
+      const html = editorRef.current.innerHTML;
+      setNotes((prev) => {
+        const next = prev.map((n) =>
+          n.id === activeId ? { ...n, content: html, updatedAt: Date.now() } : n
+        );
+        saveNotes(next);
+        return next;
+      });
+      setSavedStatus("saved");
+    }, 600);
   };
 
   const handleTitleChange = (newTitle: string) => {
     setNotes((prev) => {
-      const updated = prev.map((n) =>
+      const next = prev.map((n) =>
         n.id === activeId ? { ...n, title: newTitle, updatedAt: Date.now() } : n
       );
-      saveNotes(updated);
-      return updated;
+      saveNotes(next);
+      return next;
     });
   };
 
   const createNewNote = () => {
     const newNote: NoteItem = {
-      id: "note-" + Date.now(),
+      id: `note-${Date.now()}`,
       title: "Untitled Note",
       updatedAt: Date.now(),
-      content: "<p>Start writing your study notes here...</p>",
+      content: "",
     };
-    const updated = [newNote, ...notes];
-    setNotes(updated);
-    saveNotes(updated);
+    const next = [newNote, ...notes];
+    setNotes(next);
     setActiveId(newNote.id);
+    saveNotes(next);
   };
 
-  const deleteActiveNote = () => {
+  const deleteActiveNote = (idToDelete?: string) => {
+    const targetId = idToDelete || activeId;
     if (notes.length <= 1) {
-      alert("You need at least one note document.");
+      const fresh = [DEFAULT_NOTE];
+      setNotes(fresh);
+      setActiveId(DEFAULT_NOTE.id);
+      saveNotes(fresh);
       return;
     }
-    const remaining = notes.filter((n) => n.id !== activeId);
-    setNotes(remaining);
-    saveNotes(remaining);
-    if (remaining[0]) setActiveId(remaining[0].id);
+    const next = notes.filter((n) => n.id !== targetId);
+    setNotes(next);
+    if (targetId === activeId) {
+      setActiveId(next[0]!.id);
+    }
+    saveNotes(next);
   };
 
   const handleAiAction = async (promptType: string) => {
-    if (!canSendAiMessage()) {
-      setPaywallOpen(true);
+    if (!editorRef.current) return;
+    const text = editorRef.current.innerText.trim();
+    if (!text) {
+      alert("Please write some notes first so the AI can analyze them!");
       return;
     }
+
     setAiGenerating(true);
-    incrementAiMessageCount();
-
     try {
-      const currentSelection = window.getSelection()?.toString() || "";
-      const textToAnalyze = currentSelection || editorRef.current?.innerText || "";
-
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -186,19 +195,18 @@ function NotesEditorPage() {
           messages: [
             {
               role: "user",
-              content: `Please ${promptType} for the following study notes:\n\n${textToAnalyze.slice(0, 1500)}`,
+              content: `Based on my notes below, please ${promptType}:\n\n${text.slice(0, 3000)}`,
             },
           ],
         }),
       });
       const data = (await res.json()) as { text?: string };
       if (data.text) {
-        // Insert AI output at bottom of note
         if (editorRef.current) {
           editorRef.current.innerHTML += `
             <div style="margin-top: 24px; padding: 16px; border-radius: 12px; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.25);">
-              <strong style="color: #7c3aed; font-size: 14px;">✨ AI Study Assist:</strong>
-              <p style="margin-top: 8px; font-size: 14px; line-height: 1.7; color: #374151;">${data.text.replace(/\\n/g, "<br/>")}</p>
+              <strong style="color: #7c3aed; font-size: 14px;">Study AI Assist:</strong>
+              <p style="margin-top: 8px; font-size: 14px; line-height: 1.7; color: #374151;">${data.text.replace(/\n/g, "<br/>")}</p>
             </div>
           `;
           triggerAutoSave();
@@ -212,30 +220,37 @@ function NotesEditorPage() {
     }
   };
 
+  const filteredNotes = notes.filter((n) =>
+    n.title.toLowerCase().includes(searchNotes.toLowerCase())
+  );
+
   return (
     <>
-      <PaywallModal
-        open={paywallOpen}
-        onClose={() => setPaywallOpen(false)}
-        title="Upgrade to ExamGlow Premium"
-        subtitle="You've reached your free AI limit. Upgrade to unlock unlimited AI note generation, full syllabus coverage, and past papers."
-      />
-
-      <DashboardLayout crumbs={[{ label: "Workspace" }, { label: "Notes" }]}>
+      <DashboardLayout>
         <div
           className={`flex flex-col bg-card transition-all ${
             fullscreen
-              ? "fixed inset-0 z-[100] h-dvh w-dvw p-4 sm:p-8"
+              ? "fixed inset-0 z-[100] h-dvh w-dvw p-4 sm:p-8 overflow-hidden"
               : "min-h-[calc(100dvh-75px)] rounded-3xl border border-border"
           }`}
         >
           {/* Top Note switcher bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-2.5 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-2.5 sm:px-6 bg-card">
+            {/* Left: Saved notes & note switcher */}
             <div className="flex items-center gap-2 overflow-x-auto">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mr-1">
-                Notes:
-              </span>
-              {notes.map((n) => (
+              {/* Big obvious Saved Notes button */}
+              <button
+                type="button"
+                onClick={() => setSavedDrawerOpen(true)}
+                className="flex items-center gap-1.5 rounded-full border border-border bg-secondary/80 px-3.5 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
+              >
+                <FolderOpen className="size-4 text-muted-foreground" />
+                <span>Saved Notes ({notes.length})</span>
+              </button>
+
+              <div className="h-4 w-px bg-border mx-1" />
+
+              {notes.slice(0, 4).map((n) => (
                 <button
                   key={n.id}
                   onClick={() => setActiveId(n.id)}
@@ -245,272 +260,158 @@ function NotesEditorPage() {
                       : "bg-secondary text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <span className="max-w-[120px] truncate sm:max-w-[160px]">{n.title}</span>
+                  <span className="max-w-[120px] truncate sm:max-w-[150px]">{n.title || "Untitled"}</span>
                 </button>
               ))}
+
               <button
                 type="button"
                 onClick={createNewNote}
-                className="flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-foreground hover:text-foreground"
+                className="flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:border-foreground hover:text-foreground"
               >
                 <FilePlus className="size-3.5" />
                 <span>New</span>
               </button>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
+            {/* Right: Autosave status + Big Obvious Fullscreen button */}
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <Check className="size-3 text-emerald-500" />
                 {savedStatus === "saved" ? "Autosaved" : "Saving..."}
               </span>
+
+              {/* Big Obvious Fullscreen Button */}
               <button
                 type="button"
-                onClick={deleteActiveNote}
-                title="Delete note"
-                className="rounded-lg p-1.5 hover:bg-secondary hover:text-destructive"
+                onClick={() => setFullscreen((v) => !v)}
+                className="flex items-center gap-2 rounded-full bg-foreground px-4 py-1.5 text-xs font-semibold text-background shadow-sm transition-transform hover:scale-105 active:scale-95"
               >
-                <Trash2 className="size-3.5" />
+                {fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                <span>{fullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
               </button>
             </div>
           </div>
 
-          {/* ── Rich Text Toolbar (Matches user's screenshot exactly!) ──────────── */}
-          <div className="flex flex-wrap items-center gap-1 border-b border-border bg-card/60 px-3 py-2 text-foreground sm:gap-1.5 sm:px-6 backdrop-blur">
-            {/* Font family dropdown */}
-            <div className="relative">
-              <select
-                value={fontFamily}
-                onChange={(e) => {
-                  setFontFamily(e.target.value);
-                  exec("fontName", e.target.value);
-                }}
-                className="h-8 rounded-lg border border-border bg-background px-2.5 text-xs font-medium text-foreground focus:outline-none"
-              >
-                <option value="Inter">Inter</option>
-                <option value="Georgia">Georgia</option>
-                <option value="serif">Serif</option>
-                <option value="monospace">Monospace</option>
-                <option value="Arial">Arial</option>
-              </select>
-            </div>
+          {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
+          <div className="flex flex-wrap items-center gap-1 border-b border-border bg-secondary/30 px-3 py-1.5 text-foreground sm:px-6">
+            {/* Font Family */}
+            <select
+              value={fontFamily}
+              onChange={(e) => setFontFamily(e.target.value)}
+              className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-medium focus:outline-none"
+            >
+              <option value="Inter, sans-serif">Inter (Sans)</option>
+              <option value="Georgia, serif">Georgia (Serif)</option>
+              <option value="'Playfair Display', serif">Playfair (Display)</option>
+              <option value="'Courier New', monospace">Monospace</option>
+              <option value="Arial, sans-serif">Arial</option>
+            </select>
 
-            {/* Font size dropdown */}
-            <div className="relative">
-              <select
-                value={fontSize}
-                onChange={(e) => {
-                  setFontSize(e.target.value);
-                  exec("fontSize", e.target.value === "11" ? "2" : e.target.value === "15" ? "3" : "4");
-                }}
-                className="h-8 w-14 rounded-lg border border-border bg-background px-2 text-xs font-medium text-foreground focus:outline-none"
-              >
-                <option value="9">9</option>
-                <option value="11">11</option>
-                <option value="13">13</option>
-                <option value="15">15</option>
-                <option value="18">18</option>
-                <option value="24">24</option>
-              </select>
-            </div>
+            {/* Font Size */}
+            <select
+              value={fontSize}
+              onChange={(e) => setFontSize(e.target.value)}
+              className="rounded-lg border border-border bg-card px-2 py-1 text-xs font-medium focus:outline-none"
+            >
+              <option value="12">12</option>
+              <option value="14">14</option>
+              <option value="15">15</option>
+              <option value="18">18</option>
+              <option value="22">22</option>
+              <option value="26">26</option>
+            </select>
 
             <div className="mx-1 h-4 w-px bg-border" />
 
-            {/* Formatting: Bold, Italic, Underline, Strikethrough */}
-            <button
-              type="button"
-              onClick={() => exec("bold")}
-              title="Bold (Ctrl+B)"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            {/* Bold, Italic, Underline, Strike */}
+            <button type="button" onClick={() => exec("bold")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <Bold className="size-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={() => exec("italic")}
-              title="Italic (Ctrl+I)"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            <button type="button" onClick={() => exec("italic")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <Italic className="size-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={() => exec("underline")}
-              title="Underline (Ctrl+U)"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            <button type="button" onClick={() => exec("underline")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <Underline className="size-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={() => exec("strikeThrough")}
-              title="Strikethrough"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            <button type="button" onClick={() => exec("strikeThrough")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <Strikethrough className="size-3.5" />
             </button>
 
             <div className="mx-1 h-4 w-px bg-border" />
 
-            {/* Highlighter */}
-            <button
-              type="button"
-              onClick={() => exec("hiliteColor", "#fef08a")}
-              title="Highlight yellow"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
-              <Highlighter className="size-3.5 text-amber-500" />
+            {/* Highlight & Text color */}
+            <button type="button" onClick={() => exec("hiliteColor", "#fef08a")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary text-amber-500">
+              <Highlighter className="size-3.5" />
             </button>
-
-            {/* Color palette */}
-            <button
-              type="button"
-              onClick={() => exec("foreColor", "#7c3aed")}
-              title="Purple text"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
-              <Palette className="size-3.5 text-lavender" />
+            <button type="button" onClick={() => exec("foreColor", "#7c3aed")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary text-purple-600">
+              <Palette className="size-3.5" />
             </button>
 
             <div className="mx-1 h-4 w-px bg-border" />
 
             {/* Alignment */}
-            <button
-              type="button"
-              onClick={() => exec("justifyLeft")}
-              title="Align Left"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            <button type="button" onClick={() => exec("justifyLeft")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <AlignLeft className="size-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={() => exec("justifyCenter")}
-              title="Align Center"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            <button type="button" onClick={() => exec("justifyCenter")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <AlignCenter className="size-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={() => exec("justifyRight")}
-              title="Align Right"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            <button type="button" onClick={() => exec("justifyRight")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <AlignRight className="size-3.5" />
             </button>
 
             <div className="mx-1 h-4 w-px bg-border" />
 
             {/* Lists */}
-            <button
-              type="button"
-              onClick={() => exec("insertOrderedList")}
-              title="Numbered List"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
-              <ListOrdered className="size-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => exec("insertUnorderedList")}
-              title="Bulleted List"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            <button type="button" onClick={() => exec("insertUnorderedList")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <List className="size-3.5" />
+            </button>
+            <button type="button" onClick={() => exec("insertOrderedList")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
+              <ListOrdered className="size-3.5" />
             </button>
 
             <div className="mx-1 h-4 w-px bg-border" />
 
-            {/* Undo & Redo */}
-            <button
-              type="button"
-              onClick={() => exec("undo")}
-              title="Undo"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            {/* Undo / Redo */}
+            <button type="button" onClick={() => exec("undo")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <Undo2 className="size-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={() => exec("redo")}
-              title="Redo"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            <button type="button" onClick={() => exec("redo")} className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <Redo2 className="size-3.5" />
             </button>
 
-            {/* Insert dropdown */}
-            <button
-              type="button"
-              onClick={() => {
-                const quote = prompt("Enter text to insert as key takeaway / quote:");
-                if (quote) {
-                  exec(
-                    "insertHTML",
-                    `<blockquote style="border-left: 4px solid #8b5cf6; padding-left: 16px; margin: 20px 0; font-style: italic; color: #6b7280;">"${quote}"</blockquote>`
-                  );
-                }
-              }}
-              title="Insert quote or block"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
-              <Plus className="size-4" />
-            </button>
-
-            {/* History */}
-            <button
-              type="button"
-              onClick={() => alert("Note revisions are automatically versioned and stored locally in your browser.")}
-              title="Revision History"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
-              <History className="size-3.5" />
-            </button>
+            <div className="mx-1 h-4 w-px bg-border" />
 
             {/* Print */}
-            <button
-              type="button"
-              onClick={() => window.print()}
-              title="Print Note (Ctrl+P)"
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
+            <button type="button" onClick={() => window.print()} title="Print Note" className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary">
               <Printer className="size-3.5" />
-            </button>
-
-            {/* Fullscreen */}
-            <button
-              type="button"
-              onClick={() => setFullscreen((v) => !v)}
-              title={fullscreen ? "Exit Fullscreen" : "Fullscreen"}
-              className="flex size-7.5 items-center justify-center rounded-lg hover:bg-secondary active:scale-95"
-            >
-              {fullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
             </button>
 
             <div className="flex-1" />
 
-            {/* ── AI Assistant Button (Matches green sparkle in screenshot!) ─── */}
+            {/* AI Assistant Button */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setAiPromptOpen((v) => !v)}
-                title="AI Note Assistant"
-                className="flex size-8 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-600 transition-transform hover:scale-105 active:scale-95 dark:bg-emerald-500/30 dark:text-emerald-400"
+                className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-foreground hover:bg-secondary/80 transition-colors"
               >
-                <Sparkles className="size-4.5" />
+                <Bot className="size-3.5 text-lavender" />
+                <span>AI Note Assist</span>
               </button>
 
               {aiPromptOpen && (
-                <div className="absolute right-0 top-10 z-50 w-72 rounded-2xl border border-border bg-card p-3 shadow-xl">
+                <div className="absolute right-0 top-9 z-50 w-72 rounded-2xl border border-border bg-card p-3 shadow-xl">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    ✨ AI Note Tools
+                    AI Study Tools
                   </p>
                   <div className="space-y-1">
                     {[
                       { label: "Summarize this note", type: "summarize key points into bullet list" },
                       { label: "Generate 5 revision questions", type: "generate 5 active recall test questions" },
-                      { label: "Simplify complex explanations", type: "simplify complex jargon for high school students" },
-                      { label: "Check grammar & improve clarity", type: "improve flow and clarity" },
+                      { label: "Simplify complex explanations", type: "simplify complex jargon for students" },
+                      { label: "Check grammar & clarity", type: "improve flow and clarity" },
                     ].map((item) => (
                       <button
                         key={item.label}
@@ -526,7 +427,7 @@ function NotesEditorPage() {
                   </div>
                   {aiGenerating && (
                     <div className="mt-2 flex items-center justify-center gap-2 text-xs text-lavender font-medium">
-                      <Sparkles className="size-3 animate-spin" /> Thinking...
+                      Thinking...
                     </div>
                   )}
                 </div>
@@ -562,6 +463,99 @@ function NotesEditorPage() {
             </div>
           </div>
         </div>
+
+        {/* ── Saved Notes Slide-over Drawer ─────────────────────────────────── */}
+        {savedDrawerOpen && (
+          <div className="fixed inset-0 z-[110] flex justify-end">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSavedDrawerOpen(false)} />
+            <div className="relative w-full max-w-md h-full bg-card border-l border-border p-6 shadow-2xl flex flex-col">
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="size-5 text-lavender" />
+                  <h2 className="text-lg font-bold text-foreground">My Saved Notes</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSavedDrawerOpen(false)}
+                  className="rounded-full p-1.5 hover:bg-secondary text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* Search bar inside drawer */}
+              <div className="relative mt-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                <input
+                  type="search"
+                  value={searchNotes}
+                  onChange={(e) => setSearchNotes(e.target.value)}
+                  placeholder="Search saved notes..."
+                  className="w-full rounded-xl border border-border bg-secondary/50 py-2 pl-9 pr-3 text-xs outline-none focus:border-lavender"
+                />
+              </div>
+
+              {/* Notes list */}
+              <div className="flex-1 overflow-y-auto mt-4 space-y-2">
+                {filteredNotes.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">No saved notes found.</p>
+                ) : (
+                  filteredNotes.map((n) => {
+                    const isSelected = n.id === activeId;
+                    return (
+                      <div
+                        key={n.id}
+                        className={`group flex items-start justify-between rounded-2xl border p-3 transition-all cursor-pointer ${
+                          isSelected
+                            ? "border-foreground bg-secondary/80"
+                            : "border-border bg-card hover:bg-secondary/40"
+                        }`}
+                        onClick={() => {
+                          setActiveId(n.id);
+                          setSavedDrawerOpen(false);
+                        }}
+                      >
+                        <div className="min-w-0 flex-1 pr-2">
+                          <p className="truncate text-sm font-semibold text-foreground">
+                            {n.title || "Untitled Note"}
+                          </p>
+                          <p className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1">
+                            <Calendar className="size-3" />
+                            <span>{new Date(n.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteActiveNote(n.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-opacity"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="border-t border-border pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    createNewNote();
+                    setSavedDrawerOpen(false);
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-foreground py-2.5 text-xs font-semibold text-background shadow-md hover:opacity-90"
+                >
+                  <FilePlus className="size-4" />
+                  <span>Create New Note</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </DashboardLayout>
     </>
   );

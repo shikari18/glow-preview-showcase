@@ -157,20 +157,7 @@ export const MATHEMATICS: SubjectNotes = {
           title: "Solving Equations and Inequalities",
           body: `Methods for finding exact solutions to linear, quadratic, and simultaneous equations, and representing inequality solution sets.
 
-\`\`\`diagram
-                 y ▲
-                   │           | Line of Symmetry: x = -b / (2a)
-             \\     │     /     |
-              \\    │    /
-               \\   │   /       y = ax² + bx + c  (a > 0)
-                \\  │  /
-        Root 1   \\ │ /   Root 2
-     ──────●───────┼──────●──────► x
-            \\      │      /
-             \\     │     /
-              \\____│____/  ◄ Minimum Vertex (-b/2a, c - b²/4a)
-                   │
-\`\`\``,
+![Quadratic Function Parabola Anatomy: Roots, Line of Symmetry, and Vertex](/diagrams/quadratic-graph.svg)`,
           groups: [
             {
               subTitle: "Quadratic Equations",
