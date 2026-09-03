@@ -89,6 +89,18 @@ declare global {
         render: (el: HTMLElement) => Promise<void>;
         isEligible: () => boolean;
       };
+      CardFields?: (cfg: {
+        createOrder: () => Promise<string>;
+        onApprove: (data: { orderID: string }) => Promise<void>;
+        onError: (err: unknown) => void;
+      }) => {
+        isEligible: () => boolean;
+        NumberField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
+        ExpiryField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
+        CVVField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
+        NameField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
+        submit: (data?: { cardholderName?: string }) => Promise<void>;
+      };
     };
   }
 }

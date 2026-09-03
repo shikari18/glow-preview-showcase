@@ -9,15 +9,6 @@ import {
   CreditCard,
   AlertCircle,
 } from "lucide-react";
-import { loadStripe, type Stripe as StripeType } from "@stripe/stripe-js";
-import {
-  Elements,
-  CardNumberElement,
-  CardExpiryElement,
-  CardCvcElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
 
 import logoMark from "@/assets/logo-mark.png";
 import { saveProfile } from "@/lib/onboarding";
@@ -26,6 +17,7 @@ import {
   formatPrice,
   convertPrice,
   type CurrencyInfo,
+  PAYPAL_CLIENT_ID,
 } from "@/lib/paypal";
 import { updateAccountPlan, type PlanLabel } from "@/lib/admin-store";
 
@@ -39,17 +31,6 @@ export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
 
-// ─── Stripe setup ─────────────────────────────────────────────────────────────
-
-const STRIPE_PK =
-  (import.meta.env["VITE_STRIPE_PUBLISHABLE_KEY"] as string | undefined) ?? "";
-
-let _stripePromise: ReturnType<typeof loadStripe> | null = null;
-function getStripePromise() {
-  if (!_stripePromise) _stripePromise = loadStripe(STRIPE_PK);
-  return _stripePromise;
-}
-
 // ─── Plan data ────────────────────────────────────────────────────────────────
 
 const PLANS: Record<string, { name: string; period: string; features: string[] }> = {
@@ -62,56 +43,58 @@ const PLANS: Record<string, { name: string; period: string; features: string[] }
     name: "Monthly Plan",
     period: "billed every month",
     features: [
-      "Full notes access",
-      "Past papers",
-      "AI chat",
-      "Priority support",
-      "Cancel anytime",
+      "Full notes access", "Past papers", "AI chat",
+      "Priority support", "Cancel anytime",
     ],
   },
   termly: {
     name: "Termly Plan",
     period: "billed every 3 months",
     features: [
-      "Full notes access",
-      "Past papers",
-      "AI chat",
-      "Priority support",
-      "Study plan",
-      "Cancel anytime",
+      "Full notes access", "Past papers", "AI chat",
+      "Priority support", "Study plan", "Cancel anytime",
     ],
   },
   "exam-pass": {
     name: "Exam Pass",
     period: "valid until end of exam season",
     features: [
-      "Full notes access",
-      "Past papers",
-      "AI chat",
-      "Priority support",
-      "Study plan",
-      "Exam prep toolkit",
+      "Full notes access", "Past papers", "AI chat",
+      "Priority support", "Study plan", "Exam prep toolkit",
     ],
   },
 };
 
-// ─── Stripe card element styles ───────────────────────────────────────────────
+// ─── SDK loader ───────────────────────────────────────────────────────────────
 
-const ELEMENT_STYLE = {
-  base: {
-    fontSize: "15px",
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    color: "#18181b",
-    "::placeholder": { color: "#a1a1aa" },
-    iconColor: "#71717a",
-  },
-  invalid: { color: "#ef4444" },
-};
+let _sdkPromise: Promise<void> | null = null;
 
-// ─── Inner card form (must be inside <Elements>) ──────────────────────────────
+function loadPayPalSDK(currency: string): Promise<void> {
+  if (_sdkPromise) return _sdkPromise;
+  _sdkPromise = new Promise((resolve, reject) => {
+    // Remove stale script if any
+    document.getElementById("paypal-sdk")?.remove();
 
-function CardForm({
+    const s = document.createElement("script");
+    s.id = "paypal-sdk";
+    s.src = [
+      "https://www.paypal.com/sdk/js",
+      `?client-id=${PAYPAL_CLIENT_ID}`,
+      `&currency=${currency}`,
+      "&intent=capture",
+      "&components=card-fields,buttons",
+    ].join("");
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("PayPal SDK failed to load"));
+    document.head.appendChild(s);
+  });
+  return _sdkPromise;
+}
+
+// ─── PayPal card form component ───────────────────────────────────────────────
+
+function PayPalCardForm({
   planId,
   currency,
   onSuccess,
@@ -120,148 +103,209 @@ function CardForm({
   currency: CurrencyInfo;
   onSuccess: () => void;
 }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [cardReady, setCardReady] = useState(false);
+  const [state, setState] = useState<"loading" | "ready" | "buttons" | "error">("loading");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const cardFieldsRef = useRef<{
+    isEligible: () => boolean;
+    NumberField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
+    ExpiryField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
+    CVVField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
+    NameField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
+    submit: (data?: { cardholderName?: string }) => Promise<void>;
+  } | null>(null);
+  const mountedRef = useRef(false);
 
   const amount = convertPrice(planId, currency);
-  const plan = PLANS[planId] ?? PLANS["monthly"]!;
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!stripe || !elements) return;
+  const createOrder = useCallback(async (): Promise<string> => {
+    const res = await fetch("/api/paypal-order", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ amount, currency: currency.code, planId }),
+    });
+    const data = (await res.json()) as { orderId?: string; error?: string };
+    if (!res.ok || !data.orderId) throw new Error(data.error ?? "Could not create order");
+    return data.orderId;
+  }, [amount, currency.code, planId]);
 
-      setProcessing(true);
-      setError(null);
+  const handleApprove = useCallback(async ({ orderID }: { orderID: string }) => {
+    const res = await fetch("/api/paypal-capture", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ orderId: orderID }),
+    });
+    const data = (await res.json()) as { status?: string; error?: string };
+    if (!res.ok || data.error) throw new Error(data.error ?? "Payment capture failed");
 
-      try {
-        // 1. Create PaymentIntent on server
-        const res = await fetch("/api/payment-intent", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            amount: parseFloat(amount),
-            currency: currency.code,
-            planId,
-          }),
+    saveProfile({ plan: planId as PlanLabel });
+    const uid = window.localStorage.getItem("examglow.google_sub");
+    if (uid) await updateAccountPlan(uid, planId as PlanLabel);
+    onSuccess();
+  }, [planId, onSuccess]);
+
+  useEffect(() => {
+    if (mountedRef.current) return;
+    mountedRef.current = true;
+
+    loadPayPalSDK(currency.code)
+      .then(() => {
+        if (!window.paypal) { setState("error"); return; }
+
+        const ppCardFields = window.paypal.CardFields;
+        if (!ppCardFields) {
+          // CardFields API not available on this PayPal SDK version — fall back
+          setState("buttons");
+          return;
+        }
+
+        const cardFields = ppCardFields({
+          createOrder,
+          onApprove: handleApprove,
+          onError: (err: unknown) => {
+            console.error("PayPal card error:", err);
+            setErrorMsg("Payment failed. Please check your card details and try again.");
+            setSubmitting(false);
+          },
         });
 
-        const data = (await res.json()) as {
-          clientSecret?: string;
-          error?: string;
-        };
+        if (cardFields.isEligible()) {
+          cardFieldsRef.current = cardFields;
 
-        if (!res.ok || !data.clientSecret) {
-          setError(data.error ?? "Could not initialise payment. Please try again.");
-          setProcessing(false);
-          return;
+          // Mount fields into placeholder divs
+          cardFields.NumberField({ placeholder: "Card number" }).mount("#pp-card-number");
+          cardFields.ExpiryField({ placeholder: "MM / YY" }).mount("#pp-card-expiry");
+          cardFields.CVVField({ placeholder: "CVC" }).mount("#pp-card-cvv");
+          cardFields.NameField({ placeholder: "Name on card" }).mount("#pp-card-name");
+
+          setState("ready");
+        } else {
+          // CardFields not eligible on this merchant account — fall back to PayPal buttons
+          setState("buttons");
         }
+      })
+      .catch((err) => {
+        console.error("PayPal SDK load error:", err);
+        setState("error");
+      });
+  }, [currency.code, createOrder, handleApprove]);
 
-        // 2. Confirm card payment with Stripe
-        const cardElement = elements.getElement(CardNumberElement);
-        if (!cardElement) {
-          setError("Card element not found. Please refresh the page.");
-          setProcessing(false);
-          return;
-        }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!cardFieldsRef.current || submitting) return;
+    setSubmitting(true);
+    setErrorMsg(null);
+    try {
+      await cardFieldsRef.current.submit({ cardholderName: name });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Payment failed. Please try again.";
+      setErrorMsg(msg);
+      setSubmitting(false);
+    }
+  };
 
-        const { error: stripeErr, paymentIntent } =
-          await stripe.confirmCardPayment(data.clientSecret, {
-            payment_method: { card: cardElement },
-          });
-
-        if (stripeErr) {
-          setError(stripeErr.message ?? "Payment failed. Please try again.");
-        } else if (paymentIntent?.status === "succeeded") {
-          // 3. Upgrade plan locally + in Supabase
-          saveProfile({ plan: planId as PlanLabel });
-          const uid = window.localStorage.getItem("examglow.google_sub");
-          if (uid) await updateAccountPlan(uid, planId as PlanLabel);
-          onSuccess();
-        }
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "An error occurred";
-        setError(msg);
-      } finally {
-        setProcessing(false);
-      }
-    },
-    [stripe, elements, amount, currency, planId, onSuccess],
-  );
-
-  if (!STRIPE_PK) {
+  // ── Loading ────────────────────────────────────────────────────────────────
+  if (state === "loading") {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
-        <p className="font-semibold">Stripe not configured yet</p>
-        <p className="mt-1 text-amber-700">
-          Add <code className="rounded bg-amber-100 px-1">VITE_STRIPE_PUBLISHABLE_KEY</code>{" "}
-          and <code className="rounded bg-amber-100 px-1">STRIPE_SECRET_KEY</code> to your
-          Cloudflare environment variables to accept card payments.
-        </p>
+      <div className="flex h-24 items-center justify-center gap-2 rounded-2xl bg-zinc-100 text-sm text-zinc-500">
+        <Loader2 className="size-4 animate-spin" />
+        Loading payment form…
       </div>
     );
   }
 
+  // ── SDK failed to load ─────────────────────────────────────────────────────
+  if (state === "error") {
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+        <p className="font-semibold">Could not load PayPal</p>
+        <p className="mt-1 text-red-500">
+          Please check your internet connection, then refresh the page.
+          Make sure pop-ups are not blocked.
+        </p>
+        <button
+          onClick={() => { _sdkPromise = null; mountedRef.current = false; setState("loading"); }}
+          className="mt-3 rounded-full bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  // ── Fallback: PayPal standard buttons (when CardFields not available) ───────
+  if (state === "buttons") {
+    return (
+      <div className="space-y-3">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+          <strong>Card form</strong> is not enabled on this PayPal account.
+          Use the PayPal buttons below to pay by card (click PayPal →
+          "Pay with Debit or Credit Card").
+        </div>
+        <PayPalButtonsFallback planId={planId} currency={currency} onSuccess={onSuccess} />
+      </div>
+    );
+  }
+
+  // ── PayPal Card Fields form ────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Name on card */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+          Name on card
+        </label>
+        <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-shadow">
+          <div id="pp-card-name" className="w-full" />
+        </div>
+      </div>
+
       {/* Card number */}
       <div>
         <label className="mb-1.5 block text-sm font-medium text-zinc-700">
           Card number
         </label>
-        <div
-          className={`flex items-center gap-3 rounded-2xl border px-4 py-3.5 transition-shadow focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-200 ${
-            cardReady ? "border-zinc-300" : "border-zinc-200"
-          } bg-white`}
-        >
+        <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-shadow">
           <CreditCard className="size-4 shrink-0 text-zinc-400" />
-          <div className="w-full">
-            <CardNumberElement
-              options={{ style: ELEMENT_STYLE, showIcon: true }}
-              onReady={() => setCardReady(true)}
-            />
-          </div>
+          <div id="pp-card-number" className="w-full" />
         </div>
       </div>
 
-      {/* Expiry + CVC */}
+      {/* Expiry + CVV */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-            Expiry
-          </label>
-          <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 transition-shadow focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-200">
-            <CardExpiryElement options={{ style: ELEMENT_STYLE }} />
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Expiry</label>
+          <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-shadow">
+            <div id="pp-card-expiry" />
           </div>
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-            CVC
-          </label>
-          <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3.5 transition-shadow focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-200">
-            <CardCvcElement options={{ style: ELEMENT_STYLE }} />
+          <label className="mb-1.5 block text-sm font-medium text-zinc-700">CVC</label>
+          <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-shadow">
+            <div id="pp-card-cvv" />
           </div>
         </div>
       </div>
 
+      {/* Name state — hidden since PayPal NameField handles it, but keep for accessibility */}
+      <input type="hidden" value={name} onChange={(e) => setName(e.target.value)} />
+
       {/* Error */}
-      {error && (
+      {errorMsg && (
         <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
-          <span>{error}</span>
+          <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Submit */}
       <button
         type="submit"
-        disabled={!stripe || processing}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-900 py-3.5 text-[15px] font-semibold text-white transition-all hover:bg-zinc-700 active:scale-[0.99] disabled:opacity-60"
+        disabled={submitting}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0070BA] py-3.5 text-[15px] font-semibold text-white transition-all hover:bg-[#005ea6] active:scale-[0.99] disabled:opacity-60"
       >
-        {processing ? (
+        {submitting ? (
           <>
             <Loader2 className="size-4 animate-spin" />
             Processing…
@@ -269,7 +313,7 @@ function CardForm({
         ) : (
           <>
             <Lock className="size-4" />
-            Pay {formatPrice(planId, currency)} — {plan.name}
+            Pay {formatPrice(planId, currency)} securely
           </>
         )}
       </button>
@@ -285,13 +329,17 @@ function CardForm({
           </span>
         ))}
       </div>
+
+      <p className="text-center text-xs text-zinc-400">
+        Processed securely by PayPal · No PayPal account needed
+      </p>
     </form>
   );
 }
 
-// ─── Stripe Elements wrapper ───────────────────────────────────────────────────
+// ─── Fallback PayPal buttons (if CardFields not eligible) ─────────────────────
 
-function StripeSection({
+function PayPalButtonsFallback({
   planId,
   currency,
   onSuccess,
@@ -300,26 +348,33 @@ function StripeSection({
   currency: CurrencyInfo;
   onSuccess: () => void;
 }) {
-  const stripePromise = getStripePromise();
+  const ref = useRef<HTMLDivElement>(null);
+  const rendered = useRef(false);
+  const amount = convertPrice(planId, currency);
+  const plan = PLANS[planId];
 
-  if (!STRIPE_PK) {
-    return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
-        <p className="font-semibold">Stripe not configured yet</p>
-        <p className="mt-1 text-amber-700">
-          Add <code className="rounded bg-amber-100 px-1">VITE_STRIPE_PUBLISHABLE_KEY</code>{" "}
-          and <code className="rounded bg-amber-100 px-1">STRIPE_SECRET_KEY</code> to your
-          Cloudflare environment variables.
-        </p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (rendered.current || !window.paypal || !ref.current) return;
+    rendered.current = true;
 
-  return (
-    <Elements stripe={stripePromise}>
-      <CardForm planId={planId} currency={currency} onSuccess={onSuccess} />
-    </Elements>
-  );
+    window.paypal.Buttons({
+      style: { layout: "vertical", color: "blue", shape: "rect", label: "pay", height: 50, tagline: false },
+      createOrder: async (_d: unknown, actions: { order: { create: (o: unknown) => Promise<string> } }) =>
+        actions.order.create({
+          intent: "CAPTURE",
+          purchase_units: [{ description: `ExamGlow ${plan?.name ?? planId}`, amount: { currency_code: currency.code, value: amount } }],
+        }),
+      onApprove: async (data: { orderID: string }, actions: { order: { capture: () => Promise<unknown> } }) => {
+        await actions.order.capture();
+        saveProfile({ plan: planId as PlanLabel });
+        const uid = window.localStorage.getItem("examglow.google_sub");
+        if (uid) await updateAccountPlan(uid, planId as PlanLabel);
+        onSuccess();
+      },
+    }).render(ref.current!);
+  }, [amount, currency, plan, planId, onSuccess]);
+
+  return <div ref={ref} />;
 }
 
 // ─── Success screen ────────────────────────────────────────────────────────────
@@ -347,9 +402,7 @@ function CheckoutPage() {
 
   const plan = PLANS[planId] ?? PLANS["monthly"]!;
 
-  useEffect(() => {
-    detectCurrency().then(setCurrency);
-  }, []);
+  useEffect(() => { detectCurrency().then(setCurrency); }, []);
 
   const handleSuccess = useCallback(() => {
     if (successRef.current) return;
@@ -370,8 +423,7 @@ function CheckoutPage() {
             <span className="text-[17px] font-bold text-zinc-900">ExamGlow</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-            <Lock className="size-3.5" />
-            Secure checkout
+            <Lock className="size-3.5" /> Secure checkout
           </div>
         </div>
       </header>
@@ -386,7 +438,7 @@ function CheckoutPage() {
 
         <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
 
-          {/* ── Left: Card form ──────────────────────────────────────────── */}
+          {/* ── Left: Payment form ─────────────────────────────────────────── */}
           <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
             <h1 className="text-xl font-bold text-zinc-900">Complete your purchase</h1>
             <p className="mt-1 text-sm text-zinc-500">
@@ -418,7 +470,7 @@ function CheckoutPage() {
             {/* Card form */}
             <div className="mt-6">
               {currency ? (
-                <StripeSection
+                <PayPalCardForm
                   key={`${planId}-${currency.code}`}
                   planId={planId}
                   currency={currency}
@@ -426,27 +478,20 @@ function CheckoutPage() {
                 />
               ) : (
                 <div className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-zinc-100 text-sm text-zinc-500">
-                  <Loader2 className="size-4 animate-spin" />
-                  Detecting your location…
+                  <Loader2 className="size-4 animate-spin" /> Detecting your location…
                 </div>
               )}
             </div>
 
             {/* Trust row */}
             <div className="mt-6 flex items-center justify-center gap-5 text-xs text-zinc-400">
-              <span className="flex items-center gap-1">
-                <Lock className="size-3" /> 256-bit SSL
-              </span>
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="size-3" /> Secure
-              </span>
-              <span className="flex items-center gap-1">
-                <Check className="size-3" /> Cancel anytime
-              </span>
+              <span className="flex items-center gap-1"><Lock className="size-3" /> 256-bit SSL</span>
+              <span className="flex items-center gap-1"><ShieldCheck className="size-3" /> Secure</span>
+              <span className="flex items-center gap-1"><Check className="size-3" /> Cancel anytime</span>
             </div>
           </div>
 
-          {/* ── Right: Plan summary ───────────────────────────────────────── */}
+          {/* ── Right: Plan summary ─────────────────────────────────────────── */}
           <div className="flex flex-col gap-4">
             <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
               <h2 className="font-bold text-zinc-900">{plan.name}</h2>
@@ -481,7 +526,7 @@ function CheckoutPage() {
               </p>
               <p className="mt-2">
                 Your card details are encrypted and processed by{" "}
-                <strong className="text-zinc-700">Stripe</strong> — one of the world's most
+                <strong className="text-zinc-700">PayPal</strong> — one of the world's most
                 trusted payment platforms. We never store your card information.
               </p>
             </div>
