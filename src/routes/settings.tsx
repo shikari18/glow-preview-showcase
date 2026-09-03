@@ -13,7 +13,7 @@ import {
   RefreshCw,
   AlertTriangle,
   LogOut,
-  Sparkles,
+  GraduationCap,
 } from "lucide-react";
 import { DashboardLayout, PageHeading } from "@/components/dashboard-page";
 import {
@@ -150,7 +150,7 @@ function SettingsPage() {
           <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
               <span className="flex size-9 items-center justify-center rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                <Sparkles className="size-4" />
+                <GraduationCap className="size-4" />
               </span>
               <div>
                 <h2 className="font-bold text-lg text-foreground">Yumna Tutoring Preferences</h2>

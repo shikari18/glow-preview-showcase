@@ -83,7 +83,15 @@ function PdfModal({ subject, doc, onClose }: {
 
 // ─── Subject row (collapsed by default) ──────────────────────────────────────
 
-const OPEN_FREE_SUBJECT_IDS = ["biology", "chemistry", "mathematics"];
+const OPEN_FREE_SUBJECT_IDS = [
+  "biology",
+  "chemistry",
+  "physics",
+  "mathematics",
+  "economics",
+  "computer-science",
+  "geography",
+];
 
 function SubjectRow({
   subject,

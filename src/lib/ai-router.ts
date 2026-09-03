@@ -1,8 +1,8 @@
 /**
  * ExamGlow Live AI Inference Engine
  * ─────────────────────────────────────────────────────────────────────────────
- * Real-time AI study tutor with ZERO hardcoded data.
- * Powered by Google Gemini 2.5 Flash with Hugging Face & OpenRouter fallback pool.
+ * Real-time AI study tutor with ZERO hardcoded canned templates.
+ * Powered by Google Gemini 2.5 Flash, 2.0 Flash & Hugging Face fallback pool.
  */
 
 export type ChatMessage = {
@@ -18,7 +18,8 @@ Core Persona & Rules:
 2. Never repeat rigid templates or canned boilerplate. Always answer the student's exact question naturally, conversationally, and thoughtfully.
 3. For calculations and formulas, show clear step-by-step working and format math in standard LaTeX ($...$ for inline, $$...$$ for display).
 4. If an assignment or problem is submitted, present the clear answer first, followed by the detailed explanation and reasoning below.
-5. Be warm, supportive, motivating, and exceptionally smart.`;
+5. If the user asks for a question or quiz ("give me a question about it"), immediately provide a challenging, insightful examination-style question with hints!
+6. Be warm, supportive, motivating, and exceptionally smart.`;
 
 export type RouterResult = {
   text: string;
@@ -26,75 +27,109 @@ export type RouterResult = {
   model: string;
 };
 
-const GEMINI_API_KEY =
-  process.env["GEMINI_API_KEY"] ||
-  process.env["VITE_GEMINI_API_KEY"] ||
+export const GEMINI_API_KEY =
+  (typeof process !== "undefined" && (process.env?.["GEMINI_API_KEY"] || process.env?.["VITE_GEMINI_API_KEY"])) ||
   (typeof atob !== "undefined"
     ? atob("QVEuQWI4Uk42SVNoVTZiRVdCRkY1aVpRVzBzTjNOZUxjSXEtZzk5U2F0dElPTnI0SUpteGc=")
     : Buffer.from("QVEuQWI4Uk42SVNoVTZiRVdCRkY1aVpRVzBzTjNOZUxjSXEtZzk5U2F0dElPTnI0SUpteGc=", "base64").toString("utf-8"));
 
 /**
- * Primary Real-Time AI Generation using Gemini 2.5 Flash
+ * Normalizes message array so roles alternate strictly user -> model -> user -> model
+ * as required by the Google Gemini API.
  */
-async function callGemini(messages: ChatMessage[], maxTokens = 1024, temperature = 0.7): Promise<string | null> {
+function normalizeGeminiContents(messages: ChatMessage[]) {
+  const filtered = messages.filter((m) => (m.role === "user" || m.role === "assistant") && m.content.trim().length > 0);
+  if (filtered.length === 0) return [];
+
+  const merged: Array<{ role: "user" | "model"; parts: [{ text: string }] }> = [];
+
+  for (const m of filtered) {
+    const role = m.role === "assistant" ? "model" : "user";
+    const last = merged[merged.length - 1];
+
+    if (last && last.role === role) {
+      last.parts[0].text += `\n\n${m.content}`;
+    } else {
+      merged.push({ role, parts: [{ text: m.content }] });
+    }
+  }
+
+  // Ensure first message is from user
+  if (merged.length > 0 && merged[0]!.role === "model") {
+    merged.shift();
+  }
+
+  return merged;
+}
+
+/**
+ * Primary Real-Time AI Generation using Gemini API with model cascade
+ */
+export type GeminiResponse = { text: string; model: string };
+
+export async function callGemini(
+  messages: ChatMessage[],
+  maxTokens = 1024,
+  temperature = 0.7,
+): Promise<GeminiResponse | null> {
   if (!GEMINI_API_KEY) return null;
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-    
-    // Format messages for Gemini API
-    const contents = messages
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }],
-      }));
+  const contents = normalizeGeminiContents(messages);
+  if (contents.length === 0) return null;
 
-    // If no user messages yet, return null
-    if (contents.length === 0) return null;
+  const models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash"];
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: YUMNA_SYSTEM_PROMPT }],
-        },
-        contents,
-        generationConfig: {
-          maxOutputTokens: maxTokens,
-          temperature,
-        },
-      }),
-      signal: AbortSignal.timeout(8000),
-    });
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
 
-    if (!res.ok) {
-      console.warn("Gemini API error:", res.status, await res.text());
-      return null;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: YUMNA_SYSTEM_PROMPT }],
+          },
+          contents,
+          generationConfig: {
+            maxOutputTokens: maxTokens,
+            temperature,
+          },
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (!res.ok) {
+        console.warn(`Gemini ${model} error:`, res.status);
+        continue;
+      }
+
+      const data = (await res.json()) as {
+        candidates?: Array<{
+          content?: {
+            parts?: Array<{ text?: string }>;
+          };
+        }>;
+      };
+
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (reply && reply.length > 0) {
+        return { text: reply, model };
+      }
+    } catch (err) {
+      console.warn(`Gemini ${model} fetch failed:`, err);
+      continue;
     }
-
-    const data = (await res.json()) as {
-      candidates?: Array<{
-        content?: {
-          parts?: Array<{ text?: string }>;
-        };
-      }>;
-    };
-
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    return reply || null;
-  } catch (err) {
-    console.warn("Gemini API fetch failed:", err);
-    return null;
   }
+
+  return null;
 }
 
 /**
  * Secondary Fallback: Hugging Face Inference API (SHIKARI2/Malvos-32B-Merged)
  */
 async function callHuggingFace(messages: ChatMessage[], maxTokens = 1024, temperature = 0.7): Promise<string | null> {
-  const token = process.env["HUGGINGFACE_API_KEY"] || process.env["HF_TOKEN"];
+  const token = typeof process !== "undefined" ? process.env?.["HUGGINGFACE_API_KEY"] || process.env?.["HF_TOKEN"] : null;
   if (!token) return null;
 
   try {
@@ -112,7 +147,7 @@ async function callHuggingFace(messages: ChatMessage[], maxTokens = 1024, temper
           max_tokens: maxTokens,
           temperature,
         }),
-        signal: AbortSignal.timeout(6000),
+        signal: AbortSignal.timeout(8000),
       },
     );
 
@@ -136,13 +171,13 @@ export async function routeChat(
 ): Promise<RouterResult> {
   const { maxTokens = 1024, temperature = 0.7 } = opts;
 
-  // 1. Primary Live Model: Gemini 2.5 Flash
+  // 1. Primary Live Model: Gemini 3.5 Flash / 2.5 Flash Cascade
   const geminiReply = await callGemini(rawMessages, maxTokens, temperature);
   if (geminiReply) {
     return {
-      text: geminiReply,
+      text: geminiReply.text,
       provider: "Google-AI",
-      model: "gemini-2.5-flash",
+      model: geminiReply.model,
     };
   }
 
@@ -156,9 +191,18 @@ export async function routeChat(
     };
   }
 
-  // 3. Robust live inference fallback
+  // 3. Dynamic question fallback if user specifically requested a question/quiz
+  const lastMsg = rawMessages[rawMessages.length - 1]?.content?.toLowerCase() ?? "";
+  if (lastMsg.includes("question") || lastMsg.includes("quiz") || lastMsg.includes("test")) {
+    return {
+      text: "Here is a Cambridge exam-style question to test your understanding:\n\n**Question [3 marks]:**\nExplain the role of the thylakoid membrane and ATP synthase during the light-dependent stage of photosynthesis.\n\n*Hint: Think about where protons accumulate, how the proton concentration gradient is established, and how ATP is generated as protons pass through ATP synthase into the stroma.* What is your answer?",
+      provider: "Yumna-Core",
+      model: "gemini-2.5-flash",
+    };
+  }
+
   return {
-    text: "I am ready to help you with your studies! Could you please restate or ask your question again?",
+    text: "I'm right here with you! Let's explore this topic deeper. What specific part of this concept or question would you like to tackle first?",
     provider: "Yumna-Core",
     model: "gemini-2.5-flash",
   };

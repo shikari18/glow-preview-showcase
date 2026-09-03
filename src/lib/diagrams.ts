@@ -399,41 +399,281 @@ export const DIAGRAM_MAP: Record<string, string> = {
     <text x="120" y="90" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#92400e">Output: Displays, Audio</text>
   </g>
 </svg>`,
+
+  "biology-classification.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 380" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
+    <rect width="840" height="46" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#14532d">Cambridge IGCSE Biology · 5 Kingdoms &amp; Dichotomous Key</text>
+    <g transform="translate(40, 75)">
+      <rect x="0" y="0" width="130" height="60" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+      <text x="65" y="26" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#065f46">Animalia</text>
+      <text x="65" y="44" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#047857">Multicellular, no wall</text>
+
+      <rect x="150" y="0" width="130" height="60" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+      <text x="215" y="26" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#1e40af">Plantae</text>
+      <text x="215" y="44" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#1d4ed8">Cellulose wall &amp; chloro</text>
+
+      <rect x="300" y="0" width="130" height="60" rx="10" fill="#fefce8" stroke="#eab308" stroke-width="2"/>
+      <text x="365" y="26" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#854d0e">Fungi</text>
+      <text x="365" y="44" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#a16207">Chitin wall, saprotrophic</text>
+
+      <rect x="450" y="0" width="130" height="60" rx="10" fill="#faf5ff" stroke="#a855f7" stroke-width="2"/>
+      <text x="515" y="26" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#6b21a8">Protoctista</text>
+      <text x="515" y="44" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#7e22ce">Single/colonial eukaryote</text>
+
+      <rect x="600" y="0" width="140" height="60" rx="10" fill="#fff1f2" stroke="#f43f5e" stroke-width="2"/>
+      <text x="670" y="26" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#9f1239">Prokaryotae</text>
+      <text x="670" y="44" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#be123c">No true nucleus, 70S</text>
+    </g>
+    <g transform="translate(80, 175)">
+      <rect x="0" y="0" width="680" height="155" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+      <text x="340" y="30" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#0f172a">Dichotomous Key Decision Logic (Pairwise Couplets)</text>
+      <path d="M 120 45 L 120 80 L 260 80 M 120 80 L 120 125 L 260 125" fill="none" stroke="#64748b" stroke-width="2"/>
+      <text x="270" y="84" font-family="monospace" font-size="11" fill="#334155">1a. Has jointed legs ................................... Go to 2</text>
+      <text x="270" y="129" font-family="monospace" font-size="11" fill="#334155">1b. No jointed legs (annelid / mollusc) ................ Annelida</text>
+    </g>
+  </svg>`,
+
+  "biology-enzyme.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 380" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
+    <rect width="840" height="46" fill="#fef2f2" stroke="#fecaca" stroke-width="1"/>
+    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#991b1b">Enzyme Action: Lock &amp; Key Hypothesis &amp; Active Site</text>
+    <g transform="translate(50, 80)">
+      <!-- Enzyme shape -->
+      <path d="M 40 180 C 40 100, 100 60, 180 60 C 210 60, 220 90, 240 110 C 260 130, 280 130, 300 110 C 320 90, 330 60, 360 60 C 440 60, 500 100, 500 180 C 500 240, 440 280, 270 280 C 100 280, 40 240, 40 180 Z" fill="#e0e7ff" stroke="#4338ca" stroke-width="3"/>
+      <text x="270" y="220" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="800" fill="#3730a3">ENZYME</text>
+      <text x="270" y="145" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#4f46e5">Active Site</text>
+      <!-- Substrate fitting in -->
+      <path d="M 230 40 L 310 40 L 290 85 L 250 85 Z" fill="#fef08a" stroke="#ca8a04" stroke-width="2.5"/>
+      <text x="270" y="30" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#854d0e">Substrate (Complementary Shape)</text>
+    </g>
+    <g transform="translate(560, 100)">
+      <rect width="230" height="180" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+      <text x="115" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#0f172a">Key Principles</text>
+      <text x="20" y="65" font-family="system-ui, sans-serif" font-size="11" fill="#334155">• Substrate binds to Active Site</text>
+      <text x="20" y="92" font-family="system-ui, sans-serif" font-size="11" fill="#334155">• Forms Enzyme-Substrate Complex</text>
+      <text x="20" y="120" font-family="system-ui, sans-serif" font-size="11" fill="#334155">• Reaction lowers Activation Energy</text>
+      <text x="20" y="148" font-family="system-ui, sans-serif" font-size="11" fill="#334155">• High temp/pH causes Denaturation</text>
+    </g>
+  </svg>`,
+
+  "biology-photosynthesis.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 380" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
+    <rect width="840" height="46" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1"/>
+    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#065f46">Plant Nutrition: Chloroplast Anatomy &amp; Photosynthetic Stages</text>
+    <g transform="translate(60, 80)">
+      <!-- Chloroplast outer and inner envelope -->
+      <ellipse cx="260" cy="140" rx="230" ry="115" fill="#f0fdf4" stroke="#16a34a" stroke-width="3"/>
+      <ellipse cx="260" cy="140" rx="215" ry="100" fill="none" stroke="#22c55e" stroke-width="2" stroke-dasharray="4,2"/>
+      <!-- Thylakoid grana stack -->
+      <rect x="120" y="110" width="60" height="16" rx="6" fill="#15803d"/>
+      <rect x="120" y="130" width="60" height="16" rx="6" fill="#15803d"/>
+      <rect x="120" y="150" width="60" height="16" rx="6" fill="#15803d"/>
+      <text x="150" y="190" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#14532d">Granum (Thylakoids)</text>
+      <!-- Stroma -->
+      <text x="360" y="145" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#15803d">Stroma (Fluid Matrix)</text>
+      <text x="360" y="165" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#166534">Calvin Cycle &amp; Glucose synthesis</text>
+    </g>
+    <g transform="translate(560, 100)">
+      <rect width="240" height="175" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+      <text x="120" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#0f172a">Balanced Equation</text>
+      <text x="120" y="65" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="#15803d">6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂</text>
+      <text x="20" y="105" font-family="system-ui, sans-serif" font-size="11" fill="#334155">• Chlorophyll absorbs light energy</text>
+      <text x="20" y="130" font-family="system-ui, sans-serif" font-size="11" fill="#334155">• Photolysis splits H₂O → H⁺ + O₂</text>
+      <text x="20" y="155" font-family="system-ui, sans-serif" font-size="11" fill="#334155">• Limiting factors: Light, CO₂, Temp</text>
+    </g>
+  </svg>`,
+
+  "chemistry-states-matter.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 380" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
+    <rect width="840" height="46" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#1e40af">Chemistry: Kinetic Particle Theory (Solid, Liquid, Gas Transitions)</text>
+    <g transform="translate(50, 80)">
+      <!-- Solid Box -->
+      <rect x="0" y="20" width="190" height="190" rx="12" fill="#f8fafc" stroke="#3b82f6" stroke-width="2"/>
+      <text x="95" y="45" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#1e40af">SOLID</text>
+      <g fill="#2563eb">
+        <circle cx="50" cy="80" r="14"/><circle cx="85" cy="80" r="14"/><circle cx="120" cy="80" r="14"/>
+        <circle cx="50" cy="115" r="14"/><circle cx="85" cy="115" r="14"/><circle cx="120" cy="115" r="14"/>
+        <circle cx="50" cy="150" r="14"/><circle cx="85" cy="150" r="14"/><circle cx="120" cy="150" r="14"/>
+      </g>
+      <text x="95" y="195" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Regular lattice · Vibrate in place</text>
+
+      <!-- Liquid Box -->
+      <rect x="250" y="20" width="190" height="190" rx="12" fill="#f8fafc" stroke="#06b6d4" stroke-width="2"/>
+      <text x="345" y="45" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#0891b2">LIQUID</text>
+      <g fill="#0891b2">
+        <circle cx="285" cy="85" r="14"/><circle cx="330" cy="95" r="14"/><circle cx="380" cy="80" r="14"/>
+        <circle cx="300" cy="130" r="14"/><circle cx="350" cy="140" r="14"/><circle cx="395" cy="125" r="14"/>
+        <circle cx="320" cy="170" r="14"/><circle cx="370" cy="175" r="14"/>
+      </g>
+      <text x="345" y="195" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Random, touching · Slide past</text>
+
+      <!-- Gas Box -->
+      <rect x="500" y="20" width="190" height="190" rx="12" fill="#f8fafc" stroke="#ec4899" stroke-width="2"/>
+      <text x="595" y="45" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#be185d">GAS</text>
+      <g fill="#db2777">
+        <circle cx="535" cy="80" r="14"/><circle cx="640" cy="95" r="14"/><circle cx="585" cy="145" r="14"/><circle cx="620" cy="170" r="14"/>
+      </g>
+      <text x="595" y="195" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Far apart · Rapid, random motion</text>
+    </g>
+    <text x="420" y="335" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#475569">
+      Melting (Solid → Liquid) · Boiling/Evaporation (Liquid → Gas) · Sublimation (Solid → Gas)
+    </text>
+  </svg>`,
+
+  "chemistry-mole-triangle.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 380" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
+    <rect width="840" height="46" fill="#fdf4ff" stroke="#f5d0fe" stroke-width="1"/>
+    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#86198f">The 3 Essential Cambridge Mole Calculation Triangles</text>
+    <g transform="translate(50, 75)">
+      <!-- Triangle 1: Mass -->
+      <polygon points="110,20 20,180 200,180" fill="#fdf2f8" stroke="#ec4899" stroke-width="2.5"/>
+      <line x1="45" y1="120" x2="175" y2="120" stroke="#ec4899" stroke-width="2"/>
+      <line x1="110" y1="120" x2="110" y2="180" stroke="#ec4899" stroke-width="2"/>
+      <text x="110" y="85" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#9d174d">Mass (g)</text>
+      <text x="70" y="155" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#be185d">Moles</text>
+      <text x="150" y="155" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#be185d">Mr / Ar</text>
+      <text x="110" y="215" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#9d174d">Moles = Mass / Mr</text>
+
+      <!-- Triangle 2: Gas Volume -->
+      <polygon points="370,20 280,180 460,180" fill="#eff6ff" stroke="#3b82f6" stroke-width="2.5"/>
+      <line x1="305" y1="120" x2="435" y2="120" stroke="#3b82f6" stroke-width="2"/>
+      <line x1="370" y1="120" x2="370" y2="180" stroke="#3b82f6" stroke-width="2"/>
+      <text x="370" y="85" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#1e40af">Vol (dm³)</text>
+      <text x="330" y="155" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#2563eb">Moles</text>
+      <text x="410" y="155" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#2563eb">24 dm³</text>
+      <text x="370" y="215" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#1e40af">Vol = Moles × 24</text>
+
+      <!-- Triangle 3: Solutions -->
+      <polygon points="630,20 540,180 720,180" fill="#ecfdf5" stroke="#10b981" stroke-width="2.5"/>
+      <line x1="565" y1="120" x2="695" y2="120" stroke="#10b981" stroke-width="2"/>
+      <line x1="630" y1="120" x2="630" y2="180" stroke="#10b981" stroke-width="2"/>
+      <text x="630" y="85" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="800" fill="#065f46">Moles</text>
+      <text x="590" y="155" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#059669">Conc</text>
+      <text x="670" y="155" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#059669">Vol(dm³)</text>
+      <text x="630" y="215" text-anchor="middle" font-family="monospace" font-size="12" font-weight="700" fill="#065f46">Moles = Conc × Vol</text>
+    </g>
+  </svg>`,
+
+  "physics-refraction.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 380" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
+    <rect width="840" height="46" fill="#f0f9ff" stroke="#bae6fd" stroke-width="1"/>
+    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#0369a1">Physics: Ray Optics, Refraction &amp; Snell's Law</text>
+    <g transform="translate(50, 75)">
+      <!-- Glass Block -->
+      <rect x="150" y="90" width="360" height="150" fill="#e0f2fe" stroke="#0284c7" stroke-width="2" opacity="0.8"/>
+      <text x="170" y="115" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#0369a1">Glass Medium (n = 1.5)</text>
+      <text x="170" y="70" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#64748b">Air (n = 1.0)</text>
+      <!-- Normal line -->
+      <line x1="330" y1="20" x2="330" y2="280" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="335" y="35" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Normal</text>
+      <!-- Incident Ray -->
+      <line x1="200" y1="10" x2="330" y2="90" stroke="#ef4444" stroke-width="3"/>
+      <!-- Refracted Ray inside glass -->
+      <line x1="330" y1="90" x2="380" y2="240" stroke="#ef4444" stroke-width="3"/>
+      <!-- Emergent Ray in air -->
+      <line x1="380" y1="240" x2="510" y2="320" stroke="#ef4444" stroke-width="3"/>
+      <!-- Angles -->
+      <text x="290" y="70" font-family="monospace" font-size="13" font-weight="700" fill="#b91c1c">Angle i</text>
+      <text x="350" y="135" font-family="monospace" font-size="13" font-weight="700" fill="#b91c1c">Angle r</text>
+    </g>
+    <g transform="translate(580, 95)">
+      <rect width="210" height="180" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+      <text x="105" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#0f172a">Snell's Law Formula</text>
+      <text x="105" y="65" text-anchor="middle" font-family="monospace" font-size="13" font-weight="800" fill="#0284c7">n = sin(i) / sin(r)</text>
+      <text x="20" y="105" font-family="system-ui, sans-serif" font-size="11" fill="#334155">• Ray bends towards normal</text>
+      <text x="20" y="130" font-family="system-ui, sans-serif" font-size="11" fill="#334155">• Speed slows down in glass</text>
+      <text x="20" y="155" font-family="system-ui, sans-serif" font-size="11" fill="#334155">• Critical angle: sin(c) = 1/n</text>
+    </g>
+  </svg>`,
+
+  "cs-logic-gates.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 380" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
+    <rect width="840" height="46" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1"/>
+    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#5b21b6">Computer Science: Standard Logic Gates &amp; Truth Tables</text>
+    <g transform="translate(50, 75)">
+      <!-- AND Gate -->
+      <rect x="0" y="20" width="220" height="110" rx="10" fill="#f8fafc" stroke="#8b5cf6" stroke-width="2"/>
+      <text x="110" y="45" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="800" fill="#6d28d9">AND Gate (A · B)</text>
+      <path d="M 35 65 L 75 65 C 95 65, 95 95, 75 95 L 35 95 Z" fill="#ede9fe" stroke="#6d28d9" stroke-width="2"/>
+      <text x="160" y="85" text-anchor="middle" font-family="monospace" font-size="11" fill="#334155">1 &amp; 1 = 1</text>
+
+      <!-- OR Gate -->
+      <rect x="260" y="20" width="220" height="110" rx="10" fill="#f8fafc" stroke="#3b82f6" stroke-width="2"/>
+      <text x="370" y="45" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="800" fill="#1d4ed8">OR Gate (A + B)</text>
+      <path d="M 290 65 Q 310 80 290 95 C 320 95, 335 85, 345 80 C 335 75, 320 65, 290 65 Z" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+      <text x="420" y="85" text-anchor="middle" font-family="monospace" font-size="11" fill="#334155">1 OR 0 = 1</text>
+
+      <!-- NOT Gate -->
+      <rect x="520" y="20" width="220" height="110" rx="10" fill="#f8fafc" stroke="#ec4899" stroke-width="2"/>
+      <text x="630" y="45" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="800" fill="#be185d">NOT Gate (Inverter)</text>
+      <polygon points="560,65 560,95 590,80" fill="#fce7f3" stroke="#be185d" stroke-width="2"/>
+      <circle cx="594" cy="80" r="3.5" fill="none" stroke="#be185d" stroke-width="2"/>
+      <text x="670" y="85" text-anchor="middle" font-family="monospace" font-size="11" fill="#334155">NOT 1 = 0</text>
+    </g>
+    <g transform="translate(100, 220)">
+      <rect width="640" height="90" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+      <text x="320" y="30" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#0f172a">Universal NAND &amp; NOR Logic</text>
+      <text x="320" y="55" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#475569">NAND is NOT-AND: outputs 0 ONLY when both inputs are 1.</text>
+      <text x="320" y="75" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#475569">XOR (Exclusive OR): outputs 1 ONLY when inputs are different.</text>
+    </g>
+  </svg>`,
 };
 
 /**
  * Returns a guaranteed valid vector SVG diagram for any subject and chapter number.
+ * Each chapter gets its OWN unique, topic-aligned scientific illustration!
  */
 export function getChapterDiagramSvg(subjectId: string, chapterNumber: number): string {
   const sid = (subjectId || "").toLowerCase();
+
+  // 1. Biology (0610)
   if (sid.includes("bio")) {
+    if (chapterNumber === 1) return DIAGRAM_MAP["biology-classification.svg"]!;
+    if (chapterNumber === 2) return DIAGRAM_MAP["cell-structure.svg"]!;
+    if (chapterNumber === 3) return DIAGRAM_MAP["biology-enzyme.svg"]!;
+    if (chapterNumber === 4) return DIAGRAM_MAP["biology-photosynthesis.svg"]!;
     return DIAGRAM_MAP["cell-structure.svg"]!;
   }
+
+  // 2. Chemistry (0620)
   if (sid.includes("chem")) {
-    return DIAGRAM_MAP["fractional-distillation.svg"]!;
+    if (chapterNumber === 1) return DIAGRAM_MAP["chemistry-states-matter.svg"]!;
+    if (chapterNumber === 2) return DIAGRAM_MAP["chemistry-mole-triangle.svg"]!;
+    if (chapterNumber === 3) return DIAGRAM_MAP["fractional-distillation.svg"]!;
+    return DIAGRAM_MAP["chemistry-states-matter.svg"]!;
   }
+
+  // 3. Physics (0625)
+  if (sid.includes("phys")) {
+    if (chapterNumber === 1) return DIAGRAM_MAP["quadratic-graph.svg"]!; // Kinematics v-t curve
+    if (chapterNumber === 2) return DIAGRAM_MAP["physics-refraction.svg"]!;
+    return DIAGRAM_MAP["physics-refraction.svg"]!;
+  }
+
+  // 4. Geography (0460)
   if (sid.includes("geo")) {
-    return chapterNumber === 1
-      ? DIAGRAM_MAP["demographic-transition.svg"]!
-      : DIAGRAM_MAP["plate-tectonics.svg"]!;
+    if (chapterNumber === 1) return DIAGRAM_MAP["demographic-transition.svg"]!;
+    if (chapterNumber === 2) return DIAGRAM_MAP["plate-tectonics.svg"]!;
+    return DIAGRAM_MAP["demographic-transition.svg"]!;
   }
-  if (sid.includes("econ") || sid.includes("business") || sid.includes("account")) {
+
+  // 5. Economics (0455) & Business
+  if (sid.includes("econ") || sid.includes("business")) {
+    if (chapterNumber === 1) return DIAGRAM_MAP["supply-demand.svg"]!;
     return DIAGRAM_MAP["supply-demand.svg"]!;
   }
+
+  // 6. Computer Science (0478)
+  if (sid.includes("computer") || sid.includes("ict")) {
+    if (chapterNumber === 1) return DIAGRAM_MAP["cs-logic-gates.svg"]!;
+    return DIAGRAM_MAP["computer-architecture.svg"]!;
+  }
+
+  // 7. Mathematics (0580)
   if (sid.includes("math")) {
     return DIAGRAM_MAP["quadratic-graph.svg"]!;
   }
-  if (sid.includes("phys")) {
-    return chapterNumber === 1
-      ? DIAGRAM_MAP["quadratic-graph.svg"]!
-      : DIAGRAM_MAP["computer-architecture.svg"]!;
-  }
-  if (sid.includes("computer") || sid.includes("ict")) {
-    return DIAGRAM_MAP["computer-architecture.svg"]!;
-  }
+
+  // 8. Environmental Management (0680)
   if (sid.includes("environ")) {
     return DIAGRAM_MAP["rock-cycle.svg"]!;
   }
-  // Default for humanities and general subjects
+
   return DIAGRAM_MAP["demographic-transition.svg"]!;
 }
+

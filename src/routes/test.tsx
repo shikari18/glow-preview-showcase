@@ -10,9 +10,12 @@ import {
   Award,
   FileCheck,
   Printer,
+  Loader2,
+  Sliders,
 } from "lucide-react";
 
 import { DashboardLayout } from "@/components/dashboard-page";
+import { callGemini } from "@/lib/ai-router";
 
 export const Route = createFileRoute("/test")({
   head: () => ({
@@ -40,7 +43,20 @@ type Question = {
   markingCriteria: string[];
 };
 
-const SAMPLE_EXAMS: Record<string, { code: string; title: string; syllabus: string; questions: Question[] }> = {
+type QuestionPaper = {
+  subject?: string;
+  code: string;
+  paperCode?: string;
+  series?: string;
+  title: string;
+  syllabus: string;
+  timeAllowedMinutes?: number;
+  totalMarks?: number;
+  instructions?: string[];
+  questions: Question[];
+};
+
+const SAMPLE_EXAMS: Record<string, QuestionPaper> = {
   biology: {
     code: "0610/22",
     title: "Biology",
@@ -206,11 +222,21 @@ const SUBJECT_LIST = [
   { id: "chemistry", name: "Chemistry", code: "0620" },
   { id: "physics", name: "Physics", code: "0625" },
   { id: "mathematics", name: "Mathematics", code: "0580" },
+  { id: "economics", name: "Economics", code: "0455" },
+  { id: "computer-science", name: "Computer Science", code: "0478" },
+  { id: "geography", name: "Geography", code: "0460" },
+  { id: "business-studies", name: "Business Studies", code: "0450" },
 ];
 
 function TestSimulationPage() {
   const [selectedSubject, setSelectedSubject] = useState("biology");
   const [topicInput, setTopicInput] = useState("");
+  const [questionMode, setQuestionMode] = useState<"both" | "objectives" | "theory">("both");
+  const [objCount, setObjCount] = useState(15);
+  const [theoryCount, setTheoryCount] = useState(5);
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [customExam, setCustomExam] = useState<QuestionPaper | null>(null);
+
   const [candidateName, setCandidateName] = useState("Alex Johnson");
   const [centreNumber, setCentreNumber] = useState("GB120");
   const [candidateNumber, setCandidateNumber] = useState("0421");
@@ -219,7 +245,9 @@ function TestSimulationPage() {
   const [userAnswers, setUserAnswers] = useState<Record<number, string | number>>({});
   const [timeLeft, setTimeLeft] = useState(45 * 60);
 
-  const examData = SAMPLE_EXAMS[selectedSubject] ?? SAMPLE_EXAMS["biology"]!;
+  const activeSubjectInfo = SUBJECT_LIST.find((s) => s.id === selectedSubject) ?? SUBJECT_LIST[0]!;
+  const examData: QuestionPaper =
+    customExam ?? SAMPLE_EXAMS[selectedSubject] ?? SAMPLE_EXAMS["biology"]!;
 
   useEffect(() => {
     if (!examStarted || examSubmitted) return;
@@ -242,10 +270,10 @@ function TestSimulationPage() {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  const totalMarks = examData.questions.reduce((acc, q) => acc + q.marks, 0);
+  const totalMarks = examData.questions.reduce((acc: number, q: Question) => acc + q.marks, 0);
 
   const scoreResult = examData.questions.reduce(
-    (acc, q) => {
+    (acc: { scored: number }, q: Question) => {
       if (q.type === "mcq") {
         if (userAnswers[q.id] === q.correctOption) acc.scored += q.marks;
       } else {
@@ -258,20 +286,98 @@ function TestSimulationPage() {
     { scored: 0 },
   );
 
-  const percentage = Math.round((scoreResult.scored / totalMarks) * 100);
+  const percentage = Math.round((scoreResult.scored / (totalMarks || 1)) * 100);
+
+  async function handleStartExam() {
+    setIsCompiling(true);
+    const targetObj = questionMode === "theory" ? 0 : objCount;
+    const targetTheory = questionMode === "objectives" ? 0 : theoryCount;
+
+    const prompt = `You are a Senior Cambridge IGCSE Examiner. Generate an authentic official examination paper in valid JSON format.
+Subject: ${activeSubjectInfo.name} (Code ${activeSubjectInfo.code}).
+${topicInput.trim() ? `Specific Syllabus Topic: ${topicInput.trim()}` : "Full Subject Syllabus Scope"}.
+Exam Format: ${questionMode}
+Requirements:
+- Exactly ${targetObj} Multiple Choice Questions (type: "mcq", 4 options labeled A/B/C/D, correctOption index 0-3, marks: 1).
+- Exactly ${targetTheory} Structured Theory Questions (type: "structured", 2 to 4 marks each, linesCount: 2 to 5, sampleAnswer, and markingCriteria array).
+
+Return STRICTLY a JSON object without surrounding prose:
+{
+  "paperCode": "${activeSubjectInfo.code}/22",
+  "series": "May/June 2025",
+  "questions": [
+    {
+      "id": 1,
+      "part": "1",
+      "type": "mcq",
+      "text": "Question text...",
+      "marks": 1,
+      "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+      "correctOption": 0,
+      "markingCriteria": ["1 mark for correct selection"]
+    }
+  ]
+}`;
+
+    try {
+      const res = await callGemini([{ role: "user", content: prompt }], 2048, 0.6);
+      if (res?.text) {
+        const jsonMatch = res.text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]) as {
+            paperCode?: string;
+            series?: string;
+            questions?: Question[];
+          };
+          if (Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+            setCustomExam({
+              subject: activeSubjectInfo.name,
+              code: activeSubjectInfo.code,
+              paperCode: parsed.paperCode || `${activeSubjectInfo.code}/22`,
+              series: parsed.series || "May/June 2025",
+              title: activeSubjectInfo.name,
+              syllabus: `${activeSubjectInfo.name} Exam`,
+              timeAllowedMinutes: Math.max(30, targetObj * 1.5 + targetTheory * 5),
+              totalMarks: parsed.questions.reduce((n: number, q: Question) => n + q.marks, 0),
+              instructions: [
+                "Answer all questions in black or dark blue pen.",
+                "Write your name, centre number and candidate number in the boxes at the top of the page.",
+                "Show all necessary working clearly.",
+              ],
+              questions: parsed.questions,
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("AI exam generation fell back to preset:", err);
+    } finally {
+      setIsCompiling(false);
+      setTimeLeft(45 * 60);
+      setUserAnswers({});
+      setExamSubmitted(false);
+      setExamStarted(true);
+    }
+  }
 
   return (
     <DashboardLayout crumbs={[{ label: "Practice" }, { label: "Exam Simulation" }]}>
       {!examStarted ? (
         /* Setup Screen */
         <div className="w-full max-w-2xl py-4">
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-            <h1 className="text-xl font-bold text-foreground">Cambridge IGCSE Examination Setup</h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              Select your subject and candidate details to generate an authentic Cambridge examination booklet.
+          <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <BookOpen className="size-4" />
+              </span>
+              <h1 className="text-xl font-bold text-foreground">Cambridge Examination Setup</h1>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Configure your exam format (Objectives, Theory, or Both) and let Yumna AI generate an authentic Cambridge examination booklet.
             </p>
 
-            <div className="mt-5 space-y-4">
+            <div className="mt-6 space-y-5">
+              {/* Subject selector */}
               <div>
                 <label className="text-xs font-bold text-foreground uppercase tracking-wide">Select Examination Subject</label>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -282,59 +388,151 @@ function TestSimulationPage() {
                       onClick={() => setSelectedSubject(subj.id)}
                       className={`rounded-2xl border p-3 text-center text-xs font-bold transition-all ${
                         selectedSubject === subj.id
-                          ? "border-foreground bg-secondary font-extrabold shadow-sm"
-                          : "border-border hover:bg-secondary/40"
+                          ? "border-primary bg-primary/10 text-primary font-extrabold shadow-sm"
+                          : "border-border hover:bg-secondary/40 text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      <span className="block text-[10px] text-muted-foreground">{subj.code}</span>
+                      <span className="block text-[10px] opacity-70">{subj.code}</span>
                       <span>{subj.name}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
+              {/* Optional Topic Input */}
               <div>
-                <label className="text-xs font-bold text-foreground uppercase tracking-wide">Candidate Name</label>
+                <label className="text-xs font-bold text-foreground uppercase tracking-wide">
+                  Specific Topic <span className="text-[10px] font-normal lowercase text-muted-foreground">(optional)</span>
+                </label>
                 <input
                   type="text"
-                  value={candidateName}
-                  onChange={(e) => setCandidateName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs"
+                  value={topicInput}
+                  onChange={(e) => setTopicInput(e.target.value)}
+                  placeholder="e.g. Photosynthesis, Kinetic Theory, Newton's Laws (or leave blank for full syllabus)"
+                  className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Question Format Mode: Objectives, Theory, or Both */}
+              <div>
+                <label className="text-xs font-bold text-foreground uppercase tracking-wide">Question Paper Format</label>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuestionMode("both")}
+                    className={`rounded-xl border p-2.5 text-center text-xs font-bold transition-all ${
+                      questionMode === "both"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:bg-secondary text-muted-foreground"
+                    }`}
+                  >
+                    Both (Objectives &amp; Theory)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuestionMode("objectives")}
+                    className={`rounded-xl border p-2.5 text-center text-xs font-bold transition-all ${
+                      questionMode === "objectives"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:bg-secondary text-muted-foreground"
+                    }`}
+                  >
+                    Objectives Only (MCQ)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuestionMode("theory")}
+                    className={`rounded-xl border p-2.5 text-center text-xs font-bold transition-all ${
+                      questionMode === "theory"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:bg-secondary text-muted-foreground"
+                    }`}
+                  >
+                    Theory Only (Structured)
+                  </button>
+                </div>
+              </div>
+
+              {/* Question Count Selectors */}
+              <div className="grid grid-cols-2 gap-4">
+                {questionMode !== "theory" && (
+                  <div>
+                    <label className="text-xs font-bold text-foreground uppercase tracking-wide">
+                      Objectives Count (Default 15)
+                    </label>
+                    <input
+                      type="number"
+                      min={5}
+                      max={40}
+                      value={objCount}
+                      onChange={(e) => setObjCount(parseInt(e.target.value, 10) || 15)}
+                      className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-mono font-bold"
+                    />
+                  </div>
+                )}
+                {questionMode !== "objectives" && (
+                  <div>
+                    <label className="text-xs font-bold text-foreground uppercase tracking-wide">
+                      Theory Count (Default 5)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={15}
+                      value={theoryCount}
+                      onChange={(e) => setTheoryCount(parseInt(e.target.value, 10) || 5)}
+                      className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-mono font-bold"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Candidate Info */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-border pt-4">
                 <div>
-                  <label className="text-xs font-bold text-foreground uppercase tracking-wide">Centre Number</label>
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase">Candidate Name</label>
+                  <input
+                    type="text"
+                    value={candidateName}
+                    onChange={(e) => setCandidateName(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase">Centre Number</label>
                   <input
                     type="text"
                     value={centreNumber}
                     onChange={(e) => setCentreNumber(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-mono"
+                    className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-mono"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-foreground uppercase tracking-wide">Candidate Number</label>
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase">Candidate Number</label>
                   <input
                     type="text"
                     value={candidateNumber}
                     onChange={(e) => setCandidateNumber(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-mono"
+                    className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-mono"
                   />
                 </div>
               </div>
 
               <button
                 type="button"
-                onClick={() => {
-                  setTimeLeft(45 * 60);
-                  setUserAnswers({});
-                  setExamSubmitted(false);
-                  setExamStarted(true);
-                }}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3 text-xs font-bold text-ink-foreground shadow hover:opacity-90"
+                disabled={isCompiling}
+                onClick={handleStartExam}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-ink py-3.5 text-xs font-bold text-ink-foreground shadow-md hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                <Play className="size-4" /> Start Official Examination Paper
+                {isCompiling ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" /> Compiling Authentic Cambridge Paper via AI...
+                  </>
+                ) : (
+                  <>
+                    <Play className="size-4" /> Start Official Examination Paper
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -435,7 +633,7 @@ function TestSimulationPage() {
 
             {/* Questions Form Body */}
             <div className="mt-8 space-y-8">
-              {examData.questions.map((q) => (
+              {examData.questions.map((q: Question) => (
                 <div key={q.id} className="relative pt-4">
                   {/* Question Header with Marks on Right Margin */}
                   <div className="flex items-baseline justify-between gap-4">
@@ -452,7 +650,7 @@ function TestSimulationPage() {
                   <div className="mt-4">
                     {q.type === "mcq" ? (
                       <div className="grid grid-cols-1 gap-2 font-sans text-xs sm:grid-cols-2 pl-4">
-                        {q.options?.map((opt, idx) => (
+                        {q.options?.map((opt: string, idx: number) => (
                           <button
                             key={idx}
                             type="button"
@@ -498,7 +696,7 @@ function TestSimulationPage() {
                       </p>
                       <p className="mt-1 font-mono text-zinc-800 dark:text-zinc-200">{q.sampleAnswer}</p>
                       <ul className="mt-2 space-y-0.5 text-[11px] text-zinc-600 dark:text-zinc-400 list-disc pl-4">
-                        {q.markingCriteria.map((c, i) => (
+                        {q.markingCriteria.map((c: string, i: number) => (
                           <li key={i}>{c}</li>
                         ))}
                       </ul>

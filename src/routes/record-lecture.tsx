@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FileText, Loader2, Mic, Save, Square, Trash2 } from "lucide-react";
+import { BookOpen, FileText, Loader2, Mic, Save, Square, Trash2, Volume2, VolumeX } from "lucide-react";
 
 import { DashboardLayout, EmptyState, PageHeading, PrimaryButton } from "@/components/dashboard-page";
 import {
@@ -61,6 +61,8 @@ function RecordLecturePage() {
   const [askingId, setAskingId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const startedAtRef = useRef(0);
@@ -88,6 +90,31 @@ function RecordLecturePage() {
     const timer = window.setInterval(() => setElapsed(Date.now() - startedAtRef.current), 250);
     return () => window.clearInterval(timer);
   }, [recording]);
+
+  function speakText(id: string, text: string) {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    if (playingVoiceId === id) {
+      setPlayingVoiceId(null);
+      return;
+    }
+    // Clean emojis and markdown formatting
+    const clean = text
+      .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, "")
+      .replace(/[#*_`~-]/g, " ")
+      .trim();
+    if (!clean) return;
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+    const voices = window.speechSynthesis.getVoices();
+    const naturalVoice = voices.find((v) => v.lang.startsWith("en") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Female")));
+    if (naturalVoice) utterance.voice = naturalVoice;
+    utterance.onend = () => setPlayingVoiceId(null);
+    utterance.onerror = () => setPlayingVoiceId(null);
+    setPlayingVoiceId(id);
+    window.speechSynthesis.speak(utterance);
+  }
 
   async function start() {
     setError(null);
@@ -151,6 +178,10 @@ function RecordLecturePage() {
   }
 
   async function remove(id: string) {
+    if (playingVoiceId === id) {
+      window.speechSynthesis.cancel();
+      setPlayingVoiceId(null);
+    }
     await deleteRecording(id);
     setUrls((prev) => {
       if (prev[id]) URL.revokeObjectURL(prev[id] as string);
@@ -166,20 +197,25 @@ function RecordLecturePage() {
     await refresh();
   }
 
-  async function askWhiskers(item: Recording, kind: "summary" | "quiz") {
+  async function askYumna(item: Recording, kind: "summary" | "explain" | "quiz") {
     if (!item.transcript) {
       setAnswers((prev) => ({
         ...prev,
-        [item.id]: "There's no transcript for this recording yet, so Whiskers can't read it. Try recording in Chrome, where live transcription is supported.",
+        [item.id]: "There's no transcript for this recording yet, so Yumna can't read it. Try recording in Chrome or Edge, where live speech transcription is enabled.",
       }));
       return;
     }
     setAskingId(item.id);
     try {
-      const prompt =
-        kind === "summary"
-          ? `Summarise this lecture in short bullet-style lines, then list the 3 most exam-relevant points.\n\nLecture transcript:\n${item.transcript}`
-          : `Write 5 short practice questions with answers based on this lecture.\n\nLecture transcript:\n${item.transcript}`;
+      let prompt = "";
+      if (kind === "summary") {
+        prompt = `You are Yumna, a supportive Cambridge AI tutor. Summarise this recorded lecture in concise bullet points, then provide the 3 most crucial exam takeaways:\n\nLecture transcript:\n${item.transcript}`;
+      } else if (kind === "explain") {
+        prompt = `You are Yumna, a warm and encouraging Cambridge AI tutor. Break down and explain this lecture transcript in simple, intuitive terms as if explaining to a student who found it confusing. Highlight the key concepts step-by-step:\n\nLecture transcript:\n${item.transcript}`;
+      } else {
+        prompt = `You are Yumna, a Cambridge tutor. Write 5 high-yield exam practice questions with mark schemes and model answers based on this lecture:\n\nLecture transcript:\n${item.transcript}`;
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -188,10 +224,10 @@ function RecordLecturePage() {
       const data = (await res.json()) as { text?: string; error?: string };
       setAnswers((prev) => ({
         ...prev,
-        [item.id]: data.text ?? data.error ?? "Whiskers couldn't answer that just now.",
+        [item.id]: data.text ?? data.error ?? "Yumna couldn't complete the breakdown just now. Please try again.",
       }));
     } catch {
-      setAnswers((prev) => ({ ...prev, [item.id]: "Network error — please try again." }));
+      setAnswers((prev) => ({ ...prev, [item.id]: "Network error — please check your connection and try again." }));
     } finally {
       setAskingId(null);
     }
@@ -202,7 +238,7 @@ function RecordLecturePage() {
       <PageHeading
         icon={<Mic className="size-5" aria-hidden />}
         title="Record a lecture"
-        subtitle="Record, save it on your device, listen back later — and let Whiskers help with it."
+        subtitle="Record, save it on your device, listen back later — and let Yumna explain, summarise or quiz you."
       />
 
       <section className="rounded-3xl border border-border bg-card p-5">
@@ -280,36 +316,69 @@ function RecordLecturePage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => void askWhiskers(item, "summary")}
+                  onClick={() => void askYumna(item, "explain")}
                   disabled={askingId === item.id}
-                  className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm transition-colors hover:bg-secondary disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold transition-all hover:bg-secondary disabled:opacity-60"
                 >
                   {askingId === item.id ? (
-                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                    <Loader2 className="size-3.5 animate-spin" aria-hidden />
                   ) : (
-                    <FileText className="size-4" aria-hidden />
+                    <BookOpen className="size-3.5" aria-hidden />
                   )}
-                  Summarise with AI
+                  Break Down &amp; Explain
                 </button>
                 <button
                   type="button"
-                  onClick={() => void askWhiskers(item, "quiz")}
+                  onClick={() => void askYumna(item, "summary")}
                   disabled={askingId === item.id}
-                  className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm transition-colors hover:bg-secondary disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold transition-all hover:bg-secondary disabled:opacity-60"
                 >
-                  <Save className="size-4" aria-hidden /> Make questions
+                  {askingId === item.id ? (
+                    <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                  ) : (
+                    <FileText className="size-3.5" aria-hidden />
+                  )}
+                  Summarise with Yumna
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void askYumna(item, "quiz")}
+                  disabled={askingId === item.id}
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold transition-all hover:bg-secondary disabled:opacity-60"
+                >
+                  <Save className="size-3.5" aria-hidden /> Make Exam Questions
                 </button>
               </div>
 
               {item.transcript && (
                 <details className="mt-4 rounded-2xl bg-surface p-4">
-                  <summary className="cursor-pointer text-sm font-medium">Transcript</summary>
-                  <p className="mt-2 text-sm text-muted-foreground">{item.transcript}</p>
+                  <summary className="cursor-pointer text-xs font-bold uppercase tracking-wide text-muted-foreground">Lecture Transcript</summary>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/80">{item.transcript}</p>
                 </details>
               )}
 
               {answers[item.id] && (
-                <div className="mt-4 rounded-2xl bg-lilac/25 p-4 text-sm whitespace-pre-wrap">{answers[item.id]}</div>
+                <div className="mt-4 rounded-2xl border border-border bg-lilac/15 p-4 text-sm leading-relaxed whitespace-pre-wrap">
+                  <div className="mb-2 flex items-center justify-between border-b border-border/50 pb-2">
+                    <span className="text-xs font-bold text-foreground">Yumna's Breakdown:</span>
+                    <button
+                      type="button"
+                      onClick={() => speakText(item.id, answers[item.id]!)}
+                      className="flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold shadow-sm hover:bg-secondary transition-colors"
+                    >
+                      {playingVoiceId === item.id ? (
+                        <>
+                          <VolumeX className="size-3.5 text-rose-500" /> Stop Audio
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="size-3.5 text-primary" /> Listen with Voice
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div>{answers[item.id]}</div>
+                </div>
               )}
             </li>
           ))}

@@ -7,7 +7,7 @@ import logoMark from "@/assets/logo-mark.png";
 export const Route = createFileRoute("/tutors")({
   head: () => ({
     meta: [
-      { title: "Tutor Me — 1:1 sessions with Whiskers | ExamGlow" },
+      { title: "Tutor Me — 1:1 sessions with Yumna | ExamGlow" },
       {
         name: "description",
         content: "Start a 1:1 tutoring session built around your own course materials with the ExamGlow AI tutor.",
@@ -36,7 +36,7 @@ function TutorsPage() {
           />
           <div className="min-w-0">
             <h1 className="flex min-w-0 items-center gap-2 truncate text-[clamp(1.6rem,3vw,2.2rem)]">
-              Whiskers
+              Yumna
               <span className="shrink-0 rounded-full bg-lilac px-2.5 py-1 text-xs font-semibold text-ink">AI Tutor</span>
             </h1>
             <p className="truncate text-sm text-muted-foreground">1:1 personalized tutoring with your course materials</p>
@@ -68,7 +68,7 @@ function TutorsPage() {
 
       <EmptyState
         title="No sessions yet"
-        body="Start a 1:1 tutoring session with Whiskers using your course materials."
+        body="Start a 1:1 tutoring session with Yumna using your course materials."
         action={
           <button type="button" className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-medium text-ink-foreground">
             <Plus className="size-4" aria-hidden /> New Session

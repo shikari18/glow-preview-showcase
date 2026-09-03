@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { ClipboardCheck, Copy, FileText, Loader2, Upload, X } from "lucide-react";
 
 import { DashboardLayout } from "@/components/dashboard-page";
+import { callGemini } from "@/lib/ai-router";
 
 export const Route = createFileRoute("/assignments")({
   head: () => ({
@@ -66,10 +67,30 @@ function AssignmentsPage() {
         body: JSON.stringify({ prompt: brief, title, style, length }),
       });
       const data = (await res.json()) as { text?: string; error?: string };
-      if (!res.ok || !data.text) setError(data.error ?? "Something went wrong. Please try again.");
-      else setAnswer(data.text);
+      if (res.ok && data.text) {
+        setAnswer(data.text);
+        return;
+      }
+      // Direct client fallback via callGemini
+      const prompt = `You are ExamGlow's senior Cambridge academic tutor Yumna. Complete this assignment thoroughly.
+Assignment title: ${title || "Untitled Assignment"}
+Preferred style: ${style}
+Target length: ${length}
+Brief / Questions:
+${brief}
+
+Produce a complete, well-structured answer: restate the task in one line, then answer it fully with clear headings, worked steps for calculations, and short explanations of the reasoning. Finish with a short 'How to check this' checklist.`;
+      const gem = await callGemini([{ role: "user", content: prompt }], 2048, 0.5);
+      if (gem?.text) setAnswer(gem.text);
+      else setError("Could not complete the assignment just now. Please try again.");
     } catch {
-      setError("Network error — check your connection and try again.");
+      try {
+        const gem = await callGemini([{ role: "user", content: `Complete this assignment with full working:\n${brief}` }], 2048, 0.5);
+        if (gem?.text) setAnswer(gem.text);
+        else setError("Network error — check your connection and try again.");
+      } catch {
+        setError("Network error — check your connection and try again.");
+      }
     } finally {
       setLoading(false);
     }

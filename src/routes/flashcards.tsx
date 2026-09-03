@@ -5,7 +5,6 @@ import {
   RotateCw,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   Upload,
   FileText,
   Copy,
@@ -13,9 +12,11 @@ import {
   HelpCircle,
   BookOpen,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 
 import { DashboardLayout, PageHeading } from "@/components/dashboard-page";
+import { callGemini } from "@/lib/ai-router";
 
 export const Route = createFileRoute("/flashcards")({
   head: () => ({
@@ -35,60 +36,6 @@ type Flashcard = {
   question: string;
   answer: string;
 };
-
-// Generates 10 dynamic, varied questions for any topic
-function generate10Flashcards(topic: string): Flashcard[] {
-  const t = topic.trim() || "Cambridge Science & Mathematics";
-  const seed = Date.now();
-  const variations = [
-    {
-      q: `What is the core definition of ${t}?`,
-      a: `${t} represents the fundamental scientific/mathematical principle tested under Cambridge syllabus standards.`,
-    },
-    {
-      q: `State the primary equation or formula associated with ${t}.`,
-      a: `The standard formula governing ${t} must be expressed with precise SI units and defined variables.`,
-    },
-    {
-      q: `What is the key role or function of ${t} in real-world systems?`,
-      a: `It regulates system behavior, energy transfer, or numerical equilibrium depending on initial boundary conditions.`,
-    },
-    {
-      q: `Describe one typical experimental method used to investigate ${t}.`,
-      a: `Identify independent and dependent variables, maintain controlled variables constant, and repeat trials for reliability.`,
-    },
-    {
-      q: `What happens when conditions or parameters in ${t} are altered?`,
-      a: `A shift occurs according to governing laws (e.g. Le Chatelier's, Newton's, or proportionality principles).`,
-    },
-    {
-      q: `Name the standard units used to measure quantities in ${t}.`,
-      a: `Standard SI units apply (e.g. Joules for energy, Newtons for force, mol/dm³ for concentration, or metres per second).`,
-    },
-    {
-      q: `What common mistake do students make when answering questions on ${t}?`,
-      a: `Omitting state symbols, forgetting standard unit conversions, or confusing rate with total yield.`,
-    },
-    {
-      q: `Compare and contrast ${t} with its inverse or complementary process.`,
-      a: `One represents an anabolic or constructive process while the other is catabolic or opposing in vector direction.`,
-    },
-    {
-      q: `How do Cambridge examiners allocate marks for a 4-mark question on ${t}?`,
-      a: `1 mark for definition, 2 marks for step-by-step mechanism or working, and 1 mark for correct deduction with units.`,
-    },
-    {
-      q: `Summarize the most critical exam takeaway regarding ${t}.`,
-      a: `Master the keyword definitions in the syllabus and always show complete working in calculations.`,
-    },
-  ];
-
-  return variations.map((item, idx) => ({
-    id: idx + 1,
-    question: item.q,
-    answer: item.a,
-  }));
-}
 
 function FlashcardsPage() {
   const [tab, setTab] = useState<"flashcards" | "assignment">("flashcards");
@@ -131,14 +78,55 @@ function FlashcardsPage() {
 // ─── 1. Flashcard Deck View (10 Dynamic Cards) ────────────────────────────────
 function FlashcardDeckView() {
   const [topic, setTopic] = useState("");
-  const [deck, setDeck] = useState<Flashcard[]>(() => generate10Flashcards("Cell Biology & Enzymes"));
+  const [deck, setDeck] = useState<Flashcard[]>([
+    { id: 1, question: "What is the function of the cell membrane?", answer: "Controls the movement of substances into and out of the cell; selectively permeable barrier." },
+    { id: 2, question: "Define an enzyme in Cambridge biological terms.", answer: "A biological catalyst that increases the rate of chemical reactions without being changed or consumed." },
+    { id: 3, question: "What is the active site of an enzyme?", answer: "The specific region of an enzyme molecule where the substrate binds to form an enzyme-substrate complex." },
+    { id: 4, question: "What happens when an enzyme is denatured?", answer: "Extreme temperature or pH alters its tertiary protein structure and active site shape, so substrates can no longer fit." },
+    { id: 5, question: "Which organelle is the site of aerobic cellular respiration?", answer: "Mitochondria." },
+    { id: 6, question: "Which organelle synthesises proteins in eukaryotic cells?", answer: "Ribosomes." },
+    { id: 7, question: "What is the effect of low temperature on enzyme activity?", answer: "Kinetic energy is reduced, resulting in fewer successful collisions per second between enzyme and substrate." },
+    { id: 8, question: "Define osmosis precisely.", answer: "The net movement of water molecules from a region of higher water potential to lower water potential down a gradient through a partially permeable membrane." },
+    { id: 9, question: "State the balanced equation for photosynthesis.", answer: "6CO2 + 6H2O -> C6H12O6 + 6O2 (in presence of light and chlorophyll)." },
+    { id: 10, question: "What is the function of xylem vessels in plants?", answer: "Transports water and dissolved mineral ions upward from roots to leaves; provides mechanical support." },
+  ]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleGenerateNew() {
-    setIsFlipped(false);
-    setCurrentIndex(0);
-    setDeck(generate10Flashcards(topic));
+  async function handleGenerateCards(targetTopic?: string) {
+    const chosen = (targetTopic ?? topic).trim() || "Cell Biology & Genetics";
+    setIsGenerating(true);
+    setError(null);
+
+    const prompt = `You are an expert Cambridge IGCSE tutor. Generate exactly 10 high-yield, syllabus-aligned revision flashcards for the topic: "${chosen}".
+Return STRICTLY a JSON array of objects without markdown formatting or surrounding explanations:
+[
+  {
+    "id": 1,
+    "question": "Concise key definition, concept check, or recall question...",
+    "answer": "Clear, precise examiner-level answer with key terms and units."
+  }
+]`;
+
+    try {
+      const res = await callGemini([{ role: "user", content: prompt }], 1800, 0.5);
+      if (!res?.text) throw new Error("No response");
+      const match = res.text.match(/\[[\s\S]*\]/);
+      if (!match) throw new Error("Parse error");
+      const parsed = JSON.parse(match[0]) as Flashcard[];
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        setDeck(parsed);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+      }
+    } catch (err) {
+      console.error("Flashcards AI error:", err);
+      setError("Could not generate cards just now. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
   function handleRepeat() {
@@ -157,35 +145,42 @@ function FlashcardDeckView() {
             type="text"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="Enter topic (e.g. Photosynthesis, Newton's Laws, Quadratic Equations)..."
-            className="flex-1 rounded-2xl border border-border bg-background px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-foreground/20"
+            placeholder="Enter topic (e.g. Photosynthesis, Newton's Laws, Organic Chemistry)..."
+            className="flex-1 rounded-2xl border border-border bg-background px-4 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/20"
           />
           <button
             type="button"
-            onClick={handleGenerateNew}
-            className="flex items-center justify-center gap-1.5 rounded-full bg-ink px-5 py-2.5 text-xs font-bold text-ink-foreground shadow"
+            disabled={isGenerating}
+            onClick={() => handleGenerateCards()}
+            className="flex items-center justify-center gap-1.5 rounded-full bg-ink px-5 py-2.5 text-xs font-bold text-ink-foreground shadow hover:opacity-90 disabled:opacity-50"
           >
-            Generate 10 Cards
+            {isGenerating ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" /> Generating...
+              </>
+            ) : (
+              "Generate 10 Cards"
+            )}
           </button>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {["Cell Biology", "Newton's Laws", "Organic Chemistry", "Macroeconomics", "Trigonometry"].map((chip) => (
+          {["Cell Biology", "Newton's Laws", "Organic Chemistry", "Macroeconomics", "Trigonometry", "Electromagnetism"].map((chip) => (
             <button
               key={chip}
               type="button"
               onClick={() => {
                 setTopic(chip);
-                setIsFlipped(false);
-                setCurrentIndex(0);
-                setDeck(generate10Flashcards(chip));
+                void handleGenerateCards(chip);
               }}
-              className="rounded-full border border-border bg-secondary/50 px-3 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+              className="rounded-full border border-border bg-secondary/50 px-3 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               {chip}
             </button>
           ))}
         </div>
+
+        {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
       </div>
 
       {/* Progress Counter & Controls */}
@@ -245,9 +240,11 @@ function FlashcardDeckView() {
           </button>
           <button
             type="button"
-            onClick={handleGenerateNew}
-            className="rounded-full bg-secondary px-4 py-2 text-xs font-semibold text-foreground hover:bg-border"
+            disabled={isGenerating}
+            onClick={() => handleGenerateCards()}
+            className="flex items-center gap-1.5 rounded-full bg-secondary px-4 py-2 text-xs font-semibold text-foreground hover:bg-border disabled:opacity-50"
           >
+            {isGenerating ? <Loader2 className="size-3.5 animate-spin" /> : null}
             Generate 10 New Questions
           </button>
         </div>
@@ -277,21 +274,41 @@ function AssignmentSolverView() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSolve() {
-    if (!problemText.trim()) return;
+    if (!problemText.trim() || loading) return;
     setLoading(true);
 
-    // Provide instant step-by-step resolution
-    setTimeout(() => {
+    const prompt = `Solve this academic assignment problem thoroughly.
+Problem:
+${problemText}
+
+Respond STRICTLY with a valid JSON object without markdown syntax:
+{
+  "answer": "Concise direct final answer with units if applicable",
+  "reasoning": "Step-by-step working, equations, logic, and verification points"
+}`;
+
+    try {
+      const res = await callGemini([{ role: "user", content: prompt }], 2000, 0.4);
+      if (!res?.text) throw new Error("No response");
+      const match = res.text.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]) as { answer: string; reasoning: string };
+        setSolution(parsed);
+      } else {
+        setSolution({
+          answer: "Completed Solution",
+          reasoning: res.text,
+        });
+      }
+    } catch (err) {
+      console.error("Solver error:", err);
       setSolution({
-        answer: "Final Answer: x = 3 or x = -0.5 (for quadratic equations), or 3600 N (for resultant force F = ma).",
-        reasoning: `1. Identify the given variables and standard formulas from the question.
-2. Formulate the governing equation according to the Cambridge syllabus mark scheme.
-3. Substitute numerical values and carry out step-by-step algebraic simplification.
-4. Verify units (e.g. Newtons, Joules, kg/m³) and significant figures (typically 3 significant figures in Cambridge examinations).
-5. State any necessary physical assumptions (e.g. negligible air resistance or friction).`,
+        answer: "Error solving assignment",
+        reasoning: "Please check your network connection and try again.",
       });
+    } finally {
       setLoading(false);
-    }, 400);
+    }
   }
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {

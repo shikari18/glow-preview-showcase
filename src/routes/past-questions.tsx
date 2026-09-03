@@ -140,9 +140,9 @@ const SUBJECTS: SubjectGroup[] = [
       [[1,1,80],[1,2,80],[2,1,80],[2,2,80]]),
   },
   {
-    subject: "First Language English", code: "0500", color: "bg-rose-600",
-    years: juneYears("english-first-language","0500","First Language English",
-      [[1,1,80],[1,2,80],[2,1,80],[2,2,80]]),
+    subject: "Information & Communication Technology", code: "0417", color: "bg-cyan-600",
+    years: juneYears("ict","0417","ICT",
+      [[1,1,100],[1,2,100],[2,1,80],[2,2,80]]),
   },
   {
     subject: "Global Perspectives", code: "0457", color: "bg-sky-600",
