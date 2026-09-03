@@ -8,11 +8,11 @@ import {
   RotateCcw,
   BookOpen,
   Award,
-  ChevronRight,
   FileCheck,
+  Printer,
 } from "lucide-react";
 
-import { DashboardLayout, PageHeading } from "@/components/dashboard-page";
+import { DashboardLayout } from "@/components/dashboard-page";
 
 export const Route = createFileRoute("/test")({
   head: () => ({
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/test")({
       { title: "Exam Test Simulation | ExamGlow" },
       {
         name: "description",
-        content: "Simulate real Cambridge IGCSE timed examinations with authentic question formats and mark schemes.",
+        content: "Official Cambridge IGCSE examination paper simulation with authentic form layout, live timer, and mark scheme.",
       },
     ],
   }),
@@ -32,6 +32,7 @@ type Question = {
   part: string;
   text: string;
   marks: number;
+  linesCount: number;
   type: "mcq" | "structured";
   options?: string[];
   correctOption?: number;
@@ -39,135 +40,147 @@ type Question = {
   markingCriteria: string[];
 };
 
-const SAMPLE_EXAMS: Record<string, { code: string; title: string; questions: Question[] }> = {
+const SAMPLE_EXAMS: Record<string, { code: string; title: string; syllabus: string; questions: Question[] }> = {
   biology: {
     code: "0610/22",
-    title: "Biology (Theory & Structure)",
+    title: "Biology",
+    syllabus: "Paper 2 Theory (Extended)",
     questions: [
       {
         id: 1,
         part: "1 (a) (i)",
-        text: "State the word equation for aerobic cellular respiration in human body cells.",
+        text: "State the balanced chemical equation for aerobic cellular respiration in human tissue cells.",
         marks: 2,
+        linesCount: 2,
         type: "structured",
-        sampleAnswer: "Glucose + Oxygen -> Carbon Dioxide + Water (+ ATP / Energy)",
-        markingCriteria: ["1 mark for correct reactants (glucose and oxygen)", "1 mark for correct products (carbon dioxide and water)"],
+        sampleAnswer: "C6H12O6 + 6O2 -> 6CO2 + 6H2O (+ 2880 kJ / ATP)",
+        markingCriteria: ["1 mark: Correct chemical formulas for glucose and oxygen", "1 mark: Balanced equation with carbon dioxide and water"],
       },
       {
         id: 2,
         part: "1 (a) (ii)",
-        text: "Name the cellular organelle where the majority of aerobic respiration reactions take place.",
+        text: "Name the cell organelle where the enzymes responsible for aerobic respiration are located.",
         marks: 1,
+        linesCount: 1,
         type: "structured",
         sampleAnswer: "Mitochondria / Mitochondrion",
-        markingCriteria: ["1 mark for mitochondria (allow phonetic spellings)"],
+        markingCriteria: ["1 mark for mitochondria"],
       },
       {
         id: 3,
         part: "1 (b)",
-        text: "Which of the following structures is found in plant cells but absent from animal cells?",
+        text: "Which of the following cellular structures is present in plant epidermal cells but absent from human epithelial cells?",
         marks: 1,
+        linesCount: 1,
         type: "mcq",
-        options: ["A. Cell membrane", "B. Mitochondria", "C. Cellulose cell wall", "D. Ribosomes"],
+        options: ["A. Cell membrane", "B. Ribosomes", "C. Cellulose cell wall", "D. Mitochondria"],
         correctOption: 2,
         sampleAnswer: "C. Cellulose cell wall",
-        markingCriteria: ["1 mark for selecting option C"],
+        markingCriteria: ["1 mark for selecting C"],
       },
       {
         id: 4,
         part: "2 (a)",
-        text: "Explain how increasing temperature beyond 45°C affects the rate of enzyme-controlled reactions.",
+        text: "Explain, in terms of collision theory and molecular shape, why enzyme activity decreases rapidly at temperatures above 45°C.",
         marks: 3,
+        linesCount: 3,
         type: "structured",
-        sampleAnswer: "The reaction rate decreases rapidly. High temperatures disrupt hydrogen bonds holding the tertiary enzyme structure, causing the active site to change shape (denaturation). Substrates can no longer bind.",
+        sampleAnswer: "At excessive temperatures, excessive kinetic energy breaks hydrogen bonds maintaining the tertiary structure. The active site permanently alters shape (denaturation), meaning substrate molecules can no longer fit to form enzyme-substrate complexes.",
         markingCriteria: [
-          "1 mark: Rate decreases / drops to zero",
-          "1 mark: Active site alters shape / enzyme denatures",
-          "1 mark: Substrate can no longer fit / enzyme-substrate complexes cannot form",
+          "1 mark: High kinetic energy breaks tertiary bonds",
+          "1 mark: Active site alters shape (denatures)",
+          "1 mark: Substrate cannot fit / no enzyme-substrate complexes form",
         ],
       },
       {
         id: 5,
         part: "2 (b)",
-        text: "Define the term osmosis.",
+        text: "Define the term osmosis according to the Cambridge syllabus standard.",
         marks: 3,
+        linesCount: 3,
         type: "structured",
-        sampleAnswer: "Osmosis is the net movement of water molecules from a region of higher water potential to a region of lower water potential through a selectively permeable membrane.",
+        sampleAnswer: "Osmosis is the net diffusion of water molecules from an area of higher water potential to an area of lower water potential across a partially permeable membrane.",
         markingCriteria: [
-          "1 mark: Movement of water molecules",
-          "1 mark: Higher to lower water potential / down water potential gradient",
-          "1 mark: Across a selectively permeable / partially permeable membrane",
+          "1 mark: Net movement of water molecules",
+          "1 mark: Down a water potential gradient (higher to lower water potential)",
+          "1 mark: Through a partially / selectively permeable membrane",
         ],
       },
     ],
   },
   physics: {
     code: "0625/42",
-    title: "Physics (Extended Theory)",
+    title: "Physics",
+    syllabus: "Paper 4 Theory (Extended)",
     questions: [
       {
         id: 1,
         part: "1 (a)",
-        text: "State Newton's Second Law of Motion in words or as a formula, defining all symbols used.",
+        text: "State Newton's Second Law of Motion in words or as an equation, defining each symbol used.",
         marks: 2,
+        linesCount: 2,
         type: "structured",
-        sampleAnswer: "F = ma, where F is resultant force in Newtons (N), m is mass in kilograms (kg), and a is acceleration in m/s^2.",
-        markingCriteria: ["1 mark: Formula F = ma stated", "1 mark: Symbols clearly defined with standard SI units"],
+        sampleAnswer: "F = ma, where F is the resultant force in Newtons (N), m is the mass in kilograms (kg), and a is the acceleration in m/s².",
+        markingCriteria: ["1 mark: Formula F = ma stated", "1 mark: Standard SI symbols defined"],
       },
       {
         id: 2,
         part: "1 (b)",
-        text: "A car of mass 1200 kg accelerates uniformly from rest to 24 m/s in 8.0 seconds. Calculate the resultant force acting on the car.",
+        text: "A vehicle of mass 1200 kg accelerates uniformly from rest to a velocity of 24 m/s in 8.0 seconds. Calculate the magnitude of the resultant force acting on the vehicle.",
         marks: 3,
+        linesCount: 3,
         type: "structured",
-        sampleAnswer: "a = (v - u) / t = 24 / 8 = 3.0 m/s^2. Force F = m * a = 1200 * 3.0 = 3600 N.",
-        markingCriteria: ["1 mark: Acceleration calculated as 3.0 m/s^2", "1 mark: Correct substitution into F = ma", "1 mark: Final answer 3600 N with unit"],
+        sampleAnswer: "a = (v - u) / t = (24 - 0) / 8 = 3.0 m/s². Force F = m * a = 1200 * 3.0 = 3600 N.",
+        markingCriteria: ["1 mark: Acceleration calculated as 3.0 m/s²", "1 mark: Substitution into F = ma", "1 mark: Final value 3600 N with unit"],
       },
       {
         id: 3,
         part: "2 (a)",
-        text: "Which of the following is a scalar quantity?",
+        text: "Which of the following physical quantities is a vector?",
         marks: 1,
+        linesCount: 1,
         type: "mcq",
-        options: ["A. Velocity", "B. Speed", "C. Acceleration", "D. Weight"],
-        correctOption: 1,
-        sampleAnswer: "B. Speed",
-        markingCriteria: ["1 mark for selecting B"],
+        options: ["A. Mass", "B. Energy", "C. Velocity", "D. Speed"],
+        correctOption: 2,
+        sampleAnswer: "C. Velocity",
+        markingCriteria: ["1 mark for selecting C"],
       },
       {
         id: 4,
         part: "2 (b)",
-        text: "Explain the difference between transverse waves and longitudinal waves, giving one example of each.",
-        marks: 4,
+        text: "State two differences between transverse waves and longitudinal waves.",
+        marks: 2,
+        linesCount: 2,
         type: "structured",
-        sampleAnswer: "In transverse waves, oscillations are perpendicular (90°) to the direction of wave travel (e.g. light or water waves). In longitudinal waves, oscillations are parallel to the direction of wave travel (e.g. sound waves).",
+        sampleAnswer: "1. Transverse wave oscillations are perpendicular to energy propagation, whereas longitudinal oscillations are parallel.\n2. Longitudinal waves consist of compressions and rarefactions, whereas transverse waves consist of crests and troughs.",
         markingCriteria: [
-          "1 mark: Transverse oscillations perpendicular to energy transfer",
-          "1 mark: Valid transverse example (light, EM wave, water wave)",
-          "1 mark: Longitudinal oscillations parallel to energy transfer",
-          "1 mark: Valid longitudinal example (sound wave, ultrasound)",
+          "1 mark: Oscillations perpendicular vs parallel to direction of travel",
+          "1 mark: Compressions/rarefactions vs crests/troughs",
         ],
       },
     ],
   },
   mathematics: {
     code: "0580/42",
-    title: "Mathematics (Extended Paper 4)",
+    title: "Mathematics",
+    syllabus: "Paper 4 (Extended)",
     questions: [
       {
         id: 1,
         part: "1 (a)",
-        text: "Solve the quadratic equation: 2x² + 5x - 3 = 0. Show all your working.",
+        text: "Solve the quadratic equation 2x² + 5x - 3 = 0. Show all steps of your working.",
         marks: 3,
+        linesCount: 3,
         type: "structured",
-        sampleAnswer: "(2x - 1)(x + 3) = 0 => 2x - 1 = 0 or x + 3 = 0 => x = 0.5 or x = -3.",
-        markingCriteria: ["1 mark: Correct factorisation (2x - 1)(x + 3) or quadratic formula substitution", "1 mark: x = 0.5", "1 mark: x = -3"],
+        sampleAnswer: "(2x - 1)(x + 3) = 0  =>  x = 0.5 or x = -3.",
+        markingCriteria: ["1 mark: Correct factorisation or quadratic formula substitution", "1 mark: x = 0.5", "1 mark: x = -3"],
       },
       {
         id: 2,
         part: "1 (b)",
-        text: "What is the gradient of a line perpendicular to the line with equation y = 4x - 7?",
+        text: "What is the gradient of a straight line perpendicular to the line with equation y = 4x - 7?",
         marks: 1,
+        linesCount: 1,
         type: "mcq",
         options: ["A. 4", "B. -4", "C. -1/4", "D. 1/4"],
         correctOption: 2,
@@ -179,53 +192,10 @@ const SAMPLE_EXAMS: Record<string, { code: string; title: string; questions: Que
         part: "2 (a)",
         text: "Expand and simplify the algebraic expression: (3x - 4)(2x + 5).",
         marks: 2,
+        linesCount: 2,
         type: "structured",
-        sampleAnswer: "6x^2 + 15x - 8x - 20 = 6x^2 + 7x - 20.",
-        markingCriteria: ["1 mark: Correct middle terms 15x - 8x", "1 mark: Final simplified expression 6x^2 + 7x - 20"],
-      },
-      {
-        id: 4,
-        part: "2 (b)",
-        text: "A right-angled triangle has legs of length 6 cm and 8 cm. Calculate the length of the hypotenuse.",
-        marks: 2,
-        type: "structured",
-        sampleAnswer: "h^2 = 6^2 + 8^2 = 36 + 64 = 100 => h = sqrt(100) = 10 cm.",
-        markingCriteria: ["1 mark: Applying Pythagoras theorem 6^2 + 8^2 = 100", "1 mark: 10 cm with unit"],
-      },
-    ],
-  },
-  chemistry: {
-    code: "0620/42",
-    title: "Chemistry (Theory Extended)",
-    questions: [
-      {
-        id: 1,
-        part: "1 (a)",
-        text: "Define the term isotope.",
-        marks: 2,
-        type: "structured",
-        sampleAnswer: "Atoms of the same element with the same number of protons but different numbers of neutrons.",
-        markingCriteria: ["1 mark: Same number of protons / same atomic number", "1 mark: Different number of neutrons / different mass numbers"],
-      },
-      {
-        id: 2,
-        part: "1 (b)",
-        text: "Which of the following substances contains ionic bonding?",
-        marks: 1,
-        type: "mcq",
-        options: ["A. Methane (CH4)", "B. Sodium chloride (NaCl)", "C. Water (H2O)", "D. Carbon dioxide (CO2)"],
-        correctOption: 1,
-        sampleAnswer: "B. Sodium chloride (NaCl)",
-        markingCriteria: ["1 mark for selecting B"],
-      },
-      {
-        id: 3,
-        part: "2 (a)",
-        text: "Write the balanced chemical equation, including state symbols, for the reaction between dilute hydrochloric acid and sodium hydroxide solution.",
-        marks: 3,
-        type: "structured",
-        sampleAnswer: "HCl(aq) + NaOH(aq) -> NaCl(aq) + H2O(l)",
-        markingCriteria: ["1 mark: Correct formulas of reactants and products", "1 mark: Balanced equation", "1 mark: Correct state symbols"],
+        sampleAnswer: "6x² + 15x - 8x - 20 = 6x² + 7x - 20.",
+        markingCriteria: ["1 mark: Correct middle expansion terms 15x - 8x", "1 mark: Simplified expression 6x² + 7x - 20"],
       },
     ],
   },
@@ -236,24 +206,21 @@ const SUBJECT_LIST = [
   { id: "chemistry", name: "Chemistry", code: "0620" },
   { id: "physics", name: "Physics", code: "0625" },
   { id: "mathematics", name: "Mathematics", code: "0580" },
-  { id: "economics", name: "Economics", code: "0455" },
-  { id: "business-studies", name: "Business Studies", code: "0450" },
-  { id: "computer-science", name: "Computer Science", code: "0478" },
-  { id: "geography", name: "Geography", code: "0460" },
-  { id: "history", name: "History", code: "0470" },
 ];
 
 function TestSimulationPage() {
   const [selectedSubject, setSelectedSubject] = useState("biology");
   const [topicInput, setTopicInput] = useState("");
+  const [candidateName, setCandidateName] = useState("Alex Johnson");
+  const [centreNumber, setCentreNumber] = useState("GB120");
+  const [candidateNumber, setCandidateNumber] = useState("0421");
   const [examStarted, setExamStarted] = useState(false);
   const [examSubmitted, setExamSubmitted] = useState(false);
   const [userAnswers, setUserAnswers] = useState<Record<number, string | number>>({});
-  const [timeLeft, setTimeLeft] = useState(45 * 60); // 45 minutes countdown
+  const [timeLeft, setTimeLeft] = useState(45 * 60);
 
   const examData = SAMPLE_EXAMS[selectedSubject] ?? SAMPLE_EXAMS["biology"]!;
 
-  // Countdown timer
   useEffect(() => {
     if (!examStarted || examSubmitted) return;
     const timer = setInterval(() => {
@@ -269,15 +236,14 @@ function TestSimulationPage() {
     return () => clearInterval(timer);
   }, [examStarted, examSubmitted]);
 
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  const formatTimer = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
   const totalMarks = examData.questions.reduce((acc, q) => acc + q.marks, 0);
 
-  // Calculate score on submission
   const scoreResult = examData.questions.reduce(
     (acc, q) => {
       if (q.type === "mcq") {
@@ -293,62 +259,71 @@ function TestSimulationPage() {
   );
 
   const percentage = Math.round((scoreResult.scored / totalMarks) * 100);
-  const getGrade = (pct: number) => {
-    if (pct >= 85) return { grade: "A* (Grade 9)", color: "text-emerald-500" };
-    if (pct >= 75) return { grade: "A (Grade 8)", color: "text-emerald-600" };
-    if (pct >= 65) return { grade: "B (Grade 7)", color: "text-blue-500" };
-    if (pct >= 50) return { grade: "C (Grade 5)", color: "text-amber-500" };
-    return { grade: "D (Grade 4)", color: "text-rose-500" };
-  };
 
   return (
     <DashboardLayout crumbs={[{ label: "Practice" }, { label: "Exam Simulation" }]}>
       {!examStarted ? (
-        /* Configuration Screen */
-        <div className="w-full py-4">
-          <PageHeading
-            icon={<BookOpen className="size-5" aria-hidden />}
-            title="Cambridge IGCSE Exam Simulation"
-            subtitle="Take an authentic, timed examination paper formatted according to official Cambridge assessment guidelines."
-          />
-
-          <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-sm max-w-2xl">
-            <h2 className="text-lg font-bold text-foreground">1. Select Examination Subject</h2>
-            <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-              {SUBJECT_LIST.map((subj) => (
-                <button
-                  key={subj.id}
-                  type="button"
-                  onClick={() => setSelectedSubject(subj.id)}
-                  className={`flex flex-col items-start rounded-2xl border p-3.5 text-left transition-all ${
-                    selectedSubject === subj.id
-                      ? "border-foreground bg-secondary font-bold shadow-sm"
-                      : "border-border hover:bg-secondary/50"
-                  }`}
-                >
-                  <span className="text-xs text-muted-foreground">{subj.code}</span>
-                  <span className="text-sm font-semibold text-foreground">{subj.name}</span>
-                </button>
-              ))}
-            </div>
-
-            <h2 className="mt-6 text-lg font-bold text-foreground">2. Specific Focus Topic (Optional)</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Leave blank to generate a comprehensive full-paper test, or specify a topic like "Enzymes", "Kinematics", or "Organic Chemistry".
+        /* Setup Screen */
+        <div className="w-full max-w-2xl py-4">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+            <h1 className="text-xl font-bold text-foreground">Cambridge IGCSE Examination Setup</h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              Select your subject and candidate details to generate an authentic Cambridge examination booklet.
             </p>
-            <input
-              type="text"
-              value={topicInput}
-              onChange={(e) => setTopicInput(e.target.value)}
-              placeholder="e.g. Cellular Respiration and Enzymes (Optional)"
-              className="mt-3 w-full rounded-2xl border border-border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
-            />
 
-            <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
+            <div className="mt-5 space-y-4">
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase">Format</p>
-                <p className="text-sm font-bold text-foreground">Timed 45-Minute Paper · {totalMarks} Marks</p>
+                <label className="text-xs font-bold text-foreground uppercase tracking-wide">Select Examination Subject</label>
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {SUBJECT_LIST.map((subj) => (
+                    <button
+                      key={subj.id}
+                      type="button"
+                      onClick={() => setSelectedSubject(subj.id)}
+                      className={`rounded-2xl border p-3 text-center text-xs font-bold transition-all ${
+                        selectedSubject === subj.id
+                          ? "border-foreground bg-secondary font-extrabold shadow-sm"
+                          : "border-border hover:bg-secondary/40"
+                      }`}
+                    >
+                      <span className="block text-[10px] text-muted-foreground">{subj.code}</span>
+                      <span>{subj.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              <div>
+                <label className="text-xs font-bold text-foreground uppercase tracking-wide">Candidate Name</label>
+                <input
+                  type="text"
+                  value={candidateName}
+                  onChange={(e) => setCandidateName(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-foreground uppercase tracking-wide">Centre Number</label>
+                  <input
+                    type="text"
+                    value={centreNumber}
+                    onChange={(e) => setCentreNumber(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-foreground uppercase tracking-wide">Candidate Number</label>
+                  <input
+                    type="text"
+                    value={candidateNumber}
+                    onChange={(e) => setCandidateNumber(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
               <button
                 type="button"
                 onClick={() => {
@@ -357,183 +332,230 @@ function TestSimulationPage() {
                   setExamSubmitted(false);
                   setExamStarted(true);
                 }}
-                className="flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-bold text-ink-foreground shadow hover:opacity-90 transition-all"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3 text-xs font-bold text-ink-foreground shadow hover:opacity-90"
               >
-                <Play className="size-4" /> Start Exam Test
+                <Play className="size-4" /> Start Official Examination Paper
               </button>
             </div>
           </div>
         </div>
       ) : (
-        /* Real Exam Simulation Room */
-        <div className="w-full py-4">
-          {/* Exam Header */}
-          <div className="mb-6 rounded-3xl border border-border bg-card p-6 shadow-sm">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                  CAMBRIDGE INTERNATIONAL EXAMINATIONS
-                </p>
-                <h1 className="font-serif text-2xl font-bold text-foreground mt-0.5">
-                  {examData.title} · {examData.code}
-                </h1>
-                {topicInput && (
-                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
-                    Focus Topic: {topicInput}
-                  </p>
-                )}
-              </div>
-
-              {/* Countdown Timer */}
-              <div
-                className={`flex items-center gap-2 rounded-2xl px-5 py-3 border font-mono text-lg font-bold shadow-sm ${
-                  timeLeft < 300
-                    ? "border-rose-500 bg-rose-500/10 text-rose-600 animate-pulse"
-                    : "border-border bg-secondary text-foreground"
-                }`}
-              >
-                <Clock className="size-5" />
-                <span>{formatTimer(timeLeft)}</span>
-              </div>
+        /* Authentic Cambridge Printed Examination Paper Booklet */
+        <div className="w-full max-w-3xl py-4">
+          {/* Top Live Timer Bar */}
+          <div className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="size-2.5 rounded-full bg-emerald-500 animate-ping" />
+              <span className="text-xs font-bold text-foreground">Examination in Progress</span>
             </div>
-
-            {/* Candidate Instructions */}
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-              <p>• Write your answers clearly in the spaces provided below. Show all calculations and units.</p>
-              <p className="font-bold text-foreground">Total Marks: [{totalMarks}]</p>
+            <div
+              className={`flex items-center gap-2 rounded-xl px-3 py-1 font-mono text-sm font-bold border ${
+                timeLeft < 300
+                  ? "border-rose-500 bg-rose-500/10 text-rose-600 animate-pulse"
+                  : "border-border bg-secondary text-foreground"
+              }`}
+            >
+              <Clock className="size-4" />
+              <span>{formatTimer(timeLeft)}</span>
             </div>
           </div>
 
-          {/* Results Summary if submitted */}
-          {examSubmitted && (
-            <div className="mb-8 rounded-3xl border border-emerald-500/30 bg-emerald-500/5 p-6 shadow-sm">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Official Cambridge Examination Form Booklet */}
+          <div className="rounded-xl border border-zinc-300 bg-white text-zinc-900 shadow-xl p-8 sm:p-12 font-serif select-none dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100">
+            {/* Candidate Cover Box Table */}
+            <div className="border-2 border-zinc-900 p-5 dark:border-zinc-300">
+              <div className="border-b border-zinc-900 pb-3 text-center dark:border-zinc-300">
+                <p className="text-[12px] font-bold uppercase tracking-widest text-zinc-700 dark:text-zinc-300 font-sans">
+                  Cambridge Assessment International Education
+                </p>
+                <p className="text-xs font-semibold text-zinc-500 font-sans mt-0.5">
+                  Cambridge International General Certificate of Secondary Education
+                </p>
+              </div>
+
+              {/* Candidate Info Grid */}
+              <div className="mt-4 grid grid-cols-1 gap-4 font-sans text-xs sm:grid-cols-2">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <Award className="size-6 text-emerald-500" />
-                    <h2 className="text-xl font-bold text-foreground">Examination Results &amp; Mark Scheme</h2>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Your answers have been graded against official Cambridge mark scheme standards.
+                  <label className="block text-[11px] font-bold uppercase text-zinc-600 dark:text-zinc-400">
+                    CANDIDATE NAME
+                  </label>
+                  <p className="mt-1 border-b-2 border-dotted border-zinc-900 pb-1 font-mono font-bold text-zinc-900 dark:border-zinc-300 dark:text-zinc-100">
+                    {candidateName || "______________________________"}
                   </p>
                 </div>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-bold text-foreground">{scoreResult.scored} / {totalMarks}</span>
-                  <span className={`text-xl font-extrabold ${getGrade(percentage).color}`}>
-                    {getGrade(percentage).grade} ({percentage}%)
-                  </span>
-                </div>
-              </div>
 
-              <div className="mt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setExamStarted(false);
-                    setExamSubmitted(false);
-                  }}
-                  className="flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background"
-                >
-                  <RotateCcw className="size-3.5" /> Take Another Subject Test
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Questions Container */}
-          <div className="space-y-6">
-            {examData.questions.map((q) => (
-              <div key={q.id} className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-serif font-bold text-lg text-foreground">{q.part}</span>
-                    <p className="text-sm font-medium text-foreground leading-relaxed">{q.text}</p>
-                  </div>
-                  <span className="shrink-0 rounded-lg bg-secondary px-2.5 py-1 text-xs font-bold text-muted-foreground">
-                    [{q.marks} {q.marks === 1 ? "mark" : "marks"}]
-                  </span>
-                </div>
-
-                {/* Question Input Area */}
-                <div className="mt-4">
-                  {q.type === "mcq" ? (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {q.options?.map((opt, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          disabled={examSubmitted}
-                          onClick={() => setUserAnswers((prev) => ({ ...prev, [q.id]: idx }))}
-                          className={`flex items-center gap-3 rounded-2xl border p-3.5 text-left text-xs font-semibold transition-all ${
-                            userAnswers[q.id] === idx
-                              ? "border-foreground bg-secondary"
-                              : "border-border hover:bg-secondary/40"
-                          } ${
-                            examSubmitted && idx === q.correctOption
-                              ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold"
-                              : ""
-                          }`}
-                        >
-                          <span
-                            className={`flex size-5 items-center justify-center rounded-full border text-[11px] ${
-                              userAnswers[q.id] === idx ? "border-foreground bg-foreground text-background" : "border-border"
-                            }`}
-                          >
-                            {String.fromCharCode(65 + idx)}
-                          </span>
-                          <span>{opt}</span>
-                        </button>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="block text-[11px] font-bold uppercase text-zinc-600 dark:text-zinc-400">
+                      CENTRE NUMBER
+                    </label>
+                    <div className="mt-1 flex border border-zinc-900 dark:border-zinc-300 divide-x divide-zinc-900 dark:divide-zinc-300 font-mono text-center font-bold">
+                      {centreNumber.padEnd(5, " ").split("").map((ch, i) => (
+                        <span key={i} className="flex-1 py-1">{ch}</span>
                       ))}
                     </div>
-                  ) : (
-                    <div>
-                      <textarea
-                        rows={3}
-                        disabled={examSubmitted}
-                        value={String(userAnswers[q.id] || "")}
-                        onChange={(e) => setUserAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
-                        placeholder="Write your answer and working here..."
-                        className="w-full rounded-2xl border border-border bg-background p-4 text-xs font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-foreground/20 disabled:opacity-80"
-                      />
+                  </div>
+
+                  <div className="flex-1">
+                    <label className="block text-[11px] font-bold uppercase text-zinc-600 dark:text-zinc-400">
+                      CANDIDATE NUMBER
+                    </label>
+                    <div className="mt-1 flex border border-zinc-900 dark:border-zinc-300 divide-x divide-zinc-900 dark:divide-zinc-300 font-mono text-center font-bold">
+                      {candidateNumber.padEnd(4, " ").split("").map((ch, i) => (
+                        <span key={i} className="flex-1 py-1">{ch}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Title & Timing Row */}
+              <div className="mt-5 border-t border-zinc-900 pt-3 flex items-baseline justify-between dark:border-zinc-300">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 uppercase">
+                    {examData.title}
+                  </h2>
+                  <p className="text-xs italic text-zinc-600 dark:text-zinc-400">
+                    {examData.syllabus}
+                  </p>
+                </div>
+                <div className="text-right font-sans text-xs">
+                  <p className="font-bold">{examData.code}</p>
+                  <p className="text-zinc-500">45 minutes</p>
+                </div>
+              </div>
+
+              {/* Instructions to Candidates */}
+              <div className="mt-4 border-t border-dotted border-zinc-400 pt-3 font-sans text-[11px] text-zinc-600 dark:text-zinc-400 space-y-1">
+                <p>• Answer all questions in the spaces provided.</p>
+                <p>• Write your answers using black or dark blue pen. Show all working for numerical calculations.</p>
+                <p>• The number of marks is given in brackets [ ] at the end of each question or part question.</p>
+              </div>
+            </div>
+
+            {/* Questions Form Body */}
+            <div className="mt-8 space-y-8">
+              {examData.questions.map((q) => (
+                <div key={q.id} className="relative pt-4">
+                  {/* Question Header with Marks on Right Margin */}
+                  <div className="flex items-baseline justify-between gap-4">
+                    <p className="text-sm font-semibold leading-relaxed">
+                      <span className="font-bold mr-2">{q.part}</span>
+                      {q.text}
+                    </p>
+                    <span className="shrink-0 font-sans text-xs font-bold text-zinc-600 dark:text-zinc-400">
+                      [{q.marks}]
+                    </span>
+                  </div>
+
+                  {/* Form Answer Area */}
+                  <div className="mt-4">
+                    {q.type === "mcq" ? (
+                      <div className="grid grid-cols-1 gap-2 font-sans text-xs sm:grid-cols-2 pl-4">
+                        {q.options?.map((opt, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            disabled={examSubmitted}
+                            onClick={() => setUserAnswers((prev) => ({ ...prev, [q.id]: idx }))}
+                            className={`flex items-center gap-3 rounded-lg border p-2.5 text-left transition-all ${
+                              userAnswers[q.id] === idx
+                                ? "border-zinc-900 bg-zinc-100 font-bold dark:border-zinc-200 dark:bg-zinc-800"
+                                : "border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800"
+                            } ${
+                              examSubmitted && idx === q.correctOption
+                                ? "border-emerald-600 bg-emerald-50 text-emerald-800 font-bold dark:bg-emerald-950 dark:text-emerald-300"
+                                : ""
+                            }`}
+                          >
+                            <span className="flex size-4 items-center justify-center rounded-sm border border-zinc-700 text-[10px] dark:border-zinc-300 font-mono">
+                              {userAnswers[q.id] === idx ? "X" : ""}
+                            </span>
+                            <span>{opt}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      /* Authentic Cambridge Ruled Answer Lines */
+                      <div className="space-y-1 pl-4">
+                        <textarea
+                          rows={q.linesCount}
+                          disabled={examSubmitted}
+                          value={String(userAnswers[q.id] || "")}
+                          onChange={(e) => setUserAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                          placeholder="..................................................................................................................................................................."
+                          className="w-full resize-none border-b-2 border-dotted border-zinc-400 bg-transparent py-1 font-mono text-xs leading-6 text-zinc-900 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:text-zinc-100 dark:focus:border-zinc-300"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mark Scheme Breakdown if submitted */}
+                  {examSubmitted && (
+                    <div className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-50/50 p-4 font-sans text-xs dark:bg-emerald-950/30">
+                      <p className="font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                        <CheckCircle2 className="size-3.5" /> Cambridge Mark Scheme Criteria:
+                      </p>
+                      <p className="mt-1 font-mono text-zinc-800 dark:text-zinc-200">{q.sampleAnswer}</p>
+                      <ul className="mt-2 space-y-0.5 text-[11px] text-zinc-600 dark:text-zinc-400 list-disc pl-4">
+                        {q.markingCriteria.map((c, i) => (
+                          <li key={i}>{c}</li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
+              ))}
+            </div>
 
-                {/* Mark Scheme Breakdown if submitted */}
-                {examSubmitted && (
-                  <div className="mt-5 border-t border-border pt-4">
-                    <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                      <CheckCircle2 className="size-3.5" /> Cambridge Mark Scheme &amp; Expected Answer:
-                    </p>
-                    <p className="mt-1 text-xs italic text-foreground bg-secondary/50 p-3 rounded-xl">
-                      {q.sampleAnswer}
-                    </p>
-                    <div className="mt-2 space-y-1">
-                      {q.markingCriteria.map((c, i) => (
-                        <p key={i} className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-                          <span className="size-1.5 rounded-full bg-emerald-500" />
-                          <span>{c}</span>
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+            {/* Exam Paper Footer */}
+            <div className="mt-12 border-t border-zinc-900 pt-3 flex items-center justify-between font-sans text-[10px] text-zinc-500 dark:border-zinc-700">
+              <p>© Cambridge University Press &amp; Assessment 2024</p>
+              <p className="font-mono">{examData.code}</p>
+              <p>[Turn over</p>
+            </div>
           </div>
 
-          {/* Bottom Action */}
-          {!examSubmitted && (
-            <div className="mt-8 flex justify-end">
+          {/* Submit / Finish Action */}
+          <div className="mt-6 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                setExamStarted(false);
+                setExamSubmitted(false);
+              }}
+              className="flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="size-3.5" /> Exit Examination Hall
+            </button>
+
+            {!examSubmitted ? (
               <button
                 type="button"
                 onClick={() => setExamSubmitted(true)}
-                className="flex items-center gap-2 rounded-full bg-ink px-8 py-3.5 text-sm font-bold text-ink-foreground shadow-lg hover:opacity-90"
+                className="flex items-center gap-2 rounded-full bg-ink px-7 py-3 text-xs font-bold text-ink-foreground shadow hover:opacity-90"
               >
-                <FileCheck className="size-4" /> Submit Exam &amp; View Mark Scheme
+                <FileCheck className="size-4" /> Hand in Paper &amp; Calculate Grade
               </button>
-            </div>
-          )}
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                  Total Score: {scoreResult.scored} / {totalMarks} ({percentage}%)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTimeLeft(45 * 60);
+                    setUserAnswers({});
+                    setExamSubmitted(false);
+                  }}
+                  className="rounded-full bg-foreground px-5 py-2 text-xs font-bold text-background"
+                >
+                  Retake Paper
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </DashboardLayout>

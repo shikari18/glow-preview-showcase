@@ -13,7 +13,7 @@ export const GEOGRAPHY: SubjectNotes = {
       subheadings: [
         {
           title: "Population Growth and the Demographic Transition Model",
-          body: "The world's population reached 8 billion in 2022 and continues to grow, though the rate of growth varies dramatically between regions. The **Demographic Transition Model (DTM)** describes the historical shift from high birth rates and high death rates (pre-industrial) to low birth rates and low death rates (post-industrial) that occurs as countries develop economically. Understanding this model allows geographers to predict and explain population trends.",
+          body: "The world's population reached 8 billion in 2022 and continues to grow, though the rate of growth varies dramatically between regions. The **Demographic Transition Model (DTM)** describes the historical shift from high birth rates and high death rates (pre-industrial) to low birth rates and low death rates (post-industrial) that occurs as countries develop economically. Understanding this model allows geographers to predict and explain population trends.\n\n![Demographic Transition Model](/diagrams/demographic-transition.svg)",
           groups: [
             {
               subTitle: "The Five Stages of the Demographic Transition Model",
@@ -98,7 +98,7 @@ export const GEOGRAPHY: SubjectNotes = {
       subheadings: [
         {
           title: "Plate Tectonics, Earthquakes, and Volcanoes",
-          body: "The **Theory of Plate Tectonics** explains that the Earth's lithosphere (outer layer) is divided into approximately 12 major **tectonic plates** that move slowly (2–10 cm per year) on the semi-molten **asthenosphere** below. The boundaries between these plates are the sites of the world's most dramatic geological events — earthquakes, volcanoes, and the formation of mountain ranges.",
+          body: "The **Theory of Plate Tectonics** explains that the Earth's lithosphere (outer layer) is divided into approximately 12 major **tectonic plates** that move slowly (2–10 cm per year) on the semi-molten **asthenosphere** below. The boundaries between these plates are the sites of the world's most dramatic geological events — earthquakes, volcanoes, and the formation of mountain ranges.\n\n![Destructive Plate Boundary & Volcano Subduction](/diagrams/plate-tectonics.svg)",
           groups: [
             {
               subTitle: "Types of Plate Boundaries and Associated Hazards",

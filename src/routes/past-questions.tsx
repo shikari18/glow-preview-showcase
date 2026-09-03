@@ -38,7 +38,7 @@ function p(subj: string, code: string, lbl: string,
 }
 
 // Only June (s) series + Maths Feb/Mar — verified 200 OK
-const YEARS = [2026, 2025, 2024, 2023, 2022] as const;
+const YEARS = [2024, 2023, 2022] as const;
 
 function juneYears(subj: string, code: string, lbl: string,
   configs: [number, number, number][]): YearData[] {
@@ -382,15 +382,56 @@ function YearRow({ year, papers, color, onOpen }: {
   );
 }
 
+function SubjectSection({ subj, onOpen }: { subj: SubjectGroup; onOpen: (p: Paper) => void }) {
+  const [open, setOpen] = useState(false);
+  const totalPapers = subj.years.reduce((n, y) => n + y.papers.length, 0);
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors"
+      >
+        <ChevronRight
+          className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+            open ? "rotate-90 text-foreground" : ""
+          }`}
+        />
+        <span className={`size-3 rounded-full ${subj.color}`} />
+        <h2 className="font-bold text-foreground text-sm sm:text-base">{subj.subject}</h2>
+        <span className="font-mono text-xs text-muted-foreground">{subj.code}</span>
+        <span className="ml-auto rounded-full bg-surface px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+          {totalPapers} papers
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-t border-border px-4 py-1">
+          {subj.years.map((y) => (
+            <YearRow
+              key={y.year}
+              year={y.year}
+              papers={y.papers}
+              color={subj.color}
+              onOpen={onOpen}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function PastQuestionsPage() {
   const [selected, setSelected] = useState<Paper | null>(null);
   const [activeSubject, setActiveSubject] = useState("All");
 
-  const subjects = ["All", ...SUBJECTS.map(s => s.subject)];
-  const displayed = activeSubject === "All" ? SUBJECTS : SUBJECTS.filter(s => s.subject === activeSubject);
-  const totalPapers = SUBJECTS.reduce((n,s) => n + s.years.reduce((m,y) => m + y.papers.length, 0), 0);
+  const subjects = ["All", ...SUBJECTS.map((s) => s.subject)];
+  const displayed = activeSubject === "All" ? SUBJECTS : SUBJECTS.filter((s) => s.subject === activeSubject);
+  const totalPapers = SUBJECTS.reduce((n, s) => n + s.years.reduce((m, y) => m + y.papers.length, 0), 0);
 
   return (
     <>
@@ -400,7 +441,7 @@ function PastQuestionsPage() {
         <div className="mb-5 overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/20 via-violet-500/15 to-emerald-500/20 px-5 py-6">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Cambridge IGCSE</p>
           <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Past Questions</h1>
-          <p className="mt-1 text-sm text-muted-foreground">2022 – 2026 · May/Jun series + Maths Feb/Mar</p>
+          <p className="mt-1 text-sm text-muted-foreground">2022 – 2024 · Verified May/Jun series + Maths Feb/Mar</p>
           <div className="mt-3 flex gap-3">
             <div className="rounded-xl bg-card/70 px-4 py-2 text-center backdrop-blur">
               <p className="text-lg font-bold">{totalPapers}+</p>
@@ -415,33 +456,25 @@ function PastQuestionsPage() {
 
         {/* Filter */}
         <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-          {subjects.map(s => (
-            <button key={s} onClick={() => setActiveSubject(s)}
+          {subjects.map((s) => (
+            <button
+              key={s}
+              onClick={() => setActiveSubject(s)}
               className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                activeSubject === s ? "bg-ink text-ink-foreground" : "bg-surface text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}>{s}
+                activeSubject === s
+                  ? "bg-ink text-ink-foreground"
+                  : "bg-surface text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              {s}
             </button>
           ))}
         </div>
 
-        {/* Subject sections */}
-        <div className="space-y-4">
-          {displayed.map(subj => (
-            <section key={subj.code} className="overflow-hidden rounded-2xl border border-border bg-card">
-              <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-                <span className={`size-3 rounded-full ${subj.color}`} />
-                <h2 className="font-bold">{subj.subject}</h2>
-                <span className="font-mono text-xs text-muted-foreground">{subj.code}</span>
-                <span className="ml-auto rounded-full bg-surface px-2.5 py-0.5 text-xs text-muted-foreground">
-                  {subj.years.reduce((n,y) => n + y.papers.length, 0)} papers
-                </span>
-              </div>
-              <div className="px-4">
-                {subj.years.map(y => (
-                  <YearRow key={y.year} year={y.year} papers={y.papers} color={subj.color} onOpen={setSelected} />
-                ))}
-              </div>
-            </section>
+        {/* Subject sections (Collapsed by default) */}
+        <div className="space-y-2.5">
+          {displayed.map((subj) => (
+            <SubjectSection key={subj.code} subj={subj} onOpen={setSelected} />
           ))}
         </div>
       </DashboardLayout>

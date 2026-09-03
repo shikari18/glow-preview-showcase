@@ -108,6 +108,18 @@ export function generateContextualStudyReply(lastUserMessage: string): string {
   if (/^(?:hmm+|uhm+|um+|erm+|thinking\.{0,3}|wait\.{0,3})$/i.test(lower)) {
     return "Take your time! What's on your mind? You can paste any homework problem, exam question, or syllabus concept you're thinking through, and we'll break it down together.";
   }
+  // 4b. Identity, Creator, and Capabilities
+  if (/who\s+(?:made|created|built|developed|designed|coded)\s+you/i.test(lower)) {
+    return "I was created by the ExamGlow team to be your dedicated AI study tutor! 🎓\n\nMy name is **Yumna**, and I'm here to help you understand complex syllabus topics, solve homework problems step-by-step, and prepare you for top marks in your Cambridge IGCSE and school exams. What subject would you like help with today?";
+  }
+
+  if (/(?:what\s+can\s+you\s+do|how\s+can\s+you\s+help|features)/i.test(lower)) {
+    return "Here is how I can help you study as **Yumna**:\n\n• **Step-by-step Homework Solutions**: Walk through tricky math, physics, chemistry, and biology problems.\n• **Syllabus Deep Dives**: Break down key concepts into simple, intuitive language with formulas and diagrams.\n• **Exam Paper Practice**: Review Cambridge past questions and official examiner mark schemes.\n• **Instant Quizzing & Flashcards**: Test your memory on definitions, equations, and facts.\n• **Document & Image Analysis**: Upload homework photos or PDF notes using the **+** button!\n\nWhat would you like to explore first?";
+  }
+
+  if (/tell\s+me\s+a\s+joke/i.test(lower)) {
+    return "Why did the student eat their homework? 🍕\n\nBecause their teacher told them it was a piece of cake!\n\nReady to get back to some revision?";
+  }
 
   // 5. Acknowledgments
   if (/^(?:ok|okay|cool|alright|got it|makes sense|sure)$/i.test(lower)) {
@@ -225,18 +237,12 @@ Here is a structured breakdown of your material:
 Feel free to ask for further elaboration or practice questions!`;
   }
 
-  // 11. General academic tutoring response
-  return `**Explanation by Yumna 📚**
+  // 11. General study response — direct, conversational, and helpful
+  return `I'm on it! 🎯 To give you the exact explanation or step-by-step working:
 
-Let's break this concept down step-by-step:
+Could you share a few more details, the specific numbers in the question, or paste the question text directly? 
 
-• **Key Principle**: In Cambridge exams, examiners award marks for precise scientific terminology, standard definitions, and showing every step of your method.
-• **Application**:
-  1. Identify the given parameters and required outcome.
-  2. Recall the governing formula or rule.
-  3. Work through logically and check your final units.
-
-Would you like me to guide you through a worked example or generate a quick practice question on this?`;
+Whether it's breaking down a concept, solving a formula, or checking a past exam mark scheme, I'll walk you through each step clearly!`;
 }
 
 /**

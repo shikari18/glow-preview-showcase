@@ -151,7 +151,7 @@ export const ECONOMICS: SubjectNotes = {
         },
         {
           title: "Market Equilibrium and Price Determination",
-          body: "The market equilibrium is the price at which the quantity demanded by consumers exactly equals the quantity supplied by producers. At equilibrium, the market clears — there are no surpluses or shortages.",
+          body: "The market equilibrium is the price at which the quantity demanded by consumers exactly equals the quantity supplied by producers. At equilibrium, the market clears — there are no surpluses or shortages.\n\n![Market Equilibrium and Price Determination](/diagrams/supply-demand.svg)",
           groups: [
             {
               subTitle: "Equilibrium, Surplus and Shortage",

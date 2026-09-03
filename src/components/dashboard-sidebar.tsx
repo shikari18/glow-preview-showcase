@@ -37,6 +37,7 @@ const practiceItems = [
   { label: "Quiz", to: "/quizzes", Icon: ClipboardCheck },
   { label: "Test", to: "/test", Icon: CircleHelp },
   { label: "Flashcards", to: "/flashcards", Icon: NotebookTabs },
+  { label: "Assignments", to: "/assignments", Icon: FileText },
 ] as const;
 
 
@@ -51,6 +52,7 @@ type NavItem = (typeof primaryItems)[number] | (typeof studyItems)[number] | (ty
 export function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [practiceOpen, setPracticeOpen] = useState(true);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   useEffect(() => {
@@ -134,18 +136,27 @@ export function DashboardSidebar() {
         </nav>
 
         <div className="mt-2">
-          <div className="flex h-10 items-center gap-3 px-3 text-[15px] text-sidebar-muted">
+          <button
+            type="button"
+            onClick={() => setPracticeOpen((v) => !v)}
+            className="flex h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-[15px] text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
+          >
             <ClipboardCheck className="size-[17px] shrink-0" strokeWidth={1.65} aria-hidden />
             {showLabels && (
               <>
-                <span className="flex-1">Practice &amp; Activities</span>
-                <ChevronDown className="size-4" aria-hidden />
+                <span className="flex-1 font-medium">Practice &amp; Activities</span>
+                <ChevronDown
+                  className={`size-4 transition-transform duration-200 ${practiceOpen ? "" : "-rotate-90"}`}
+                  aria-hidden
+                />
               </>
             )}
-          </div>
-          <nav className="space-y-0.5" aria-label="Practice and activities">
-            {practiceItems.map((item) => navItem(item, true, mobile))}
-          </nav>
+          </button>
+          {(!showLabels || practiceOpen) && (
+            <nav className="space-y-0.5" aria-label="Practice and activities">
+              {practiceItems.map((item) => navItem(item, true, mobile))}
+            </nav>
+          )}
         </div>
 
         <div className="my-3 h-px bg-sidebar-border" />

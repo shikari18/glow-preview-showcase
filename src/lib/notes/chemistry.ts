@@ -1027,7 +1027,7 @@ export const CHEMISTRY: SubjectNotes = {
               bullets: [
                 "**Purpose**: separates a mixture of liquids with similar but different boiling points",
                 "**Principle**: fractionating column allows repeated vaporisation and condensation; components with lower boiling points rise higher in column and are collected first",
-                "**Examples**: separating ethanol/water mixture (boiling points 78°C and 100°C); industrial separation of crude oil into fractions (petrol, kerosene, diesel, lubricating oil, bitumen)"
+                "**Examples**: separating ethanol/water mixture (boiling points 78°C and 100°C); industrial separation of crude oil into fractions (petrol, kerosene, diesel, lubricating oil, bitumen)\n\n![Industrial Fractional Distillation of Petroleum](/diagrams/fractional-distillation.svg)"
               ]
             },
             {
