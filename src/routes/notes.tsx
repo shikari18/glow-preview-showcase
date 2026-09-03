@@ -49,45 +49,10 @@ type NoteItem = {
 };
 
 const DEFAULT_NOTE: NoteItem = {
-  id: "default-note-1",
-  title: "Foundations of Behavioral Economics: Rational Choice Theory vs. Bounded Rationality and the Dual Process Model",
+  id: "note-1",
+  title: "Untitled Note",
   updatedAt: Date.now(),
-  content: `
-<p style="font-size: 15px; line-height: 1.8; color: #4b5563; margin-bottom: 24px;">
-This module explores the fundamental tension in economic thought between the classical assumption of human perfection and the psychological reality of human limitation. We will examine the transition from <strong>Rational Choice Theory</strong>, which assumes humans act as hyper-logical optimizers, to <strong>Bounded Rationality</strong>, which accounts for cognitive constraints, and finally to the <strong>Dual Process Model</strong>, which explains the neurological architecture behind these different modes of thinking.
-</p>
-
-<h2 style="font-size: 22px; font-weight: 800; margin-top: 32px; margin-bottom: 12px; color: #111827;">1. Rational Choice Theory (The Classical Paradigm)</h2>
-
-<p style="font-size: 15px; line-height: 1.8; color: #374151; margin-bottom: 16px;">
-<strong>Rational Choice Theory (RCT)</strong> is the bedrock of neoclassical economics. It posits that individuals are <em>homo economicus</em>—rational agents who consistently make decisions to maximize their personal utility.
-</p>
-
-<h3 style="font-size: 17px; font-weight: 700; margin-top: 20px; margin-bottom: 10px; color: #1f2937;">Core Assumptions of RCT</h3>
-
-<ul style="list-style-type: disc; padding-left: 24px; line-height: 1.8; color: #374151; margin-bottom: 24px;">
-  <li><strong>Completeness:</strong> An agent can rank all possible options. Given choices A and B, the agent can say <em>A &gt; B</em>, <em>B &gt; A</em>, or <em>A = B</em>.</li>
-  <li><strong>Transitivity:</strong> Preferences are logically consistent. If an agent prefers A to B, and B to C, they must prefer A to C (<em>A &gt; B and B &gt; C ⇒ A &gt; C</em>).</li>
-  <li><strong>Utility Maximization:</strong> Individuals possess stable preferences and choose the option that provides the highest expected payoff under probabilistic scenarios.</li>
-  <li><strong>Perfect Information:</strong> Decision-makers have access to complete information about options, costs, benefits, and probability distributions without incurring cognitive or temporal friction.</li>
-</ul>
-
-<h2 style="font-size: 22px; font-weight: 800; margin-top: 32px; margin-bottom: 12px; color: #111827;">2. Bounded Rationality (Herbert Simon)</h2>
-
-<p style="font-size: 15px; line-height: 1.8; color: #374151; margin-bottom: 16px;">
-Herbert Simon challenged RCT by introducing <strong>Bounded Rationality</strong>: human cognition is bounded by:
-</p>
-
-<ol style="list-style-type: decimal; padding-left: 24px; line-height: 1.8; color: #374151; margin-bottom: 24px;">
-  <li><strong>Cognitive Limitations:</strong> Finite mental capacity to calculate complex probabilities.</li>
-  <li><strong>Information Imperfection:</strong> Information is asymmetric, incomplete, and costly to gather.</li>
-  <li><strong>Time Constraints:</strong> Decisions must be executed within tight real-world deadlines.</li>
-</ol>
-
-<blockquote style="border-left: 4px solid #8b5cf6; padding-left: 16px; margin: 20px 0; font-style: italic; color: #6b7280;">
-"Human rational behavior is shaped by a scissors whose two blades are the structure of task environments and the computational capabilities of the actor." — Herbert Simon
-</blockquote>
-  `.trim(),
+  content: "",
 };
 
 const STORAGE_KEY = "examglow.student_notes";
@@ -98,7 +63,13 @@ function loadNotes(): NoteItem[] {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [DEFAULT_NOTE];
     const parsed = JSON.parse(raw) as NoteItem[];
-    return parsed.length > 0 ? parsed : [DEFAULT_NOTE];
+    // Remove any previously stored hardcoded behavioral economics note
+    const filtered = parsed.filter(
+      (n) =>
+        !n.title.toLowerCase().includes("behavioral economics") &&
+        !n.title.toLowerCase().includes("rational choice")
+    );
+    return filtered.length > 0 ? filtered : [DEFAULT_NOTE];
   } catch {
     return [DEFAULT_NOTE];
   }
@@ -584,8 +555,9 @@ function NotesEditorPage() {
                 contentEditable
                 suppressContentEditableWarning
                 onInput={triggerAutoSave}
+                data-placeholder="Start typing your revision notes here..."
                 style={{ fontFamily, fontSize: `${fontSize}px` }}
-                className="min-h-[500px] leading-relaxed text-foreground/90 focus:outline-none"
+                className="min-h-[500px] leading-relaxed text-foreground/90 focus:outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40 empty:before:pointer-events-none"
               />
             </div>
           </div>
