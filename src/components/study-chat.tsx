@@ -337,17 +337,20 @@ export function StudyChat({
     setStatus("submitted");
     incrementAiMessageCount();
 
-    // Context from student learning activity to tailor response
+    // Context from student learning activity to tailor response (only for substantive study questions, not simple greetings)
     let studentContext = "";
-    try {
-      const recentNotes = localStorage.getItem("examglow.student_notes");
-      const profileRaw = localStorage.getItem("examglow.profile");
-      if (recentNotes || profileRaw) {
-        studentContext = `\n\n[Active Student Info: ${
-          profileRaw ? `Curriculum: ${JSON.parse(profileRaw).curriculum || "Cambridge IGCSE"}. ` : ""
-        }${recentNotes ? `Recent notes written: ${recentNotes.slice(0, 180)}...` : ""}]`;
-      }
-    } catch {}
+    const isGreeting = /^(hey|hi|hello|yo|sup|greetings|good\s+(morning|afternoon|evening))\b/i.test(trimmed);
+    if (!isGreeting && trimmed.length > 5) {
+      try {
+        const recentNotes = localStorage.getItem("examglow.student_notes");
+        const profileRaw = localStorage.getItem("examglow.profile");
+        if (recentNotes || profileRaw) {
+          studentContext = `\n\n(Student Info: ${
+            profileRaw ? `Curriculum: ${JSON.parse(profileRaw).curriculum || "Cambridge IGCSE"}. ` : ""
+          }${recentNotes ? `Recent notes written: ${recentNotes.slice(0, 180)}...` : ""})`;
+        }
+      } catch {}
+    }
 
     const fullMessages = [
       ...messages,

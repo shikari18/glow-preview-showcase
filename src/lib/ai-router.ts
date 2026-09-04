@@ -179,7 +179,12 @@ export async function callGemini(
     return { text: VAGUE_IMAGE_PROMPT_REPLY, model: "gemini-2.5-flash" };
   }
 
-  const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"];
+  const models = [
+    "gemini-3.5-flash",
+    "gemini-flash-lite-latest",
+    "gemini-3.5-flash-lite",
+    "gemini-2.5-flash",
+  ];
   const keys = GEMINI_API_KEYS;
   const isImageRequest = /\b(image|picture|drawing|draw|diagram|photo|illustration|visual)\b/i.test(lastUserMsg);
 
@@ -321,8 +326,19 @@ export async function routeChat(
     };
   }
 
+  const cleanUserMsg = lastUserMsg.replace(/\[Active Student Info:[\s\S]*?\]/gi, "").trim();
+
+  // If greeting
+  if (/^(hey|hi|hello|greetings|good\s+(morning|afternoon|evening)|yo|sup)\b/i.test(cleanUserMsg) || cleanUserMsg.length === 0) {
+    return {
+      text: `Hey there! 👋 What subject or topic are we tackling today?\n\nWhether you need help with **Biology**, **Chemistry**, **Physics**, **Mathematics**, **Computer Science**, or working through past paper exam questions—just let me know and we'll dive right in!`,
+      provider: "Yumna-AI",
+      model: "yumna-pro",
+    };
+  }
+
   // 3. Dynamic question fallback if user specifically requested a question/quiz
-  const lastMsgLower = lastUserMsg.toLowerCase();
+  const lastMsgLower = cleanUserMsg.toLowerCase();
   if (lastMsgLower.includes("question") || lastMsgLower.includes("quiz") || lastMsgLower.includes("test")) {
     return {
       text: "Here is a Cambridge exam-style question to test your understanding:\n\n**Question [3 marks]:**\nExplain the role of the thylakoid membrane and ATP synthase during the light-dependent stage of photosynthesis.\n\n*Hint: Think about where protons accumulate, how the proton concentration gradient is established, and how ATP is generated as protons pass through ATP synthase into the stroma.* What is your answer?",
@@ -331,8 +347,9 @@ export async function routeChat(
     };
   }
 
+  const displayTopic = cleanUserMsg.slice(0, 50).trim() || "Your Syllabus Topic";
   return {
-    text: `### Study Guide: ${lastUserMsg.slice(0, 50)}\n\nTo master this concept for your exams:\n1. **Core Definition**: Break down the principle into its fundamental scientific terms.\n2. **Key Formulas & Relationships**: Identify how variables and structures depend on one another.\n3. **Exam Application**: Review common past paper pitfalls where students lose marks.\n\nWhat specific part of this would you like to explore together next?`,
+    text: `### Study Guide: ${displayTopic}\n\nTo master this concept for your exams:\n1. **Core Definition**: Break down the principle into its fundamental scientific terms.\n2. **Key Formulas & Relationships**: Identify how variables and structures depend on one another.\n3. **Exam Application**: Review common past paper pitfalls where students lose marks.\n\nWhat specific part of this would you like to explore together next?`,
     provider: "Yumna-AI",
     model: "yumna-core",
   };
