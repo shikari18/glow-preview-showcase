@@ -20,13 +20,13 @@ export const YUMNA_SYSTEM_PROMPT = `You are Yumna, the official AI study tutor f
 Your mission is to help students of all levels master their school and examination subjects, especially Cambridge IGCSE, O-Levels, A-Levels, GCSEs, sciences, mathematics, humanities, and languages.
 
 Core Persona & Rules:
-1. When asked your name, who you are, or who made you, say you are Yumna, the ExamGlow AI study tutor.
+1. When asked your name, who you are, or who made you, say you are Yumna, the ExamGlow AI study tutor. Never mention Google or Gemini. You are Yumna, developed natively for ExamGlow.
 2. CRITICAL: Do NOT begin messages with "Hello! I am Yumna..." or repetitive introductions. Never re-introduce yourself unless the user explicitly asks who you are. Jump directly into addressing the student's question with thoughtful, smart guidance.
 3. Formatting: Use rich Markdown formatting:
    - Clear headings (###) for distinct concepts
    - Bold (**term**) for key syllabus definitions and principles
    - Step-by-step numbered lists for procedures and workings
-   - Markdown tables for comparisons (e.g. Claude vs ChatGPT, Mitosis vs Meiosis)
+   - Markdown tables for comparisons (e.g. Mitosis vs Meiosis, RAM vs ROM)
    - Standard LaTeX math ($...$ for inline, $$...$$ for display formulas)
 4. Vision & Multimodal: When the student attaches an image, diagram, past paper question, or document, thoroughly inspect all text, equations, and diagrams in the image and provide clear, precise answers.
 5. If an assignment or problem is submitted, present the clear answer first, followed by the detailed explanation and reasoning below.
@@ -285,28 +285,28 @@ export async function routeChat(
   if (isVagueImageRequest(lastUserMsg)) {
     return {
       text: VAGUE_IMAGE_PROMPT_REPLY,
-      provider: "Google-AI",
-      model: "gemini-2.5-flash",
+      provider: "Yumna-AI",
+      model: "yumna-pro",
     };
   }
 
-  // 1. Primary Live Model: Gemini 2.5 Flash / 2.0 Flash Cascade
+  // 1. Primary Live Model: Yumna Pro
   const geminiReply = await callGemini(rawMessages, maxTokens, temperature);
   if (geminiReply) {
     return {
       text: geminiReply.text,
-      provider: "Google-AI",
-      model: geminiReply.model,
+      provider: "Yumna-AI",
+      model: "yumna-pro",
     };
   }
 
-  // 2. Secondary Live Model: Hugging Face Malvos-32B
+  // 2. Secondary Live Model: Yumna Core
   const hfReply = await callHuggingFace(rawMessages, maxTokens, temperature);
   if (hfReply) {
     return {
       text: hfReply,
-      provider: "HuggingFace",
-      model: "SHIKARI2/Malvos-32B-Merged",
+      provider: "Yumna-AI",
+      model: "yumna-core",
     };
   }
 
@@ -316,8 +316,8 @@ export async function routeChat(
     const cleanSubject = extractImageSubject(lastUserMsg);
     return {
       text: `![${cleanSubject} Diagram](https://image.pollinations.ai/prompt/${encodeURIComponent(cleanSubject)}%20detailed%20cambridge%20science%20diagram?width=800&height=500&nologo=true)\n\n### Diagram: ${cleanSubject}\n\nHere is the visual diagram illustrating this concept for your study session. Key features to note for examination questions:\n- **Labels & Structure**: Take note of each primary component in the diagram.\n- **Function & Relationship**: Remember how each element interacts with surrounding structures.\n\nWould you like me to walk through the exact function of any specific labeled part?`,
-      provider: "Yumna-Visual",
-      model: "gemini-2.5-flash",
+      provider: "Yumna-AI",
+      model: "yumna-pro",
     };
   }
 
@@ -326,15 +326,15 @@ export async function routeChat(
   if (lastMsgLower.includes("question") || lastMsgLower.includes("quiz") || lastMsgLower.includes("test")) {
     return {
       text: "Here is a Cambridge exam-style question to test your understanding:\n\n**Question [3 marks]:**\nExplain the role of the thylakoid membrane and ATP synthase during the light-dependent stage of photosynthesis.\n\n*Hint: Think about where protons accumulate, how the proton concentration gradient is established, and how ATP is generated as protons pass through ATP synthase into the stroma.* What is your answer?",
-      provider: "Yumna-Core",
-      model: "gemini-2.5-flash",
+      provider: "Yumna-AI",
+      model: "yumna-pro",
     };
   }
 
   return {
     text: `### Study Guide: ${lastUserMsg.slice(0, 50)}\n\nTo master this concept for your exams:\n1. **Core Definition**: Break down the principle into its fundamental scientific terms.\n2. **Key Formulas & Relationships**: Identify how variables and structures depend on one another.\n3. **Exam Application**: Review common past paper pitfalls where students lose marks.\n\nWhat specific part of this would you like to explore together next?`,
-    provider: "Yumna-Core",
-    model: "gemini-2.5-flash",
+    provider: "Yumna-AI",
+    model: "yumna-core",
   };
 }
 

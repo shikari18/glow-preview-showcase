@@ -705,7 +705,7 @@ export function StudyChat({
                               setVoiceLoadingIdx(null);
                             }}
                             className="flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/40 px-3 py-1 text-[11px] font-bold text-primary animate-pulse hover:bg-primary/25 cursor-pointer transition-colors"
-                            title="Preparing realistic voice with Gemini Live... Click to cancel"
+                            title="Preparing realistic voice with Yumna... Click to cancel"
                           >
                             <Loader2 className="size-3.5 animate-spin" />
                             <span>Preparing realistic voice...</span>

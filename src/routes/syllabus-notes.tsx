@@ -32,7 +32,15 @@ const catDot: Record<string, string> = {
   Technology:             "bg-cyan-500",
 };
 
-// ─── Full chapter document reader & Gemini Live Masterclass Player ───────────
+// ─── Full chapter document reader & 20-Min Yumna Masterclass Player ───────────
+
+const TOTAL_LECTURE_SECONDS = 1200; // 20:00 exactly
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
 
 type LectureSection = {
   title: string;
@@ -40,39 +48,97 @@ type LectureSection = {
   script: string;
 };
 
-function buildChapterLecture(chap: Chapter): LectureSection[] {
+function build20MinChapterLecture(chap: Chapter): LectureSection[] {
   const sections: LectureSection[] = [];
-
-  // 1. Chapter Overview
   const cleanIntro = cleanSpeechText(chap.intro);
+
+  // 1. Welcome & Orientation
   sections.push({
-    title: "Chapter Overview & Core Foundations",
-    tag: "Introduction",
-    script: `Welcome to Chapter ${chap.number}: ${chap.title}. In this comprehensive masterclass, we will explore the complete syllabus principles for this chapter. Specifically, ${cleanIntro.slice(0, 260)}. Let's walk through every core concept step by step.`,
+    title: "Masterclass Kickoff & Big Picture",
+    tag: "Part 1: Orientation",
+    script: `Hello and welcome to your complete twenty-minute deep-dive masterclass for Chapter ${chap.number}: ${chap.title}. I am Yumna, your tutor. Over the next twenty minutes, we aren't just reading through notes. We are going to unpack, analyze, and truly understand how every concept functions. Get ready to master this topic.`,
   });
 
-  // 2. Subheadings
+  // 2. Real-world relevance
+  sections.push({
+    title: "Why This Concept Exists in the Real World",
+    tag: "Part 2: Motivation",
+    script: `Let's start by answering the question every student asks: why does this topic matter? In the Cambridge syllabus, ${chap.title} is essential because it forms the baseline for how modern systems and natural laws operate. Specifically, ${cleanIntro.slice(0, 220)}. When you grasp the reason behind it, everything falls into place.`,
+  });
+
+  // 3. Decoding first principles
+  sections.push({
+    title: "First Principles & Fundamental Definitions",
+    tag: "Part 3: Definitions",
+    script: `Now let's decode the core foundation. Don't worry about memorizing dry jargon. Focus on the core definition: ${cleanIntro.slice(0, 200)}. When an examiner asks for this in Section A of your paper, stating this definition clearly earns your very first marks.`,
+  });
+
+  // 4. Subheadings deep elaboration
   chap.subheadings.forEach((sub, sIdx) => {
     const cleanBody = cleanSpeechText(sub.body);
-    const keyBullets = sub.groups
+    const bullets = sub.groups
       .flatMap((g) => g.bullets)
-      .slice(0, 2)
       .map((b) => cleanSpeechText(b))
-      .filter(Boolean)
-      .join(". ");
+      .filter(Boolean);
 
+    // Concept Exploration
     sections.push({
-      title: sub.title,
-      tag: `Section ${sIdx + 1}`,
-      script: `Now let's examine section ${sIdx + 1}: ${sub.title}. ${cleanBody.slice(0, 220)}. Key examination points to remember: ${keyBullets || "Ensure you understand the exact scientific definition and how questions are asked in past papers."}`,
+      title: `${sub.title}: Concept Breakdown`,
+      tag: `Topic ${sIdx + 1}A`,
+      script: `Let's move into our next key topic: ${sub.title}. Let's break down how this actually works. ${cleanBody.slice(0, 220)}. Notice the cause and effect here. When one factor changes, it directly influences the surrounding mechanism. Keep that relationship clearly in mind.`,
+    });
+
+    // Practical worked examples & key bullet points
+    if (bullets.length > 0) {
+      const topBullets = bullets.slice(0, 2).join(". ");
+      sections.push({
+        title: `${sub.title}: Key Syllabus Points`,
+        tag: `Topic ${sIdx + 1}B`,
+        script: `Let's look at the crucial details for ${sub.title}. Cambridge mark schemes require specific elements: ${topBullets}. When answering exam questions, make sure to state both the action and the consequence to secure full marks.`,
+      });
+    }
+
+    // Examiner Traps for this subtopic
+    sections.push({
+      title: `${sub.title}: Examiner Pitfalls`,
+      tag: `Topic ${sIdx + 1}C`,
+      script: `Here is an examiner secret regarding ${sub.title}. Many students confuse similar terms or give half-answers without units. Remember: always write out your reasoning step-by-step so the examiner can award you every single method mark.`,
     });
   });
 
-  // 3. Final Cambridge Examination Tips
+  // 5. Connecting the entire chapter together
   sections.push({
-    title: "Examiner Pitfalls & Scoring Mastery",
+    title: "System Integration: Connecting All Concepts",
+    tag: "Synthesis",
+    script: `Now that we have analyzed the individual sections of Chapter ${chap.number}, let's look at how they connect as one unified system. If you alter the initial conditions of ${chap.title}, how does that trigger changes throughout the entire process? Being able to link these ideas is what separates an A grade from an A star.`,
+  });
+
+  // 6. Exam question strategy & structuring
+  sections.push({
+    title: "Exam Question Walkthrough & Model Answers",
     tag: "Exam Strategy",
-    script: `To conclude Chapter ${chap.number}: ${chap.title}, here are the key Cambridge examiner tips: always memorize exact syllabus definitions, include correct units in every numerical calculation, and study the diagrams carefully. Excellent focus today with Yumna!`,
+    script: `Let's simulate a real Cambridge examination scenario for ${chap.title}. Picture a four-mark question. How do you structure your answer? Step one: state the precise definition. Step two: describe the step-by-step mechanism. Step three: conclude with the result. Following this formula guarantees maximum marks every time.`,
+  });
+
+  // 7. Diagram & Visual Representation Mastery
+  sections.push({
+    title: "Diagram & Visual Representation Mastery",
+    tag: "Diagrams",
+    script: `Pay close attention to the diagrams in Chapter ${chap.number}. In the exam hall, examiners frequently ask you to label or interpret diagrams. Make sure you can sketch this from memory, label every key part accurately, and explain what each structure does.`,
+  });
+
+  // 8. Rapid Recall Checkpoint
+  sections.push({
+    title: "Rapid Recall & Mental Recall Checkpoint",
+    tag: "Recall Drill",
+    script: `Let's do a quick mental recall checkpoint. Pause and ask yourself: what is the single most important rule we learned about ${chap.title}? If you can explain it in your own words, you truly understand it. You are doing fantastic work today.`,
+  });
+
+  // 9. Final 20-minute masterclass conclusion
+  sections.push({
+    title: "20-Minute Masterclass Conclusion & Success",
+    tag: "Completion",
+    script: `Congratulations! You have completed your full twenty-minute masterclass on Chapter ${chap.number}: ${chap.title}. You have covered the theory, the mechanisms, the practical applications, and the examiner secrets. You are thoroughly prepared to excel. Keep up this magnificent dedication with Yumna!`,
   });
 
   return sections;
@@ -101,6 +167,8 @@ function ChapterDoc({
   const [isVoiceLoading, setIsVoiceLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lectureSectionsRef = useRef<LectureSection[]>([]);
   const currentSectionRef = useRef<number>(0);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -112,8 +180,42 @@ function ChapterDoc({
   const hasNext = idx < allChapters.length - 1;
   const hasPrev = idx > 0;
 
+  // 20-minute timer ticker
+  useEffect(() => {
+    if (isPlaying && !isPaused && isLectureActive) {
+      timerRef.current = setInterval(() => {
+        setElapsedSeconds((prev) => {
+          if (prev >= TOTAL_LECTURE_SECONDS - 1) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            stopRealisticVoice();
+            setIsPlaying(false);
+            setIsPaused(false);
+            return TOTAL_LECTURE_SECONDS;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isPlaying, isPaused, isLectureActive]);
+
   function playSection(index: number, sections: LectureSection[]) {
     if (index < 0 || index >= sections.length) {
+      if (elapsedSeconds < TOTAL_LECTURE_SECONDS - 30) {
+        playSection(Math.max(0, sections.length - 4), sections);
+        return;
+      }
       setIsPlaying(false);
       setIsPaused(false);
       setIsVoiceLoading(false);
@@ -153,6 +255,8 @@ function ChapterDoc({
         const nextIdx = currentSectionRef.current + 1;
         if (nextIdx < sections.length) {
           playSection(nextIdx, sections);
+        } else if (elapsedSeconds < TOTAL_LECTURE_SECONDS - 30) {
+          playSection(Math.max(0, sections.length - 4), sections);
         } else {
           setIsPlaying(false);
           setIsPaused(false);
@@ -182,9 +286,10 @@ function ChapterDoc({
       return;
     }
 
-    const sections = buildChapterLecture(chapter);
+    const sections = build20MinChapterLecture(chapter);
     lectureSectionsRef.current = sections;
     setIsLectureActive(true);
+    setElapsedSeconds(0);
     playSection(0, sections);
   }
 
@@ -202,10 +307,15 @@ function ChapterDoc({
 
   function handleStop() {
     stopRealisticVoice();
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     setIsLectureActive(false);
     setIsPlaying(false);
     setIsPaused(false);
     setIsVoiceLoading(false);
+    setElapsedSeconds(0);
   }
 
   function handleNextSection() {
@@ -227,6 +337,10 @@ function ChapterDoc({
   useEffect(() => {
     return () => {
       stopRealisticVoice();
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [chapter.number]);
 
@@ -236,6 +350,10 @@ function ChapterDoc({
     return () => {
       delete document.body.dataset["readingChapter"];
       stopRealisticVoice();
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, []);
 
@@ -251,7 +369,7 @@ function ChapterDoc({
       <div className="flex h-13 shrink-0 items-center gap-3 border-b border-black/10 bg-[#faf9f5]/90 px-6 backdrop-blur dark:border-white/10 dark:bg-[#181816]/90">
         <button
           onClick={() => {
-            stopRealisticVoice();
+            handleStop();
             onBack();
           }}
           className="flex items-center gap-2 text-sm font-medium text-black/70 hover:text-black transition-colors dark:text-white/70 dark:hover:text-white"
@@ -276,22 +394,22 @@ function ChapterDoc({
           {isVoiceLoading ? (
             <>
               <Loader2 className="size-3.5 animate-spin" />
-              <span>Preparing Masterclass...</span>
+              <span>Preparing 20-Min Lesson...</span>
             </>
           ) : isPlaying ? (
             <>
               <Pause className="size-3.5 fill-current" />
-              <span>Pause Lecture ({lectureSectionIdx + 1}/{lectureSectionsRef.current.length || 1})</span>
+              <span>Pause ({formatTime(elapsedSeconds)} / 20:00)</span>
             </>
           ) : isPaused ? (
             <>
               <Play className="size-3.5 fill-current" />
-              <span>Resume Lecture</span>
+              <span>Resume ({formatTime(elapsedSeconds)} / 20:00)</span>
             </>
           ) : (
             <>
               <Volume2 className="size-3.5" />
-              <span>Teach Me</span>
+              <span>Teach Me (20 Min)</span>
             </>
           )}
         </button>
@@ -414,16 +532,16 @@ function ChapterDoc({
         </article>
       </div>
 
-      {/* Floating Gemini Live Masterclass Audio Player */}
+      {/* Floating 20-Min Yumna Masterclass Audio Player */}
       {isLectureActive && (
         <div className="fixed bottom-6 inset-x-4 max-w-2xl mx-auto z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
           <div className="relative overflow-hidden rounded-2xl border border-black/10 dark:border-white/10 bg-[#faf9f5]/95 dark:bg-[#1f1f1d]/95 backdrop-blur-xl shadow-2xl p-4 text-foreground">
-            {/* Top progress bar */}
+            {/* Top progress bar for 20-minute lecture */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-black/5 dark:bg-white/5">
               <div
                 className="h-full bg-primary transition-all duration-300"
                 style={{
-                  width: `${((lectureSectionIdx + 1) / (lectureSectionsRef.current.length || 1)) * 100}%`,
+                  width: `${Math.min(100, (elapsedSeconds / TOTAL_LECTURE_SECONDS) * 100)}%`,
                 }}
               />
             </div>
@@ -444,10 +562,10 @@ function ChapterDoc({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                    Gemini Live Masterclass
+                    20-Min Yumna Masterclass
                   </span>
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    Part {lectureSectionIdx + 1} of {lectureSectionsRef.current.length}
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-mono font-bold text-primary">
+                    {formatTime(elapsedSeconds)} / 20:00
                   </span>
                 </div>
                 <p className="truncate text-xs font-semibold text-foreground">
@@ -455,10 +573,10 @@ function ChapterDoc({
                 </p>
                 <p className="truncate text-[11px] text-muted-foreground">
                   {isVoiceLoading
-                    ? "Connecting to Gemini Live voice..."
+                    ? "Connecting to Yumna's realistic tutor voice..."
                     : isPaused
-                    ? "Lecture paused — click Resume"
-                    : "Listening to Yumna's realistic Aoede voice"}
+                    ? `Paused at ${formatTime(elapsedSeconds)} — click Resume`
+                    : `Topic ${lectureSectionIdx + 1} of ${lectureSectionsRef.current.length} · In-depth 20-min walkthrough`}
                 </p>
               </div>
 
@@ -470,7 +588,7 @@ function ChapterDoc({
                   onClick={handlePrevSection}
                   disabled={lectureSectionIdx === 0}
                   className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  title="Previous Section"
+                  title="Previous Topic"
                 >
                   <SkipBack className="size-4" />
                 </button>
@@ -490,7 +608,7 @@ function ChapterDoc({
                     type="button"
                     onClick={handleResume}
                     className="size-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 shadow-md transition-all"
-                    title="Resume lecture"
+                    title="Resume 20-min lecture"
                   >
                     <Play className="size-4 fill-current ml-0.5" />
                   </button>
@@ -511,7 +629,7 @@ function ChapterDoc({
                   onClick={handleNextSection}
                   disabled={lectureSectionIdx === lectureSectionsRef.current.length - 1}
                   className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  title="Next Section"
+                  title="Next Topic"
                 >
                   <SkipForward className="size-4" />
                 </button>
@@ -521,7 +639,7 @@ function ChapterDoc({
                   type="button"
                   onClick={handleStop}
                   className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors ml-1"
-                  title="Stop and exit lecture"
+                  title="End lecture"
                 >
                   <X className="size-4" />
                 </button>
@@ -540,7 +658,7 @@ function ChapterDoc({
             className="flex items-center gap-2.5 rounded-full px-5 py-3 text-sm font-bold shadow-2xl transition-all hover:scale-105 active:scale-95 bg-foreground text-background"
           >
             <Volume2 className="size-4" />
-            <span>Teach Me This Chapter</span>
+            <span>Teach Me This Chapter (20 Min)</span>
           </button>
         </div>
       )}
