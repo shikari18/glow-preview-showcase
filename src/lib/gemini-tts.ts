@@ -162,14 +162,54 @@ export async function generateGeminiSpeech(text: string): Promise<string | null>
   }
 }
 
+export async function preloadGeminiSpeech(text: string): Promise<string | null> {
+  const snippet = prepareSpeechSnippet(text);
+  if (!snippet) return null;
+  if (audioCache.has(snippet)) return audioCache.get(snippet)!;
+  return generateGeminiSpeech(snippet);
+}
+
+export function pauseRealisticVoice(): boolean {
+  if (currentAudio && !currentAudio.paused) {
+    try {
+      currentAudio.pause();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+export function resumeRealisticVoice(): boolean {
+  if (currentAudio && currentAudio.paused) {
+    try {
+      void currentAudio.play();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+export function isRealisticVoicePlaying(): boolean {
+  return !!currentAudio && !currentAudio.paused;
+}
+
+export function isRealisticVoicePaused(): boolean {
+  return !!currentAudio && currentAudio.paused;
+}
+
 export function playRealisticVoice(
   text: string,
   callbacks?: {
+    onLoading?: () => void;
     onStart?: () => void;
     onEnd?: () => void;
-    onError?: () => void;
+    onError?: (err?: unknown) => void;
   },
-): { stop: () => void } {
+): { stop: () => void; pause: () => boolean; resume: () => boolean } {
   stopRealisticVoice();
 
   let isStopped = false;
@@ -180,8 +220,11 @@ export function playRealisticVoice(
     callbacks?.onEnd?.();
   };
 
+  const pause = () => pauseRealisticVoice();
+  const resume = () => resumeRealisticVoice();
+
   void (async () => {
-    callbacks?.onStart?.();
+    callbacks?.onLoading?.();
 
     const audioUrl = await generateGeminiSpeech(text);
 
@@ -205,10 +248,14 @@ export function playRealisticVoice(
 
       try {
         await audio.play();
+        if (!isStopped) {
+          callbacks?.onStart?.();
+        }
         return;
-      } catch {
-        // Autoplay blocked by browser policy
-        callbacks?.onError?.();
+      } catch (err) {
+        // Autoplay blocked by browser policy or audio play error
+        stopRealisticVoice();
+        callbacks?.onError?.(err);
       }
     } else {
       // Never fall back to robotic browser voice; call onError cleanly
@@ -216,7 +263,7 @@ export function playRealisticVoice(
     }
   })();
 
-  return { stop };
+  return { stop, pause, resume };
 }
 
 export function stopRealisticVoice() {
@@ -239,3 +286,4 @@ export function stopRealisticVoice() {
     } catch {}
   }
 }
+

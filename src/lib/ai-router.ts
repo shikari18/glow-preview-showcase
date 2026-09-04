@@ -122,6 +122,46 @@ function normalizeGeminiContents(messages: ChatMessage[]) {
 }
 
 /**
+ * Detects if a user is asking for an image/diagram but hasn't specified what concept or subject to illustrate.
+ * e.g., "hey i need an image", "generate an image", "can you draw something", "show me a picture"
+ */
+export function isVagueImageRequest(text: string): boolean {
+  const hasImageWord = /\b(image|picture|diagram|drawing|draw|photo|illustration|visual|visuals|sketch)\b/i.test(text);
+  if (!hasImageWord) return false;
+
+  const stripped = text
+    .toLowerCase()
+    .replace(/^(hey|hi|hello|yo|please|kindly|yumna)\b/gi, "")
+    .replace(/\b(can you|could you|would you|will you|i want|i need|give me|show me|send me|create|generate|draw|make|provide|paint|render)\b/gi, "")
+    .replace(/\b(an?|the|some|any|educational|detailed|clear|good|high quality|hd)\b/gi, "")
+    .replace(/\b(image|picture|diagram|drawing|photo|illustration|visual|visuals|pic|pics|diagrams|sketch)\b/gi, "")
+    .replace(/\b(for me|to me|please|now|here|as well|too|thanks|thank you|right now)\b/gi, "")
+    .replace(/[^a-z0-9]/gi, " ")
+    .trim();
+
+  const emptyOrTrivial = new Set(["", "it", "one", "something", "anything", "of", "about", "for", "a", "an", "this", "that"]);
+  return emptyOrTrivial.has(stripped) || stripped.length < 3;
+}
+
+export function extractImageSubject(text: string): string {
+  const cleaned = text
+    .replace(/^(hey|hi|hello|yo|please)?\s*(can you|could you)?\s*(generate|make|draw|show|create|give me|send me)\s+(an?\s+)?(image|picture|diagram|drawing|photo|illustration|visual)\s+(for\s+me\s+)?(of|about|for)?\s*/i, "")
+    .replace(/\s+(please|now|here)$/i, "")
+    .trim();
+  return cleaned || "educational concept diagram";
+}
+
+export const VAGUE_IMAGE_PROMPT_REPLY = `I would love to draw or generate an educational diagram for you! 🎨
+
+What specific concept, structure, or topic would you like me to illustrate? For example:
+- **Biology:** Plant Cell vs Animal Cell, Human Heart Anatomy, or Photosynthesis Stages
+- **Physics:** Electric Circuit Diagrams, Reflection & Refraction of Light, or Magnetic Fields
+- **Chemistry:** Fractional Distillation of Crude Oil, Electrolysis, or Atomic Orbitals
+- **Computer Science:** Von Neumann Architecture, Logic Gates, or Network Topologies
+
+Tell me which concept or syllabus topic you want, and I'll create a clear diagram right away!`;
+
+/**
  * Primary Real-Time AI Generation using Gemini API with model cascade
  */
 export type GeminiResponse = { text: string; model: string };
@@ -134,10 +174,13 @@ export async function callGemini(
   const contents = normalizeGeminiContents(messages);
   if (contents.length === 0) return null;
 
+  const lastUserMsg = messages.filter((m) => m.role === "user").pop()?.content || "";
+  if (isVagueImageRequest(lastUserMsg)) {
+    return { text: VAGUE_IMAGE_PROMPT_REPLY, model: "gemini-2.5-flash" };
+  }
+
   const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-flash-latest"];
   const keys = GEMINI_API_KEYS;
-
-  const lastUserMsg = messages.filter((m) => m.role === "user").pop()?.content || "";
   const isImageRequest = /\b(image|picture|drawing|draw|diagram|photo|illustration|visual)\b/i.test(lastUserMsg);
 
   for (const key of keys) {
@@ -178,10 +221,8 @@ export async function callGemini(
         if (reply && reply.length > 0) {
           // If the user asked for an image and Gemini didn't include one, automatically embed an educational diagram!
           if (isImageRequest && !reply.includes("http") && !reply.includes("![") && !reply.includes("<img")) {
-            const cleanPrompt = encodeURIComponent(
-              lastUserMsg.replace(/^(generate|make|draw|show|create)\s+(an?\s+)?(image|picture|diagram|drawing|photo)\s+(for\s+me\s+)?(of|about|for)?\s*/i, "").trim() || "educational diagram",
-            );
-            reply = `![${lastUserMsg}](https://image.pollinations.ai/prompt/${cleanPrompt}%20educational%20concept%20diagram%20high%20resolution?width=800&height=500&nologo=true)\n\n${reply}`;
+            const cleanSubject = extractImageSubject(lastUserMsg);
+            reply = `![${cleanSubject} Diagram](https://image.pollinations.ai/prompt/${encodeURIComponent(cleanSubject)}%20educational%20concept%20diagram%20high%20resolution?width=800&height=500&nologo=true)\n\n${reply}`;
           }
           return { text: reply, model };
         }
@@ -240,6 +281,15 @@ export async function routeChat(
 ): Promise<RouterResult> {
   const { maxTokens = 1024, temperature = 0.7 } = opts;
 
+  const lastUserMsg = rawMessages.filter((m) => m.role === "user").pop()?.content || "";
+  if (isVagueImageRequest(lastUserMsg)) {
+    return {
+      text: VAGUE_IMAGE_PROMPT_REPLY,
+      provider: "Google-AI",
+      model: "gemini-2.5-flash",
+    };
+  }
+
   // 1. Primary Live Model: Gemini 2.5 Flash / 2.0 Flash Cascade
   const geminiReply = await callGemini(rawMessages, maxTokens, temperature);
   if (geminiReply) {
@@ -260,15 +310,12 @@ export async function routeChat(
     };
   }
 
-  const lastUserMsg = rawMessages.filter((m) => m.role === "user").pop()?.content || "";
   const isImageRequest = /\b(image|picture|drawing|draw|diagram|photo|illustration|visual)\b/i.test(lastUserMsg);
 
   if (isImageRequest) {
-    const cleanPrompt = encodeURIComponent(
-      lastUserMsg.replace(/^(generate|make|draw|show|create)\s+(an?\s+)?(image|picture|diagram|drawing|photo)\s+(for\s+me\s+)?(of|about|for)?\s*/i, "").trim() || "educational concept diagram",
-    );
+    const cleanSubject = extractImageSubject(lastUserMsg);
     return {
-      text: `![Visual Diagram](https://image.pollinations.ai/prompt/${cleanPrompt}%20detailed%20cambridge%20science%20diagram?width=800&height=500&nologo=true)\n\n### Diagram: ${lastUserMsg.slice(0, 60)}\n\nHere is the visual diagram illustrating this concept for your study session. Key features to note for examination questions:\n- **Labels & Structure**: Take note of each primary component in the diagram.\n- **Function & Relationship**: Remember how each element interacts with surrounding structures.\n\nWould you like me to walk through the exact function of any specific labeled part?`,
+      text: `![${cleanSubject} Diagram](https://image.pollinations.ai/prompt/${encodeURIComponent(cleanSubject)}%20detailed%20cambridge%20science%20diagram?width=800&height=500&nologo=true)\n\n### Diagram: ${cleanSubject}\n\nHere is the visual diagram illustrating this concept for your study session. Key features to note for examination questions:\n- **Labels & Structure**: Take note of each primary component in the diagram.\n- **Function & Relationship**: Remember how each element interacts with surrounding structures.\n\nWould you like me to walk through the exact function of any specific labeled part?`,
       provider: "Yumna-Visual",
       model: "gemini-2.5-flash",
     };

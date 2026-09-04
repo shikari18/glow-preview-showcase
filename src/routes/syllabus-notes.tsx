@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { BookOpen, ChevronRight, Search, ArrowLeft, Lock, FileText, Check, Volume2, VolumeX, Loader2 } from "lucide-react";
+import { BookOpen, ChevronRight, Search, ArrowLeft, Lock, FileText, Check, Volume2, VolumeX, Loader2, Play, Pause, SkipBack, SkipForward, X } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-page";
-import { playRealisticVoice, stopRealisticVoice } from "@/lib/gemini-tts";
+import { playRealisticVoice, stopRealisticVoice, pauseRealisticVoice, resumeRealisticVoice, preloadGeminiSpeech, cleanSpeechText } from "@/lib/gemini-tts";
 import type { SubjectNotes, Chapter } from "@/lib/notes/types";
 import { SYLLABUS_NOTES } from "@/lib/syllabus-notes";
 import { formatMathAndMarkdown } from "@/lib/render-math";
@@ -32,7 +32,51 @@ const catDot: Record<string, string> = {
   Technology:             "bg-cyan-500",
 };
 
-// ─── Full chapter document reader ─────────────────────────────────────────────
+// ─── Full chapter document reader & Gemini Live Masterclass Player ───────────
+
+type LectureSection = {
+  title: string;
+  tag: string;
+  script: string;
+};
+
+function buildChapterLecture(chap: Chapter): LectureSection[] {
+  const sections: LectureSection[] = [];
+
+  // 1. Chapter Overview
+  const cleanIntro = cleanSpeechText(chap.intro);
+  sections.push({
+    title: "Chapter Overview & Core Foundations",
+    tag: "Introduction",
+    script: `Welcome to Chapter ${chap.number}: ${chap.title}. In this comprehensive masterclass, we will explore the complete syllabus principles for this chapter. Specifically, ${cleanIntro.slice(0, 260)}. Let's walk through every core concept step by step.`,
+  });
+
+  // 2. Subheadings
+  chap.subheadings.forEach((sub, sIdx) => {
+    const cleanBody = cleanSpeechText(sub.body);
+    const keyBullets = sub.groups
+      .flatMap((g) => g.bullets)
+      .slice(0, 2)
+      .map((b) => cleanSpeechText(b))
+      .filter(Boolean)
+      .join(". ");
+
+    sections.push({
+      title: sub.title,
+      tag: `Section ${sIdx + 1}`,
+      script: `Now let's examine section ${sIdx + 1}: ${sub.title}. ${cleanBody.slice(0, 220)}. Key examination points to remember: ${keyBullets || "Ensure you understand the exact scientific definition and how questions are asked in past papers."}`,
+    });
+  });
+
+  // 3. Final Cambridge Examination Tips
+  sections.push({
+    title: "Examiner Pitfalls & Scoring Mastery",
+    tag: "Exam Strategy",
+    script: `To conclude Chapter ${chap.number}: ${chap.title}, here are the key Cambridge examiner tips: always memorize exact syllabus definitions, include correct units in every numerical calculation, and study the diagrams carefully. Excellent focus today with Yumna!`,
+  });
+
+  return sections;
+}
 
 function ChapterDoc({
   chapter,
@@ -52,9 +96,15 @@ function ChapterDoc({
   onPrev: () => void;
 }) {
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
-  const [isTeaching, setIsTeaching] = useState(false);
+  const [isLectureActive, setIsLectureActive] = useState(false);
+  const [lectureSectionIdx, setLectureSectionIdx] = useState(0);
   const [isVoiceLoading, setIsVoiceLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const lectureSectionsRef = useRef<LectureSection[]>([]);
+  const currentSectionRef = useRef<number>(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
   const toggleCollapse = (i: number) =>
     setCollapsed((prev) => ({ ...prev, [i]: !prev[i] }));
 
@@ -62,32 +112,116 @@ function ChapterDoc({
   const hasNext = idx < allChapters.length - 1;
   const hasPrev = idx > 0;
 
-  function handleTeachMe() {
-    if (isTeaching || isVoiceLoading) {
-      stopRealisticVoice();
-      setIsTeaching(false);
+  function playSection(index: number, sections: LectureSection[]) {
+    if (index < 0 || index >= sections.length) {
+      setIsPlaying(false);
+      setIsPaused(false);
       setIsVoiceLoading(false);
+      setIsLectureActive(false);
+      stopRealisticVoice();
       return;
     }
 
+    currentSectionRef.current = index;
+    setLectureSectionIdx(index);
     setIsVoiceLoading(true);
-    // Create an engaging Cambridge tutor overview of this chapter
-    const lessonIntro = `Welcome to Chapter ${chapter.number}: ${chapter.title}. In this chapter, you will master ${chapter.intro.replace(/[*_#`$]/g, "").slice(0, 200)}. Let's walk through the key examination concepts so you can achieve top marks.`;
+    setIsPlaying(false);
+    setIsPaused(false);
 
-    playRealisticVoice(lessonIntro, {
+    const section = sections[index];
+    if (!section) {
+      setIsPlaying(false);
+      setIsPaused(false);
+      setIsVoiceLoading(false);
+      setIsLectureActive(false);
+      return;
+    }
+
+    // Preload next section in background
+    const nextSection = sections[index + 1];
+    if (nextSection) {
+      void preloadGeminiSpeech(nextSection.script);
+    }
+
+    playRealisticVoice(section.script, {
       onStart: () => {
         setIsVoiceLoading(false);
-        setIsTeaching(true);
+        setIsPlaying(true);
+        setIsPaused(false);
       },
       onEnd: () => {
-        setIsVoiceLoading(false);
-        setIsTeaching(false);
+        const nextIdx = currentSectionRef.current + 1;
+        if (nextIdx < sections.length) {
+          playSection(nextIdx, sections);
+        } else {
+          setIsPlaying(false);
+          setIsPaused(false);
+          setIsVoiceLoading(false);
+          setIsLectureActive(false);
+        }
       },
       onError: () => {
         setIsVoiceLoading(false);
-        setIsTeaching(false);
+        setIsPlaying(false);
+        setIsPaused(false);
       },
     });
+  }
+
+  function handleStartLecture() {
+    if (isLectureActive) {
+      if (isPaused) {
+        resumeRealisticVoice();
+        setIsPaused(false);
+        setIsPlaying(true);
+      } else if (isPlaying) {
+        pauseRealisticVoice();
+        setIsPaused(true);
+        setIsPlaying(false);
+      }
+      return;
+    }
+
+    const sections = buildChapterLecture(chapter);
+    lectureSectionsRef.current = sections;
+    setIsLectureActive(true);
+    playSection(0, sections);
+  }
+
+  function handlePause() {
+    pauseRealisticVoice();
+    setIsPaused(true);
+    setIsPlaying(false);
+  }
+
+  function handleResume() {
+    resumeRealisticVoice();
+    setIsPaused(false);
+    setIsPlaying(true);
+  }
+
+  function handleStop() {
+    stopRealisticVoice();
+    setIsLectureActive(false);
+    setIsPlaying(false);
+    setIsPaused(false);
+    setIsVoiceLoading(false);
+  }
+
+  function handleNextSection() {
+    const sections = lectureSectionsRef.current;
+    if (currentSectionRef.current + 1 < sections.length) {
+      stopRealisticVoice();
+      playSection(currentSectionRef.current + 1, sections);
+    }
+  }
+
+  function handlePrevSection() {
+    const sections = lectureSectionsRef.current;
+    if (currentSectionRef.current > 0) {
+      stopRealisticVoice();
+      playSection(currentSectionRef.current - 1, sections);
+    }
   }
 
   useEffect(() => {
@@ -108,6 +242,7 @@ function ChapterDoc({
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
     setCollapsed({});
+    handleStop();
   }, [chapter.number]);
 
   return (
@@ -127,24 +262,31 @@ function ChapterDoc({
         <div className="flex-1" />
         <button
           type="button"
-          onClick={handleTeachMe}
+          onClick={handleStartLecture}
           className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold transition-all shadow-sm ${
-            isTeaching
-              ? "bg-rose-500 text-white animate-pulse"
-              : isVoiceLoading
+            isVoiceLoading
               ? "bg-primary/20 text-primary cursor-wait"
+              : isPlaying
+              ? "bg-primary text-primary-foreground animate-pulse"
+              : isPaused
+              ? "bg-amber-500 text-white"
               : "bg-foreground text-background hover:opacity-90"
           }`}
         >
-          {isTeaching ? (
-            <>
-              <VolumeX className="size-3.5" />
-              <span>Stop Teaching</span>
-            </>
-          ) : isVoiceLoading ? (
+          {isVoiceLoading ? (
             <>
               <Loader2 className="size-3.5 animate-spin" />
-              <span>Preparing Lesson...</span>
+              <span>Preparing Masterclass...</span>
+            </>
+          ) : isPlaying ? (
+            <>
+              <Pause className="size-3.5 fill-current" />
+              <span>Pause Lecture ({lectureSectionIdx + 1}/{lectureSectionsRef.current.length || 1})</span>
+            </>
+          ) : isPaused ? (
+            <>
+              <Play className="size-3.5 fill-current" />
+              <span>Resume Lecture</span>
             </>
           ) : (
             <>
@@ -272,37 +414,136 @@ function ChapterDoc({
         </article>
       </div>
 
-      {/* Floating Teach Me Voice Button (no sparkle svg, realistic voice playback) */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <button
-          type="button"
-          onClick={handleTeachMe}
-          className={`flex items-center gap-2.5 rounded-full px-5 py-3 text-sm font-bold shadow-2xl transition-all hover:scale-105 active:scale-95 ${
-            isTeaching
-              ? "bg-rose-600 text-white animate-pulse"
-              : isVoiceLoading
-              ? "bg-foreground text-background opacity-80 cursor-wait"
-              : "bg-foreground text-background"
-          }`}
-        >
-          {isTeaching ? (
-            <>
-              <VolumeX className="size-4" />
-              <span>Stop Teaching</span>
-            </>
-          ) : isVoiceLoading ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              <span>Preparing Realistic Voice...</span>
-            </>
-          ) : (
-            <>
-              <Volume2 className="size-4" />
-              <span>Teach Me This Chapter</span>
-            </>
-          )}
-        </button>
-      </div>
+      {/* Floating Gemini Live Masterclass Audio Player */}
+      {isLectureActive && (
+        <div className="fixed bottom-6 inset-x-4 max-w-2xl mx-auto z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className="relative overflow-hidden rounded-2xl border border-black/10 dark:border-white/10 bg-[#faf9f5]/95 dark:bg-[#1f1f1d]/95 backdrop-blur-xl shadow-2xl p-4 text-foreground">
+            {/* Top progress bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-black/5 dark:bg-white/5">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{
+                  width: `${((lectureSectionIdx + 1) / (lectureSectionsRef.current.length || 1)) * 100}%`,
+                }}
+              />
+            </div>
+
+            <div className="flex items-center gap-3.5">
+              {/* Status icon */}
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary">
+                {isVoiceLoading ? (
+                  <Loader2 className="size-5 animate-spin" />
+                ) : isPlaying ? (
+                  <Volume2 className="size-5 animate-bounce" />
+                ) : (
+                  <Pause className="size-5" />
+                )}
+              </div>
+
+              {/* Title & Section details */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                    Gemini Live Masterclass
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    Part {lectureSectionIdx + 1} of {lectureSectionsRef.current.length}
+                  </span>
+                </div>
+                <p className="truncate text-xs font-semibold text-foreground">
+                  {lectureSectionsRef.current[lectureSectionIdx]?.title || chapter.title}
+                </p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {isVoiceLoading
+                    ? "Connecting to Gemini Live voice..."
+                    : isPaused
+                    ? "Lecture paused — click Resume"
+                    : "Listening to Yumna's realistic Aoede voice"}
+                </p>
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {/* Prev section */}
+                <button
+                  type="button"
+                  onClick={handlePrevSection}
+                  disabled={lectureSectionIdx === 0}
+                  className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Previous Section"
+                >
+                  <SkipBack className="size-4" />
+                </button>
+
+                {/* Play / Pause / Loading button */}
+                {isVoiceLoading ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="size-10 rounded-full bg-primary/20 text-primary flex items-center justify-center animate-pulse cursor-wait"
+                    title="Loading voice..."
+                  >
+                    <Loader2 className="size-4 animate-spin" />
+                  </button>
+                ) : isPaused ? (
+                  <button
+                    type="button"
+                    onClick={handleResume}
+                    className="size-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 shadow-md transition-all"
+                    title="Resume lecture"
+                  >
+                    <Play className="size-4 fill-current ml-0.5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handlePause}
+                    className="size-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 active:scale-95 shadow-md transition-all"
+                    title="Pause lecture"
+                  >
+                    <Pause className="size-4 fill-current" />
+                  </button>
+                )}
+
+                {/* Next section */}
+                <button
+                  type="button"
+                  onClick={handleNextSection}
+                  disabled={lectureSectionIdx === lectureSectionsRef.current.length - 1}
+                  className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Next Section"
+                >
+                  <SkipForward className="size-4" />
+                </button>
+
+                {/* Stop / Close button */}
+                <button
+                  type="button"
+                  onClick={handleStop}
+                  className="size-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors ml-1"
+                  title="Stop and exit lecture"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Teach Me Voice Button (when lecture bar is not active) */}
+      {!isLectureActive && (
+        <div className="fixed bottom-6 right-6 z-40">
+          <button
+            type="button"
+            onClick={handleStartLecture}
+            className="flex items-center gap-2.5 rounded-full px-5 py-3 text-sm font-bold shadow-2xl transition-all hover:scale-105 active:scale-95 bg-foreground text-background"
+          >
+            <Volume2 className="size-4" />
+            <span>Teach Me This Chapter</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
