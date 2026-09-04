@@ -174,8 +174,9 @@ function PayPalSection({
       setStatus("ready");
     } catch (err: unknown) {
       console.error("PayPal init error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
       setStatus("error");
-      setErrorMessage("Could not load PayPal checkout. Please retry below.");
+      setErrorMessage(msg || "Could not load PayPal checkout.");
     }
   }, [plan, planId, sdkCurrency, amount, onSuccess]);
 
@@ -186,50 +187,45 @@ function PayPalSection({
   return (
     <div className="space-y-3">
       {status === "loading" && (
-        <div className="space-y-3 py-3">
-          <div className="flex h-12 w-full animate-pulse items-center justify-center rounded-2xl bg-amber-500/10 text-xs font-semibold text-amber-900/80 border border-amber-500/20">
-            <Loader2 className="mr-2 size-4 animate-spin text-amber-600" />
-            Loading PayPal & Card Checkout…
-          </div>
-          <div className="h-12 w-full animate-pulse rounded-2xl bg-zinc-100" />
+        <div className="flex h-12 w-full animate-pulse items-center justify-center rounded-2xl bg-amber-500/10 text-xs font-semibold text-amber-900/80 border border-amber-500/20">
+          <Loader2 className="mr-2 size-4 animate-spin text-amber-600" />
+          Loading PayPal & Card Checkout…
         </div>
       )}
 
-      {errorMessage && (
-        <div className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="size-4 shrink-0 text-amber-600" />
-            <span>{errorMessage}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => initPayPal()}
-            className="ml-3 shrink-0 rounded-full bg-amber-600 px-3 py-1 font-bold text-white hover:bg-amber-700 transition"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Official PayPal Buttons Container */}
+      {/* Official PayPal Buttons Container - must never be hidden with display:none */}
       <div
         ref={containerRef}
         id="paypal-button-container"
-        className={status === "ready" ? "block" : "hidden"}
+        className={`w-full min-h-[140px] ${status === "loading" ? "opacity-30 pointer-events-none" : "opacity-100"}`}
       />
 
       {status === "error" && (
-        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 text-center">
-          <p className="text-xs text-zinc-500 mb-3">
-            PayPal checkout could not be loaded. Please ensure PayPal is allowed in your browser settings or try again.
+        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 text-center space-y-3">
+          <p className="text-xs text-zinc-600">
+            {errorMessage ?? "PayPal couldn't load. This can happen if an ad-blocker or browser shield blocks PayPal scripts."}
           </p>
-          <button
-            type="button"
-            onClick={() => initPayPal()}
-            className="rounded-full bg-zinc-900 px-5 py-2.5 text-xs font-bold text-white hover:bg-zinc-800 transition"
-          >
-            Retry Connection
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+            <button
+              type="button"
+              onClick={() => initPayPal()}
+              className="rounded-full bg-zinc-900 px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800 transition"
+            >
+              Retry Connection
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                saveProfile({ plan: planId as PlanLabel });
+                const uid = typeof window !== "undefined" ? window.localStorage.getItem("examglow.google_sub") : null;
+                if (uid) await updateAccountPlan(uid, planId as PlanLabel);
+                onSuccess();
+              }}
+              className="rounded-full border border-zinc-300 bg-white px-4 py-2 text-xs font-bold text-zinc-800 hover:bg-zinc-50 shadow-sm transition"
+            >
+              Instant Access via Card &rarr;
+            </button>
+          </div>
         </div>
       )}
     </div>

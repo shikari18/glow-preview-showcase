@@ -136,17 +136,17 @@ let _sdkPromise: Promise<void> | null = null;
 let _sdkCurrency: string | null = null;
 
 export function loadPayPalSDK(currency: string = "USD"): Promise<void> {
-  const safeCurrency = PAYPAL_SUPPORTED_CURRENCIES.has(currency) ? currency : "USD";
-
-  // Reuse if same currency already loaded on window
-  if (typeof window !== "undefined" && window.paypal && _sdkCurrency === safeCurrency) {
+  // If window.paypal is already available on page, use it immediately
+  if (typeof window !== "undefined" && window.paypal) {
     return Promise.resolve();
   }
+
+  const safeCurrency = PAYPAL_SUPPORTED_CURRENCIES.has(currency) ? currency : "USD";
 
   // Reuse ongoing load promise if currency matches
   if (_sdkPromise && _sdkCurrency === safeCurrency) return _sdkPromise;
 
-  // Remove old script tag if currency changed or failed
+  // Remove old failed script tag if any
   if (typeof document !== "undefined") {
     document.getElementById("paypal-sdk")?.remove();
   }
@@ -162,7 +162,6 @@ export function loadPayPalSDK(currency: string = "USD"): Promise<void> {
       `&currency=${safeCurrency}`,
       `&intent=capture`,
       `&components=buttons`,
-      `&enable-funding=card`,
     ].join("");
     s.async = true;
     s.onload = () => resolve();
