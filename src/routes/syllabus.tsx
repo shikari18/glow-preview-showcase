@@ -64,11 +64,6 @@ function PdfModal({ subject, doc, onClose }: {
           <p className="truncate text-sm font-semibold">{subject.name}</p>
           <p className="truncate text-xs text-muted-foreground">{subject.code} · {doc.label}</p>
         </div>
-        <a href={doc.url} target="_blank" rel="noopener noreferrer"
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary">
-          <ExternalLink className="size-3.5" aria-hidden />
-          <span className="hidden sm:inline">Download PDF</span>
-        </a>
         <button onClick={onClose} className="flex size-8 shrink-0 items-center justify-center rounded-full hover:bg-secondary" aria-label="Close">
           <X className="size-4" aria-hidden />
         </button>

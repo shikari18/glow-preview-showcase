@@ -179,10 +179,6 @@ function PaperModal({ paper, onClose }: { paper: Paper; onClose: () => void }) {
           <button onClick={() => setTab("qp")} className={`px-3 py-1.5 transition-colors ${tab==="qp"?"bg-ink text-ink-foreground":"text-muted-foreground hover:bg-secondary"}`}>Q·Paper</button>
           <button onClick={() => setTab("ms")} className={`px-3 py-1.5 transition-colors ${tab==="ms"?"bg-ink text-ink-foreground":"text-muted-foreground hover:bg-secondary"}`}>Mark Scheme</button>
         </div>
-        <a href={pdfUrl} target="_blank" rel="noopener noreferrer"
-          className="flex shrink-0 items-center gap-1 rounded-full border border-border px-2.5 py-1.5 text-xs hover:bg-secondary">
-          <ExternalLink className="size-3.5" aria-hidden />
-        </a>
         <button onClick={onClose} className="flex size-8 shrink-0 items-center justify-center rounded-full hover:bg-secondary" aria-label="Close">
           <X className="size-4" aria-hidden />
         </button>
@@ -194,16 +190,6 @@ function PaperModal({ paper, onClose }: { paper: Paper; onClose: () => void }) {
           title={paper.title}
           className="absolute inset-0 h-full w-full border-0 bg-white"
         />
-        <div className="absolute bottom-4 right-4 z-10 flex gap-2">
-          <a
-            href={pdfUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-xs font-bold text-ink-foreground shadow-lg hover:opacity-90"
-          >
-            <ExternalLink className="size-3.5" /> Open Fullscreen in New Tab
-          </a>
-        </div>
       </div>
     </div>
   );

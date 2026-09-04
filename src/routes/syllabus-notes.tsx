@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { BookOpen, ChevronRight, Search, ArrowLeft, Lock, FileText, Check } from "lucide-react";
+import { BookOpen, ChevronRight, Search, ArrowLeft, Lock, FileText, Check, Sparkles, X } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-page";
+import { StudyChat } from "@/components/study-chat";
 import type { SubjectNotes, Chapter } from "@/lib/notes/types";
 import { SYLLABUS_NOTES } from "@/lib/syllabus-notes";
 import { formatMathAndMarkdown } from "@/lib/render-math";
@@ -51,6 +52,7 @@ function ChapterDoc({
   onPrev: () => void;
 }) {
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
+  const [showTeachMe, setShowTeachMe] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const toggleCollapse = (i: number) =>
     setCollapsed((prev) => ({ ...prev, [i]: !prev[i] }));
@@ -58,6 +60,14 @@ function ChapterDoc({
   const idx = allChapters.findIndex((c) => c.number === chapter.number);
   const hasNext = idx < allChapters.length - 1;
   const hasPrev = idx > 0;
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.dataset["readingChapter"] = "true";
+    return () => {
+      delete document.body.dataset["readingChapter"];
+    };
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
@@ -76,7 +86,15 @@ function ChapterDoc({
           <span>Back to chapters</span>
         </button>
         <div className="flex-1" />
-        <span className="text-xs font-mono text-black/50 dark:text-white/50">
+        <button
+          type="button"
+          onClick={() => setShowTeachMe(true)}
+          className="flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90 transition-opacity"
+        >
+          <Sparkles className="size-3.5" />
+          <span>Teach Me</span>
+        </button>
+        <span className="text-xs font-mono text-black/50 dark:text-white/50 ml-2">
           Chapter {chapter.number} of {allChapters.length}
         </span>
       </div>
@@ -194,6 +212,47 @@ function ChapterDoc({
           </div>
         </article>
       </div>
+
+      {/* Floating Teach Me pill button */}
+      {!showTeachMe && (
+        <div className="fixed bottom-6 right-6 z-40">
+          <button
+            type="button"
+            onClick={() => setShowTeachMe(true)}
+            className="flex items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-bold text-background shadow-2xl transition-all hover:scale-105 active:scale-95"
+          >
+            <Sparkles className="size-4 text-amber-400" />
+            <span>Teach Me</span>
+          </button>
+        </div>
+      )}
+
+      {/* Slide-out Teach Me Drawer */}
+      {showTeachMe && (
+        <div className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-md sm:max-w-lg flex-col border-l border-border bg-card shadow-2xl">
+          <div className="flex h-13 shrink-0 items-center justify-between border-b border-border px-5 bg-card">
+            <div className="flex items-center gap-2">
+              <Sparkles className="size-4 text-primary" />
+              <span className="font-bold text-sm text-foreground">
+                Yumna AI Tutor · Ch. {chapter.number}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowTeachMe(false)}
+              className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <StudyChat
+              className="h-full border-0"
+              onClose={() => setShowTeachMe(false)}
+              isMini={true}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

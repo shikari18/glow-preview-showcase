@@ -5,21 +5,34 @@
  * Powered by Google Gemini 2.5 Flash, 2.0 Flash & Hugging Face fallback pool.
  */
 
+export type ChatAttachment = {
+  mimeType: string;
+  data: string; // base64
+};
+
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
   content: string;
+  attachment?: ChatAttachment;
 };
 
 export const YUMNA_SYSTEM_PROMPT = `You are Yumna, the official AI study tutor for ExamGlow (https://examglow.com).
 Your mission is to help students of all levels master their school and examination subjects, especially Cambridge IGCSE, O-Levels, A-Levels, GCSEs, sciences, mathematics, humanities, and languages.
 
 Core Persona & Rules:
-1. When asked your name, who you are, or who made you, proudly say you are Yumna, the ExamGlow AI study tutor.
-2. Never repeat rigid templates or canned boilerplate. Always answer the student's exact question naturally, conversationally, and thoughtfully.
-3. For calculations and formulas, show clear step-by-step working and format math in standard LaTeX ($...$ for inline, $$...$$ for display).
-4. If an assignment or problem is submitted, present the clear answer first, followed by the detailed explanation and reasoning below.
-5. If the user asks for a question or quiz ("give me a question about it"), immediately provide a challenging, insightful examination-style question with hints!
-6. Be warm, supportive, motivating, and exceptionally smart.
+1. When asked your name, who you are, or who made you, say you are Yumna, the ExamGlow AI study tutor.
+2. CRITICAL: Do NOT begin messages with "Hello! I am Yumna..." or repetitive introductions. Never re-introduce yourself unless the user explicitly asks who you are. Jump directly into addressing the student's question with thoughtful, smart guidance.
+3. Formatting: Use rich Markdown formatting:
+   - Clear headings (###) for distinct concepts
+   - Bold (**term**) for key syllabus definitions and principles
+   - Step-by-step numbered lists for procedures and workings
+   - Markdown tables for comparisons (e.g. Claude vs ChatGPT, Mitosis vs Meiosis)
+   - Standard LaTeX math ($...$ for inline, $$...$$ for display formulas)
+4. Vision & Multimodal: When the student attaches an image, diagram, past paper question, or document, thoroughly inspect all text, equations, and diagrams in the image and provide clear, precise answers.
+5. If an assignment or problem is submitted, present the clear answer first, followed by the detailed explanation and reasoning below.
+6. If the user asks for a question or quiz ("give me a question about it"), immediately provide a challenging, insightful examination-style question with hints!
+7. If asked for a diagram or visual, describe it clearly and provide an illustrative SVG or diagram snippet.
+8. Be warm, supportive, motivating, and exceptionally smart.
 
 ExamGlow Website Navigation (share these links when asked about navigation):
 - Home / Dashboard: https://examglow.com/home
@@ -54,31 +67,50 @@ export const GEMINI_API_KEY =
 
 /**
  * Normalizes message array so roles alternate strictly user -> model -> user -> model
- * as required by the Google Gemini API.
+ * Supports multimodal attachments (images, PDFs) via inlineData parts.
  */
 function normalizeGeminiContents(messages: ChatMessage[]) {
-  const filtered = messages.filter((m) => (m.role === "user" || m.role === "assistant") && m.content.trim().length > 0);
+  const filtered = messages.filter(
+    (m) => (m.role === "user" || m.role === "assistant") && (m.content.trim().length > 0 || m.attachment),
+  );
   if (filtered.length === 0) return [];
 
-  const merged: Array<{ role: "user" | "model"; parts: [{ text: string }] }> = [];
+  const contents: Array<{
+    role: "user" | "model";
+    parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
+  }> = [];
 
   for (const m of filtered) {
     const role = m.role === "assistant" ? "model" : "user";
-    const last = merged[merged.length - 1];
+    const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
 
+    if (m.attachment?.data && m.attachment?.mimeType) {
+      parts.push({
+        inlineData: {
+          mimeType: m.attachment.mimeType,
+          data: m.attachment.data,
+        },
+      });
+    }
+
+    if (m.content.trim().length > 0) {
+      parts.push({ text: m.content });
+    }
+
+    const last = contents[contents.length - 1];
     if (last && last.role === role) {
-      last.parts[0].text += `\n\n${m.content}`;
+      last.parts.push(...parts);
     } else {
-      merged.push({ role, parts: [{ text: m.content }] });
+      contents.push({ role, parts });
     }
   }
 
   // Ensure first message is from user
-  if (merged.length > 0 && merged[0]!.role === "model") {
-    merged.shift();
+  if (contents.length > 0 && contents[0]!.role === "model") {
+    contents.shift();
   }
 
-  return merged;
+  return contents;
 }
 
 /**

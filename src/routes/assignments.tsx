@@ -4,6 +4,8 @@ import { ClipboardCheck, Copy, FileText, Loader2, Upload, X } from "lucide-react
 
 import { DashboardLayout } from "@/components/dashboard-page";
 import { callGemini } from "@/lib/ai-router";
+import { isPaidUser } from "@/lib/onboarding";
+import { PaywallModal } from "@/components/paywall-modal";
 
 export const Route = createFileRoute("/assignments")({
   head: () => ({
@@ -36,6 +38,7 @@ function AssignmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File) {
@@ -57,6 +60,17 @@ function AssignmentsPage() {
 
   async function complete() {
     if (!brief.trim() || loading) return;
+
+    // Free user limit: 2 assignments
+    const count = typeof window !== "undefined" ? parseInt(localStorage.getItem("examglow.assignment_count") || "0", 10) : 0;
+    if (!isPaidUser() && count >= 2) {
+      setShowPaywall(true);
+      return;
+    }
+    if (typeof window !== "undefined") {
+      localStorage.setItem("examglow.assignment_count", String(count + 1));
+    }
+
     setLoading(true);
     setError(null);
     setAnswer("");
@@ -98,6 +112,12 @@ Produce a complete, well-structured answer: restate the task in one line, then a
 
   return (
     <DashboardLayout crumbs={[{ label: "Assignments" }]}>
+      <PaywallModal
+        open={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        title="Upgrade to ExamGlow Premium"
+        subtitle="You have reached the free preview limit of 2 completed assignments. Upgrade to ExamGlow Premium for unlimited AI assignment solutions with full worked steps."
+      />
       <header className="grid gap-4 py-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <div className="min-w-0">
           <span className="inline-flex items-center gap-2 rounded-full bg-lilac px-3 py-1 text-xs font-semibold text-ink">

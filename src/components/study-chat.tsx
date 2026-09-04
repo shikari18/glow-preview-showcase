@@ -31,14 +31,23 @@ import {
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import logoMark from "@/assets/logo-mark.png";
-import { callGemini } from "@/lib/ai-router";
-
-type ChatMessage = { role: "user" | "assistant"; content: string };
+import { callGemini, type ChatMessage } from "@/lib/ai-router";
+import {
+  isPaidUser,
+  getAiMessageCount,
+  incrementAiMessageCount,
+  canSendAiMessage,
+  FREE_AI_MESSAGE_LIMIT,
+} from "@/lib/onboarding";
+import { PaywallModal } from "@/components/paywall-modal";
+import { playRealisticVoice, stopRealisticVoice } from "@/lib/gemini-tts";
 
 type UploadedAttachment = {
   name: string;
   type: "pdf" | "image" | "doc";
-  content?: string;
+  mimeType?: string | undefined;
+  data?: string | undefined; // base64
+  content?: string | undefined;
 };
 
 type ChatSession = {
@@ -70,7 +79,15 @@ function cleanSpeechText(text: string): string {
     .slice(0, 800);
 }
 
-export function StudyChat({ className = "", onClose }: { className?: string; onClose?: () => void }) {
+export function StudyChat({
+  className = "",
+  onClose,
+  isMini = false,
+}: {
+  className?: string;
+  onClose?: () => void;
+  isMini?: boolean;
+}) {
   const [sessions, setSessions] = useState<ChatSession[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -92,12 +109,16 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [playingMsgIdx, setPlayingMsgIdx] = useState<number | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
 
-  // Speech-to-Speech Hands-Free Voice Mode
+  // Dictation Speech-to-Text (inside the input box)
+  const [isDictating, setIsDictating] = useState(false);
+  const dictationRecoRef = useRef<any>(null);
+
+  // Speech-to-Speech Hands-Free Voice Mode (inline Claude/Lovable style)
   const [voiceMode, setVoiceMode] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState("");
 
   // Upload dropdown
@@ -188,7 +209,7 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
         reco.onend = () => {
           setIsListening(false);
           // If still in voice mode and not muted and not speaking, auto-resume listening
-          if (voiceMode && !isMuted && !isSpeaking) {
+          if (voiceMode && !isSpeaking) {
             setTimeout(() => {
               if (voiceMode && !isSpeaking) startListening();
             }, 300);
@@ -198,44 +219,61 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
         recognitionRef.current = reco;
       }
     }
-  }, [voiceMode, isMuted, isSpeaking, voiceTranscript]);
+  }, [voiceMode, isSpeaking, voiceTranscript]);
+
+  function toggleDictation() {
+    if (isDictating) {
+      dictationRecoRef.current?.stop();
+      setIsDictating(false);
+      return;
+    }
+
+    if (typeof window === "undefined") return;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    const dictation = new SpeechRecognition();
+    dictation.continuous = true;
+    dictation.interimResults = true;
+    dictation.lang = "en-US";
+
+    dictation.onresult = (event: any) => {
+      let text = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        text += event.results[i][0].transcript;
+      }
+      setInput((prev) => (prev ? `${prev} ${text}` : text));
+    };
+
+    dictation.onerror = () => setIsDictating(false);
+    dictation.onend = () => setIsDictating(false);
+
+    dictationRecoRef.current = dictation;
+    dictation.start();
+    setIsDictating(true);
+  }
 
   function speakResponse(text: string) {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-
-    const clean = cleanSpeechText(text);
-    if (!clean.trim()) return;
-
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.rate = 1.1; // natural, brisk, engaging tutor pace
-    utterance.pitch = 1.05;
-
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(
-      (v) =>
-        v.name.includes("Natural") ||
-        v.name.includes("Libby") ||
-        v.name.includes("Samantha") ||
-        v.name.includes("Google UK English Female") ||
-        (v.lang.startsWith("en") && v.name.toLowerCase().includes("female")),
-    );
-    if (preferredVoice) utterance.voice = preferredVoice;
-
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      if (voiceMode && !isMuted) {
-        startListening();
-      }
-    };
-    utterance.onerror = () => setIsSpeaking(false);
-
-    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
+    playRealisticVoice(text, {
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => {
+        setIsSpeaking(false);
+        if (voiceMode) startListening();
+      },
+      onError: () => {
+        setIsSpeaking(false);
+        if (voiceMode) startListening();
+      },
+    });
   }
 
   function startListening() {
-    if (recognitionRef.current && !isListening && !isMuted) {
+    if (recognitionRef.current && !isListening) {
       try {
         setVoiceTranscript("");
         recognitionRef.current.start();
@@ -254,11 +292,10 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
   }
 
   function endVoiceCall() {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
+    stopRealisticVoice();
     stopListening();
     setIsSpeaking(false);
+    setIsListening(false);
     setVoiceMode(false);
     setVoiceTranscript("");
   }
@@ -274,32 +311,63 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
     const trimmed = text.trim();
     if (!trimmed || status === "submitted") return;
 
-    let fullPrompt = trimmed;
-    if (attachment) {
-      fullPrompt = `[Attached ${attachment.type.toUpperCase()}: "${attachment.name}"]\n${
-        attachment.content ? `File Content Preview:\n${attachment.content}\n\n` : ""
-      }${trimmed}`;
+    // Check free user prompt quota (6 free questions)
+    if (!isPaidUser() && !canSendAiMessage()) {
+      setShowPaywall(true);
+      setError(
+        `You have used your ${FREE_AI_MESSAGE_LIMIT} free AI study questions. Upgrade to ExamGlow Premium for unlimited tutoring with Yumna.`
+      );
+      return;
     }
 
-    const next: ChatMessage[] = [...messages, { role: "user", content: trimmed }];
+    const userMsg: ChatMessage = {
+      role: "user",
+      content: trimmed,
+      ...(attachment?.data && attachment?.mimeType
+        ? { attachment: { mimeType: attachment.mimeType, data: attachment.data } }
+        : {}),
+    };
+
+    const next: ChatMessage[] = [...messages, userMsg];
     setMessages(next);
     setInput("");
     setAttachment(null);
     setError(null);
     setStatus("submitted");
+    incrementAiMessageCount();
+
+    // Context from student learning activity to tailor response
+    let studentContext = "";
+    try {
+      const recentNotes = localStorage.getItem("examglow.student_notes");
+      const profileRaw = localStorage.getItem("examglow.profile");
+      if (recentNotes || profileRaw) {
+        studentContext = `\n\n[Active Student Info: ${
+          profileRaw ? `Curriculum: ${JSON.parse(profileRaw).curriculum || "Cambridge IGCSE"}. ` : ""
+        }${recentNotes ? `Recent notes written: ${recentNotes.slice(0, 180)}...` : ""}]`;
+      }
+    } catch {}
+
+    const fullMessages = [
+      ...messages,
+      {
+        ...userMsg,
+        content: studentContext ? `${userMsg.content}${studentContext}` : userMsg.content,
+      },
+    ];
 
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, { role: "user", content: fullPrompt }] }),
+        body: JSON.stringify({ messages: fullMessages }),
       });
       const data = (await res.json()) as { text?: string; error?: string };
       let replyText = data.text;
 
       // Fallback: If server returned nothing, error, or an extremely short reply, call Gemini API directly in-browser!
       if (!replyText || data.error || replyText.trim().length < 20) {
-        const clientRes = await callGemini([...messages, { role: "user", content: fullPrompt }]);
+        const clientRes = await callGemini(fullMessages);
         if (clientRes?.text) {
           replyText = clientRes.text;
         }
@@ -316,7 +384,7 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
     } catch {
       // Direct browser fallback if /api/chat network failed
       try {
-        const directRes = await callGemini([...messages, { role: "user", content: fullPrompt }]);
+        const directRes = await callGemini(fullMessages);
         if (directRes?.text) {
           setMessages([...next, { role: "assistant", content: directRes.text }]);
           if (speakBack || voiceMode) speakResponse(directRes.text);
@@ -366,31 +434,53 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
     }
   }
 
-  // Handle file uploads
+  // Handle file uploads with base64 conversion for Gemini Multimodal Vision
   async function handleFileUpload(file: File, type: "pdf" | "image" | "doc") {
     setUploadOpen(false);
-    if (file.size > 8_000_000) {
-      setError("File is too large. Please upload files under 8MB.");
+    if (file.size > 10_000_000) {
+      setError("File is too large. Please upload files under 10MB.");
       return;
     }
 
-    let contentPreview = "";
+    if (type === "image" || type === "pdf") {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const match = result.match(/^data:(.*?);base64,(.*)$/);
+        if (match && match[2]) {
+          setAttachment({
+            name: file.name,
+            type,
+            mimeType: match[1] || (type === "pdf" ? "application/pdf" : file.type || "image/jpeg"),
+            data: match[2],
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
     if (type === "doc") {
       try {
         const text = await file.text();
-        contentPreview = text.slice(0, 3000);
+        setAttachment({
+          name: file.name,
+          type,
+          content: text.slice(0, 5000),
+        });
       } catch {}
     }
-
-    setAttachment({
-      name: file.name,
-      type,
-      content: contentPreview,
-    });
   }
 
   return (
     <div className={`relative flex h-full w-full flex-col bg-background ${className}`}>
+      {/* Paywall modal for free tier limit */}
+      <PaywallModal
+        open={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        title="Upgrade to ExamGlow Premium"
+        subtitle={`You have used your ${FREE_AI_MESSAGE_LIMIT} free questions with Yumna. Unlock unlimited 24/7 AI tutoring, past paper walk-throughs, and voice calls.`}
+      />
       {/* Hidden file inputs */}
       <input
         ref={pdfInputRef}
@@ -464,19 +554,29 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
           <span className="text-xs text-muted-foreground hidden sm:inline">· AI Study Tutor</span>
         </div>
 
-        {/* Right side: Voice Call launcher & close */}
+        {/* Right side: Voice Call launcher (Hidden on mini widget) */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setVoiceMode(true);
-              startListening();
-            }}
-            className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-3 py-1.5 text-xs font-bold transition-colors"
-          >
-            <Mic className="size-3.5" />
-            <span className="hidden sm:inline">Voice Call</span>
-          </button>
+          {!isMini && (
+            <button
+              type="button"
+              onClick={() => {
+                if (voiceMode) {
+                  endVoiceCall();
+                } else {
+                  setVoiceMode(true);
+                  startListening();
+                }
+              }}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
+                voiceMode
+                  ? "bg-amber-500/20 text-amber-500 border border-amber-500/40 animate-pulse"
+                  : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+              }`}
+            >
+              <Mic className="size-3.5" />
+              <span>{voiceMode ? "End Call" : "Voice Call"}</span>
+            </button>
+          )}
           {onClose && (
             <button
               type="button"
@@ -544,99 +644,6 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
         </div>
       )}
 
-      {/* Voice Mode Screen: Pure Speech-to-Speech (NO SEND BUTTON) */}
-      {voiceMode && (
-        <div className="absolute inset-0 z-40 flex flex-col items-center justify-between bg-zinc-950 text-white p-6 sm:p-12 animate-in fade-in">
-          {/* Header */}
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-semibold text-zinc-400">Live Speech Call with Yumna</span>
-            </div>
-            <button
-              type="button"
-              onClick={endVoiceCall}
-              className="rounded-full bg-zinc-800 p-2 text-zinc-400 hover:text-white"
-            >
-              <X className="size-5" />
-            </button>
-          </div>
-
-          {/* Central Animated Orb */}
-          <div className="flex flex-col items-center justify-center text-center my-auto">
-            <div className="relative flex size-36 sm:size-48 items-center justify-center">
-              {/* Outer pulsing ring */}
-              <div
-                className={`absolute inset-0 rounded-full bg-emerald-500/20 blur-xl transition-all duration-300 ${
-                  isSpeaking ? "scale-125 opacity-80" : isListening ? "scale-110 opacity-50" : "scale-100 opacity-20"
-                }`}
-              />
-              {/* Inner animated circle */}
-              <div
-                className={`size-28 sm:size-36 rounded-full bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-400 shadow-2xl flex items-center justify-center transition-transform duration-200 ${
-                  isSpeaking ? "scale-110 animate-pulse" : isListening ? "scale-105" : "scale-100"
-                }`}
-              >
-                {isSpeaking ? (
-                  <Volume2 className="size-10 sm:size-12 text-white animate-bounce" />
-                ) : (
-                  <Mic className="size-10 sm:size-12 text-white" />
-                )}
-              </div>
-            </div>
-
-            <p className="mt-8 text-lg font-bold text-white">
-              {isSpeaking
-                ? "Yumna is speaking..."
-                : isListening
-                  ? "Listening to you..."
-                  : isMuted
-                    ? "Microphone Muted"
-                    : "Connecting..."}
-            </p>
-
-            <p className="mt-2 max-w-md text-xs sm:text-sm text-zinc-400 min-h-[3rem] px-4">
-              {voiceTranscript || (isListening ? "Speak naturally. Yumna will answer your question immediately." : "")}
-            </p>
-          </div>
-
-          {/* Controls: Mute & End Call */}
-          <div className="flex items-center gap-6 mb-4">
-            {/* Mute Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (isMuted) {
-                  setIsMuted(false);
-                  startListening();
-                } else {
-                  setIsMuted(true);
-                  stopListening();
-                }
-              }}
-              className={`flex size-14 items-center justify-center rounded-full border transition-all ${
-                isMuted
-                  ? "border-amber-500 bg-amber-500/20 text-amber-400"
-                  : "border-zinc-700 bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
-              }`}
-              title={isMuted ? "Unmute" : "Mute"}
-            >
-              {isMuted ? <MicOff className="size-6" /> : <Mic className="size-6" />}
-            </button>
-
-            {/* End Call Button */}
-            <button
-              type="button"
-              onClick={endVoiceCall}
-              className="flex size-16 items-center justify-center rounded-full bg-rose-600 text-white shadow-xl hover:bg-rose-700 transition-all hover:scale-105"
-              title="End Voice Call"
-            >
-              <PhoneOff className="size-7" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Main Conversation Messages */}
       <Conversation className="flex-1 overflow-y-auto">
         <ConversationContent className="mx-auto max-w-3xl space-y-4 px-4 py-6">
@@ -680,43 +687,29 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
                           <button
                             type="button"
                             onClick={() => {
-                              window.speechSynthesis?.cancel();
+                              stopRealisticVoice();
                               setPlayingMsgIdx(null);
                             }}
-                            className="flex items-center gap-1.5 text-[11px] font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+                            className="flex items-center gap-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 px-3 py-1 text-[11px] font-bold text-rose-500 hover:bg-rose-500/20 transition-colors"
                           >
                             <VolumeX className="size-3.5" />
-                            <span>Stop</span>
+                            <span>Stop Speaking</span>
                           </button>
                         ) : (
                           <button
                             type="button"
                             onClick={() => {
-                              window.speechSynthesis?.cancel();
                               setPlayingMsgIdx(i);
-                              const clean = cleanSpeechText(m.content);
-                              if (!clean.trim()) return;
-                              const utt = new SpeechSynthesisUtterance(clean);
-                              utt.rate = 1.05;
-                              utt.pitch = 1.0;
-                              const voices = window.speechSynthesis.getVoices();
-                              const preferred = voices.find(
-                                (v) =>
-                                  v.name.includes("Natural") ||
-                                  v.name.includes("Libby") ||
-                                  v.name.includes("Samantha") ||
-                                  v.name.includes("Google UK English Female") ||
-                                  (v.lang.startsWith("en") && v.name.toLowerCase().includes("female")),
-                              );
-                              if (preferred) utt.voice = preferred;
-                              utt.onend = () => setPlayingMsgIdx(null);
-                              utt.onerror = () => setPlayingMsgIdx(null);
-                              window.speechSynthesis.speak(utt);
+                              playRealisticVoice(m.content, {
+                                onStart: () => setPlayingMsgIdx(i),
+                                onEnd: () => setPlayingMsgIdx(null),
+                                onError: () => setPlayingMsgIdx(null),
+                              });
                             }}
-                            className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+                            className="flex items-center gap-1.5 rounded-full bg-secondary/80 hover:bg-secondary px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            <Volume2 className="size-3.5" />
-                            <span>Listen</span>
+                            <Volume2 className="size-3.5 text-primary" />
+                            <span>Listen to explanation</span>
                           </button>
                         )}
                       </div>
@@ -816,23 +809,58 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
             </div>
           )}
 
-          {/* Sleek Input Container */}
+          {/* Active Voice Bar (Claude/Lovable Style - Images 2 & 3) */}
+          {voiceMode && (
+            <div
+              className={`mb-2.5 flex items-center justify-between rounded-2xl px-4 py-2.5 transition-all ${
+                isSpeaking
+                  ? "border border-amber-500/40 bg-amber-500/10 text-amber-500 dark:text-amber-400 shadow-sm"
+                  : "border border-sky-500/40 bg-sky-500/10 text-sky-500 dark:text-sky-400 shadow-sm"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span
+                  className={`size-2.5 rounded-full animate-ping ${
+                    isSpeaking ? "bg-amber-400" : "bg-sky-400"
+                  }`}
+                />
+                <span className="text-xs font-bold truncate">
+                  {isSpeaking
+                    ? "Yumna is speaking..."
+                    : isListening
+                    ? "Listening to you... speak naturally"
+                    : "Connecting to voice..."}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={endVoiceCall}
+                className="flex items-center gap-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 px-3.5 py-1 text-xs font-bold hover:opacity-90 transition-opacity"
+              >
+                <span>••• Stop</span>
+              </button>
+            </div>
+          )}
+
+          {/* Sleek Lovable-Style Input Container */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               void send(input);
             }}
-            className="flex items-center gap-2 rounded-2xl border border-border bg-background p-1.5 shadow-sm focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition-all"
+            className="flex items-center gap-2 rounded-2xl border border-border/80 bg-card p-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition-all"
           >
-            {/* Attachment Button */}
-            <button
-              type="button"
-              onClick={() => setUploadOpen((v) => !v)}
-              className="flex size-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-              title="Upload file or diagram"
-            >
-              <Plus className="size-4" />
-            </button>
+            {/* Attachment Button (Only shown in full chat, removed in mini chat) */}
+            {!isMini && (
+              <button
+                type="button"
+                onClick={() => setUploadOpen((v) => !v)}
+                className="flex size-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Upload file or image"
+              >
+                <Plus className="size-4" />
+              </button>
+            )}
 
             {/* Input Textarea */}
             <textarea
@@ -846,19 +874,20 @@ export function StudyChat({ className = "", onClose }: { className?: string; onC
                   void send(input);
                 }
               }}
-              placeholder="Chat with Yumna... (Ask a question, paste homework, or test concepts)"
-              className="flex-1 bg-transparent px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none max-h-32"
+              placeholder="Ask Yumna anything... (Paste questions, formulas, or homework)"
+              className="flex-1 bg-transparent px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none max-h-32 leading-relaxed"
             />
 
-            {/* Voice Call Button */}
+            {/* Dictation Mic Button (Speech-to-Text strictly for input dictation) */}
             <button
               type="button"
-              onClick={() => {
-                setVoiceMode(true);
-                startListening();
-              }}
-              className="flex size-9 shrink-0 items-center justify-center rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
-              title="Speak with Yumna"
+              onClick={toggleDictation}
+              className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition-all ${
+                isDictating
+                  ? "bg-rose-500/20 text-rose-500 animate-pulse border border-rose-500/40"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              }`}
+              title={isDictating ? "Stop Dictation" : "Dictate with voice"}
             >
               <Mic className="size-4" />
             </button>

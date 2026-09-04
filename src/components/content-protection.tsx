@@ -17,9 +17,8 @@ export function ContentProtectionGuard() {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
-  // Only protect notes, syllabus, and past-questions pages
+  // Only protect syllabus, syllabus-notes, and past-questions pages (notes and home are free)
   const isProtectedPage =
-    currentPath.startsWith("/notes") ||
     currentPath.startsWith("/syllabus") ||
     currentPath.startsWith("/past-questions");
 

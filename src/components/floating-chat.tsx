@@ -12,13 +12,20 @@ export function FloatingChat() {
 
   useEffect(() => setOpen(false), [pathname]);
 
-  if (hiddenOn.some((path) => pathname.startsWith(path))) return null;
+  // Hide on public landing page, auth pages, and when reading syllabus chapter notes
+  if (
+    pathname === "/" ||
+    hiddenOn.some((path) => pathname.startsWith(path)) ||
+    (typeof document !== "undefined" && document.body.dataset["readingChapter"] === "true")
+  ) {
+    return null;
+  }
 
   return (
     <div className="pointer-events-none fixed inset-0 z-50 flex flex-col items-end justify-end p-4 sm:p-6">
       {open && (
         <div className="pointer-events-auto mb-3 flex h-[min(70dvh,560px)] w-[min(92vw,400px)] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-2xl">
-          <StudyChat className="rounded-none border-0" onClose={() => setOpen(false)} />
+          <StudyChat className="rounded-none border-0" onClose={() => setOpen(false)} isMini={true} />
         </div>
       )}
       <button

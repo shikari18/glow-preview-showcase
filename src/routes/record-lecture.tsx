@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BookOpen, FileText, Loader2, Mic, Save, Square, Trash2, Volume2, VolumeX } from "lucide-react";
+import { playRealisticVoice, stopRealisticVoice } from "@/lib/gemini-tts";
 
 import { DashboardLayout, EmptyState, PageHeading, PrimaryButton } from "@/components/dashboard-page";
 import {
@@ -92,44 +93,44 @@ function RecordLecturePage() {
   }, [recording]);
 
   function speakText(id: string, text: string) {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
+    stopRealisticVoice();
     if (playingVoiceId === id) {
       setPlayingVoiceId(null);
       return;
     }
-    // Clean emojis and markdown formatting
-    const clean = text
-      .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, "")
-      .replace(/[#*_`~-]/g, " ")
-      .trim();
-    if (!clean) return;
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.rate = 1.05;
-    utterance.pitch = 1.0;
-    const voices = window.speechSynthesis.getVoices();
-    const naturalVoice = voices.find((v) => v.lang.startsWith("en") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Female")));
-    if (naturalVoice) utterance.voice = naturalVoice;
-    utterance.onend = () => setPlayingVoiceId(null);
-    utterance.onerror = () => setPlayingVoiceId(null);
     setPlayingVoiceId(id);
-    window.speechSynthesis.speak(utterance);
+    playRealisticVoice(text, {
+      onStart: () => setPlayingVoiceId(id),
+      onEnd: () => setPlayingVoiceId(null),
+      onError: () => setPlayingVoiceId(null),
+    });
   }
 
   async function start() {
     setError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const options: MediaRecorderOptions = {};
+      if (typeof MediaRecorder !== "undefined") {
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          options.mimeType = "audio/webm;codecs=opus";
+        } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+          options.mimeType = "audio/webm";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          options.mimeType = "audio/mp4";
+        }
+      }
+      const recorder = new MediaRecorder(stream, options);
       chunksRef.current = [];
       transcriptRef.current = "";
       setLiveTranscript("");
       recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data);
+        if (event.data && event.data.size > 0) chunksRef.current.push(event.data);
       };
       recorder.onstop = async () => {
         stream.getTracks().forEach((track) => track.stop());
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        const mime = recorder.mimeType || "audio/webm";
+        const blob = new Blob(chunksRef.current, { type: mime });
         const durationMs = Date.now() - startedAtRef.current;
         const item: Recording = {
           id: crypto.randomUUID(),
@@ -147,7 +148,8 @@ function RecordLecturePage() {
       };
       recorderRef.current = recorder;
       startedAtRef.current = Date.now();
-      recorder.start();
+      // Use 200ms timeslice so audio buffers continuously
+      recorder.start(200);
       setRecording(true);
 
       const recognition = createRecognition();
@@ -170,7 +172,12 @@ function RecordLecturePage() {
   }
 
   function stop() {
-    recorderRef.current?.stop();
+    if (recorderRef.current && recorderRef.current.state !== "inactive") {
+      try {
+        recorderRef.current.requestData();
+      } catch {}
+      recorderRef.current.stop();
+    }
     recorderRef.current = null;
     recognitionRef.current?.stop();
     recognitionRef.current = null;

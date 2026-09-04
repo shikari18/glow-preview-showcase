@@ -12,10 +12,15 @@ import {
   Printer,
   Loader2,
   Sliders,
+  Search,
+  Lock,
 } from "lucide-react";
 
 import { DashboardLayout } from "@/components/dashboard-page";
 import { callGemini } from "@/lib/ai-router";
+import { igcseSubjects } from "@/lib/igcse-syllabuses";
+import { isPaidUser } from "@/lib/onboarding";
+import { PaywallModal } from "@/components/paywall-modal";
 
 export const Route = createFileRoute("/test")({
   head: () => ({
@@ -217,7 +222,7 @@ const SAMPLE_EXAMS: Record<string, QuestionPaper> = {
   },
 };
 
-const SUBJECT_LIST = [
+const BASE_SUBJECTS = [
   { id: "biology", name: "Biology", code: "0610" },
   { id: "chemistry", name: "Chemistry", code: "0620" },
   { id: "physics", name: "Physics", code: "0625" },
@@ -228,8 +233,17 @@ const SUBJECT_LIST = [
   { id: "business-studies", name: "Business Studies", code: "0450" },
 ];
 
+const ALL_SUBJECTS = [
+  ...BASE_SUBJECTS,
+  ...igcseSubjects
+    .filter((s) => !BASE_SUBJECTS.some((x) => x.id === s.id))
+    .map((s) => ({ id: s.id, name: s.name, code: s.code })),
+];
+
 function TestSimulationPage() {
   const [selectedSubject, setSelectedSubject] = useState("biology");
+  const [subjectSearch, setSubjectSearch] = useState("");
+  const [showPaywall, setShowPaywall] = useState(false);
   const [topicInput, setTopicInput] = useState("");
   const [questionMode, setQuestionMode] = useState<"both" | "objectives" | "theory">("both");
   const [objCount, setObjCount] = useState(15);
@@ -245,7 +259,13 @@ function TestSimulationPage() {
   const [userAnswers, setUserAnswers] = useState<Record<number, string | number>>({});
   const [timeLeft, setTimeLeft] = useState(45 * 60);
 
-  const activeSubjectInfo = SUBJECT_LIST.find((s) => s.id === selectedSubject) ?? SUBJECT_LIST[0]!;
+  const filteredSubjects = ALL_SUBJECTS.filter(
+    (s) =>
+      s.name.toLowerCase().includes(subjectSearch.toLowerCase()) ||
+      s.code.includes(subjectSearch)
+  );
+
+  const activeSubjectInfo = ALL_SUBJECTS.find((s) => s.id === selectedSubject) ?? ALL_SUBJECTS[0]!;
   const examData: QuestionPaper =
     customExam ?? SAMPLE_EXAMS[selectedSubject] ?? SAMPLE_EXAMS["biology"]!;
 
@@ -289,6 +309,16 @@ function TestSimulationPage() {
   const percentage = Math.round((scoreResult.scored / (totalMarks || 1)) * 100);
 
   async function handleStartExam() {
+    // Free user limit: 1 test simulation
+    const testCount = typeof window !== "undefined" ? parseInt(localStorage.getItem("examglow.test_count") || "0", 10) : 0;
+    if (!isPaidUser() && testCount >= 1) {
+      setShowPaywall(true);
+      return;
+    }
+    if (typeof window !== "undefined") {
+      localStorage.setItem("examglow.test_count", String(testCount + 1));
+    }
+
     setIsCompiling(true);
     const targetObj = questionMode === "theory" ? 0 : objCount;
     const targetTheory = questionMode === "objectives" ? 0 : theoryCount;
@@ -362,6 +392,13 @@ Return STRICTLY a JSON object without surrounding prose:
 
   return (
     <DashboardLayout crumbs={[{ label: "Practice" }, { label: "Exam Simulation" }]}>
+      <PaywallModal
+        open={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        title="Unlock Cambridge Examination Papers"
+        subtitle="You have completed your free trial exam paper. Upgrade to ExamGlow Premium to generate unlimited Cambridge IGCSE mock exams across all 40+ subjects with full mark schemes."
+      />
+
       {!examStarted ? (
         /* Setup Screen */
         <div className="w-full max-w-2xl py-4">
@@ -377,25 +414,49 @@ Return STRICTLY a JSON object without surrounding prose:
             </p>
 
             <div className="mt-6 space-y-5">
-              {/* Subject selector */}
+              {/* Subject search and selector */}
               <div>
-                <label className="text-xs font-bold text-foreground uppercase tracking-wide">Select Examination Subject</label>
-                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {SUBJECT_LIST.map((subj) => (
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-foreground uppercase tracking-wide">
+                    Select Examination Subject ({ALL_SUBJECTS.length} subjects available)
+                  </label>
+                  <span className="text-[11px] text-muted-foreground">
+                    Selected: <strong className="text-foreground">{activeSubjectInfo.name} ({activeSubjectInfo.code})</strong>
+                  </span>
+                </div>
+
+                <div className="relative mt-2">
+                  <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={subjectSearch}
+                    onChange={(e) => setSubjectSearch(e.target.value)}
+                    placeholder="Search 40+ subjects by name or syllabus code (e.g. 0478, Physics, Economics, Geography)..."
+                    className="w-full rounded-xl border border-border bg-background pl-9 pr-3.5 py-2 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="mt-2.5 max-h-48 overflow-y-auto rounded-2xl border border-border/70 p-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {filteredSubjects.map((subj) => (
                     <button
                       key={subj.id}
                       type="button"
                       onClick={() => setSelectedSubject(subj.id)}
-                      className={`rounded-2xl border p-3 text-center text-xs font-bold transition-all ${
+                      className={`rounded-xl border p-2.5 text-center text-xs font-bold transition-all ${
                         selectedSubject === subj.id
                           ? "border-primary bg-primary/10 text-primary font-extrabold shadow-sm"
-                          : "border-border hover:bg-secondary/40 text-muted-foreground hover:text-foreground"
+                          : "border-border/60 hover:bg-secondary/40 text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       <span className="block text-[10px] opacity-70">{subj.code}</span>
-                      <span>{subj.name}</span>
+                      <span className="truncate block">{subj.name}</span>
                     </button>
                   ))}
+                  {filteredSubjects.length === 0 && (
+                    <div className="col-span-full py-4 text-center text-xs text-muted-foreground">
+                      No subjects found matching "{subjectSearch}". Try another search term.
+                    </div>
+                  )}
                 </div>
               </div>
 

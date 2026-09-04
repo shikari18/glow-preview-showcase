@@ -504,6 +504,25 @@ function CheckoutPage() {
               )}
             </div>
 
+            {/* Terms of Service & Auto-Renewal Notice */}
+            <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 text-[12px] text-zinc-600 leading-relaxed">
+              <p className="font-semibold text-zinc-800 mb-1">Terms of Service & Auto-Renewal Policy</p>
+              <p>
+                By completing your payment, you agree to our Terms of Service and acknowledge that your subscription will automatically renew at the end of each billing cycle ({plan.period}) at the regular rate shown above unless cancelled.
+              </p>
+              <p className="mt-1.5 text-zinc-500">
+                You can easily turn off auto-renewal or cancel anytime with one click in your{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: "/settings" })}
+                  className="font-medium text-zinc-800 underline hover:text-black"
+                >
+                  Account Settings
+                </button>
+                . There are no cancellation fees, lock-ins, or hidden charges.
+              </p>
+            </div>
+
             {/* Trust row */}
             <div className="mt-6 flex items-center justify-center gap-5 text-xs text-zinc-400">
               <span className="flex items-center gap-1"><Lock className="size-3" /> 256-bit SSL</span>

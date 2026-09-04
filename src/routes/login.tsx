@@ -34,7 +34,7 @@ function LoginPage() {
     const hasPicture = window.localStorage.getItem("examglow.google_picture");
     const authMethod = window.localStorage.getItem("examglow.auth_method");
     if (hasPicture && authMethod === "google") {
-      navigate({ to: "/home" });
+      navigate({ to: "/home", replace: true });
     }
   }, [navigate]);
 
