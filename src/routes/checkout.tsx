@@ -195,14 +195,24 @@ function PayPalSection({
           },
         });
 
-        await buttons.render(containerRef.current);
-        if (active) setSdkLoading(false);
+        try {
+          await buttons.render(containerRef.current);
+          if (active) setSdkLoading(false);
+        } catch (renderErr) {
+          console.error("PayPal buttons render failed:", renderErr);
+          if (active) {
+            setSdkLoading(false);
+            setSdkError("PayPal buttons failed to render. Please refresh the page.");
+          }
+        }
       })
       .catch((err) => {
         console.warn("PayPal SDK load error:", err);
         if (active) {
           setSdkLoading(false);
-          setSdkError("Unable to load PayPal checkout. Please check your internet connection.");
+          setSdkError(
+            "Unable to connect to PayPal. If an ad-blocker or strict tracking protection is active, please disable it for ExamGlow and refresh."
+          );
         }
       });
 
@@ -215,7 +225,7 @@ function PayPalSection({
   return (
     <div className="space-y-4">
       {sdkLoading && (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 py-10 text-zinc-500">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 py-8 text-zinc-500">
           <Loader2 className="size-6 animate-spin text-blue-600" />
           <span className="text-xs font-semibold text-zinc-600">
             Loading official PayPal &amp; Card checkout…
@@ -224,25 +234,37 @@ function PayPalSection({
       )}
 
       {sdkError && (
-        <div className="rounded-2xl border border-red-200 bg-red-50/80 p-4 text-xs text-red-700 space-y-2">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-xs text-amber-900 space-y-2">
           <p className="font-semibold flex items-center gap-1.5">
-            <AlertCircle className="size-4" /> {sdkError}
+            <AlertCircle className="size-4 text-amber-600 shrink-0" /> {sdkError}
           </p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="font-medium underline hover:text-red-900"
-          >
-            Refresh checkout
-          </button>
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="font-semibold underline hover:text-amber-950"
+            >
+              Refresh checkout
+            </button>
+            <span className="text-amber-400">·</span>
+            <button
+              type="button"
+              onClick={() => {
+                window.open("https://www.paypal.com/signin", "_blank");
+              }}
+              className="font-medium text-blue-700 underline hover:text-blue-900"
+            >
+              Open PayPal in new tab
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Real PayPal & Card buttons container */}
+      {/* Real PayPal & Card buttons container — always in normal layout */}
       <div
         ref={containerRef}
         id="paypal-button-container"
-        className={sdkLoading ? "hidden" : "block min-h-[100px]"}
+        className="min-h-[100px] w-full"
       />
     </div>
   );

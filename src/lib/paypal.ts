@@ -5,7 +5,7 @@
 
 export const PAYPAL_CLIENT_ID =
   (import.meta.env["VITE_PAYPAL_CLIENT_ID"] as string | undefined)?.trim() ||
-  "BAAXrL_Pb2A66Zhr9asfXJBRIMuc7Ri5M9GzFDqDFBiwOcmMsNq4SOSAu1DLWkY1TwNPXs0G15bFKytpt4";
+  "test";
 
 // ─── Currency ─────────────────────────────────────────────────────────────────
 
@@ -143,7 +143,7 @@ let _sdkCurrency: string | null = null;
 
 export function loadPayPalSDK(currency: string = "USD"): Promise<void> {
   // If window.paypal is already available on page, use it immediately
-  if (typeof window !== "undefined" && window.paypal) {
+  if (typeof window !== "undefined" && window.paypal?.Buttons) {
     return Promise.resolve();
   }
 
