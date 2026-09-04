@@ -77,6 +77,52 @@ export function isPaidUser(profile?: OnboardingProfile): boolean {
   return true;
 }
 
+export type ActiveSubscriptionInfo = {
+  isActive: boolean;
+  plan: "weekly" | "termly" | "yearly" | "monthly" | "exam-pass";
+  planName: string;
+  renewalDue: number;
+  formattedExpiry: string;
+  daysRemaining: number;
+};
+
+export function getActiveSubscription(profile?: OnboardingProfile): ActiveSubscriptionInfo | null {
+  const p = profile ?? readProfile();
+  if (!p.plan || p.plan === "free") return null;
+  if (p.subscriptionStatus === "expired") return null;
+
+  const now = Date.now();
+  const defaultDays =
+    p.plan === "weekly" ? 7 :
+    p.plan === "yearly" ? 365 :
+    p.plan === "monthly" ? 30 : 90;
+  const renewal = p.renewalDue ?? (now + defaultDays * 24 * 60 * 60 * 1000);
+
+  if (p.autoRenew === false && now > renewal) return null;
+
+  const daysRemaining = Math.max(0, Math.ceil((renewal - now) / (1000 * 60 * 60 * 24)));
+  const formattedExpiry = new Date(renewal).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const planName =
+    p.plan === "weekly" ? "Weekly Plan" :
+    p.plan === "yearly" ? "1 Year Plan" :
+    p.plan === "monthly" ? "3 Months Plan" :
+    "3 Months Plan";
+
+  return {
+    isActive: true,
+    plan: p.plan,
+    planName,
+    renewalDue: renewal,
+    formattedExpiry,
+    daysRemaining,
+  };
+}
+
 export async function syncGoogleAccountPlan(email: string, sub?: string): Promise<OnboardingProfile | null> {
   try {
     const params = new URLSearchParams();

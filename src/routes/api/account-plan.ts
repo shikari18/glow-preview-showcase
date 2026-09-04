@@ -101,6 +101,50 @@ export const Route = createFileRoute("/api/account-plan")({
           });
         }
 
+        const globalKv = (globalThis as unknown as {
+          EXAMGLOW_ACCOUNTS?: {
+            get: (k: string) => Promise<string | null>;
+            put: (k: string, v: string) => Promise<void>;
+          };
+        }).EXAMGLOW_ACCOUNTS;
+
+        // Check if this account already has an active, unexpired paid plan
+        let existingRaw: string | null = null;
+        if (globalKv) {
+          if (email) existingRaw = await globalKv.get(`account:${email}`);
+          if (!existingRaw && sub) existingRaw = await globalKv.get(`account:${sub}`);
+        }
+        if (!existingRaw) {
+          if (email) existingRaw = memoryStore.get(`account:${email}`) ?? null;
+          if (!existingRaw && sub) existingRaw = memoryStore.get(`account:${sub}`) ?? null;
+        }
+
+        if (existingRaw) {
+          try {
+            const existingRecord = JSON.parse(existingRaw) as AccountRecord;
+            const now = Date.now();
+            const isUnexpired =
+              existingRecord.plan !== "free" &&
+              Boolean(existingRecord.renewalDue && now < existingRecord.renewalDue);
+
+            // If user has an unexpired active plan and is trying to switch to another paid plan:
+            if (isUnexpired && plan !== "free" && existingRecord.plan !== plan) {
+              return new Response(
+                JSON.stringify({
+                  error: "Account already has an active subscription until current plan expires.",
+                  blocked: true,
+                  plan: existingRecord.plan,
+                  renewalDue: existingRecord.renewalDue,
+                  autoRenew: existingRecord.autoRenew,
+                }),
+                { status: 409, headers: { "content-type": "application/json" } },
+              );
+            }
+          } catch {
+            // ignore JSON parse errors
+          }
+        }
+
         const record: AccountRecord = {
           email,
           sub,
@@ -117,7 +161,6 @@ export const Route = createFileRoute("/api/account-plan")({
         if (sub) memoryStore.set(`account:${sub}`, jsonStr);
 
         // Store in Cloudflare KV if available
-        const globalKv = (globalThis as unknown as { EXAMGLOW_ACCOUNTS?: { put: (k: string, v: string) => Promise<void> } }).EXAMGLOW_ACCOUNTS;
         if (globalKv) {
           try {
             if (email) await globalKv.put(`account:${email}`, jsonStr);

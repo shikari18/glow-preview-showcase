@@ -11,7 +11,13 @@ import {
 } from "lucide-react";
 
 import logoMark from "@/assets/logo-mark.png";
-import { saveProfile, readProfile, lockGoogleAccountPlan } from "@/lib/onboarding";
+import {
+  saveProfile,
+  readProfile,
+  lockGoogleAccountPlan,
+  getActiveSubscription,
+  syncGoogleAccountPlan,
+} from "@/lib/onboarding";
 import {
   detectCurrency,
   formatPrice,
@@ -112,22 +118,7 @@ const PLANS: Record<string, { name: string; period: string; features: string[] }
   },
 };
 
-// ─── PayPal & Card Checkout Section ──────────────────────────────────────────
-
-function PayPalSvg() {
-  return (
-    <svg className="h-4 w-auto inline-block" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M20.1 7.2c-.5 2.5-2.2 5.7-6.8 5.7h-2.4l-1.1 7.4c-.1.4-.4.7-.8.7H5.2c-.5 0-.8-.4-.7-.8L7.3 3.8c.1-.4.4-.7.8-.7h6.6c2.7 0 4.8.6 5.4 4.1z"
-        fill="#003087"
-      />
-      <path
-        d="M17.6 10.7c-.5 2.5-2.2 5.1-6.1 5.1h-2.2l-1.1 6.8c-.1.4-.4.7-.8.7H4.1c-.5 0-.8-.4-.7-.8L5.9 7.3c.1-.4.4-.7.8-.7h6c2.5 0 4.4.5 4.9 4.1z"
-        fill="#0079C1"
-      />
-    </svg>
-  );
-}
+// ─── Real PayPal & Card Checkout Section ─────────────────────────────────────
 
 function PayPalSection({
   planId,
@@ -138,35 +129,24 @@ function PayPalSection({
   currency: CurrencyInfo;
   onSuccess: () => void;
 }) {
-  const [showCardForm, setShowCardForm] = useState(false);
-  const [cardProcessing, setCardProcessing] = useState(false);
-  const [cardError, setCardError] = useState<string | null>(null);
-
-  // Card inputs
-  const [cardName, setCardName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
-
   const containerRef = useRef<HTMLDivElement>(null);
-  const [sdkReady, setSdkReady] = useState(false);
-  const renderedRef = useRef(false);
+  const [sdkLoading, setSdkLoading] = useState(true);
+  const [sdkError, setSdkError] = useState<string | null>(null);
 
   const sdkCurrency = PAYPAL_SUPPORTED_CURRENCIES.has(currency.code) ? currency.code : "USD";
   const amount = sdkCurrency === currency.code
     ? convertPrice(planId, currency)
     : convertPrice(planId, CURRENCIES["USD"]);
-  const plan = PLANS[planId] ?? PLANS["monthly"]!;
-  const displayPrice = formatPrice(planId, currency);
+  const plan = PLANS[planId] ?? PLANS["termly"]!;
 
-  // Background initialization of live PayPal SDK (if browser allows it)
   useEffect(() => {
     let active = true;
+    setSdkLoading(true);
+    setSdkError(null);
 
     loadPayPalSDK(sdkCurrency)
       .then(async () => {
-        if (!active || !containerRef.current || !window.paypal || renderedRef.current) return;
-        renderedRef.current = true;
+        if (!active || !containerRef.current || !window.paypal) return;
         containerRef.current.innerHTML = "";
 
         const buttons = window.paypal.Buttons({
@@ -211,205 +191,150 @@ function PayPalSection({
           },
           onError: (err: unknown) => {
             console.error("PayPal transaction error:", err);
-            setShowCardForm(true);
+            if (active) setSdkError("PayPal transaction encountered an issue. Please try again.");
           },
         });
 
         await buttons.render(containerRef.current);
-        if (active) setSdkReady(true);
+        if (active) setSdkLoading(false);
       })
       .catch((err) => {
-        console.warn("PayPal SDK background load note:", err);
+        console.warn("PayPal SDK load error:", err);
+        if (active) {
+          setSdkLoading(false);
+          setSdkError("Unable to load PayPal checkout. Please check your internet connection.");
+        }
       });
 
     return () => {
       active = false;
+      if (containerRef.current) containerRef.current.innerHTML = "";
     };
   }, [plan, planId, sdkCurrency, amount, onSuccess]);
 
-  const handleCardNumberChange = (val: string) => {
-    const raw = val.replace(/\D/g, "").slice(0, 16);
-    const formatted = raw.replace(/(\d{4})(?=\d)/g, "$1 ");
-    setCardNumber(formatted);
-  };
-
-  const handleExpiryChange = (val: string) => {
-    const raw = val.replace(/\D/g, "").slice(0, 4);
-    if (raw.length > 2) {
-      setCardExpiry(`${raw.slice(0, 2)} / ${raw.slice(2)}`);
-    } else {
-      setCardExpiry(raw);
-    }
-  };
-
-  const handleCvvChange = (val: string) => {
-    setCardCvv(val.replace(/\D/g, "").slice(0, 4));
-  };
-
-  const handleCardSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCardError(null);
-
-    const cleanNum = cardNumber.replace(/\s+/g, "");
-    if (cleanNum.length < 15) {
-      setCardError("Please enter a valid card number.");
-      return;
-    }
-    if (!cardExpiry || cardExpiry.length < 5) {
-      setCardError("Please enter a valid expiry date (MM / YY).");
-      return;
-    }
-    if (!cardCvv || cardCvv.length < 3) {
-      setCardError("Please enter a valid CVV.");
-      return;
-    }
-
-    setCardProcessing(true);
-    try {
-      await new Promise((r) => setTimeout(r, 800));
-      const normalizedPlan = (planId === "3months" ? "termly" : planId === "1year" ? "yearly" : planId === "monthly" ? "termly" : planId) as PlanLabel;
-      saveProfile({ plan: normalizedPlan });
-      const uid = typeof window !== "undefined" ? window.localStorage.getItem("examglow.google_sub") : null;
-      const userEmail = typeof window !== "undefined" ? readProfile().email : null;
-      await lockGoogleAccountPlan(normalizedPlan, userEmail ?? undefined, uid ?? undefined);
-      if (uid) await updateAccountPlan(uid, normalizedPlan);
-      onSuccess();
-    } catch {
-      setCardError("Payment processing was interrupted. Please try again.");
-      setCardProcessing(false);
-    }
-  };
-
   return (
-    <div className="space-y-3.5">
-      {/* 1. Live PayPal Buttons container (displayed when PayPal SDK mounts) */}
-      <div
-        ref={containerRef}
-        id="paypal-button-container"
-        className={sdkReady ? "block" : "hidden"}
-      />
+    <div className="space-y-4">
+      {sdkLoading && (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/80 py-10 text-zinc-500">
+          <Loader2 className="size-6 animate-spin text-blue-600" />
+          <span className="text-xs font-semibold text-zinc-600">
+            Loading official PayPal &amp; Card checkout…
+          </span>
+        </div>
+      )}
 
-      {/* 2. Direct Instant PayPal & Card Buttons (Always visible immediately) */}
-      {!sdkReady && (
-        <div className="space-y-3">
-          {/* Gold PayPal Button */}
+      {sdkError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50/80 p-4 text-xs text-red-700 space-y-2">
+          <p className="font-semibold flex items-center gap-1.5">
+            <AlertCircle className="size-4" /> {sdkError}
+          </p>
           <button
             type="button"
-            onClick={() => {
-              const w = window.open("https://www.paypal.com/signin", "_blank", "width=500,height=650");
-              if (!w) setShowCardForm(true);
-            }}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#FFC439] hover:bg-[#F2BA36] active:scale-[0.99] font-bold text-[#003087] shadow-sm transition-all cursor-pointer border border-[#E0A820]"
+            onClick={() => window.location.reload()}
+            className="font-medium underline hover:text-red-900"
           >
-            <PayPalSvg />
-            <span className="text-[15px] font-bold italic tracking-tight">
-              Pay with <span className="not-italic text-[#003087]">Pay</span><span className="not-italic text-[#0079C1]">Pal</span>
-            </span>
-          </button>
-
-          {/* Black Debit or Credit Card Button */}
-          <button
-            type="button"
-            onClick={() => setShowCardForm((v) => !v)}
-            className="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl bg-[#2C2E2F] hover:bg-[#1C1D1E] active:scale-[0.99] font-semibold text-white shadow-sm transition-all text-sm cursor-pointer"
-          >
-            <CreditCard className="size-4 text-zinc-300" />
-            <span>Debit or Credit Card</span>
+            Refresh checkout
           </button>
         </div>
       )}
 
-      {/* 3. Inline Card Payment Form */}
-      {(showCardForm || !sdkReady) && (
-        <form
-          onSubmit={handleCardSubmit}
-          className="rounded-2xl border border-zinc-200 bg-zinc-50/70 p-5 space-y-3 transition-all"
-        >
-          <div className="flex items-center justify-between pb-1 border-b border-zinc-200/80">
-            <span className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
-              Card Payment
+      {/* Real PayPal & Card buttons container */}
+      <div
+        ref={containerRef}
+        id="paypal-button-container"
+        className={sdkLoading ? "hidden" : "block min-h-[100px]"}
+      />
+    </div>
+  );
+}
+
+// ─── Active Subscription Blocked Screen ───────────────────────────────────────
+
+function ActiveSubscriptionBlocked({
+  activeSub,
+}: {
+  activeSub: NonNullable<ReturnType<typeof getActiveSubscription>>;
+}) {
+  return (
+    <div className="flex min-h-dvh flex-col justify-between bg-zinc-50 text-zinc-900">
+      {/* Top bar */}
+      <header className="border-b border-zinc-200 bg-white/90 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <Link to="/home" className="flex items-center gap-2.5">
+            <img src={logoMark} alt="ExamGlow" className="size-8 rounded-full" />
+            <span className="text-[17px] font-bold text-zinc-900">ExamGlow</span>
+          </Link>
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+            <ShieldCheck className="size-4" /> Pro Access Active
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-lg px-4 py-12 text-center my-auto">
+        <div className="mx-auto flex size-20 items-center justify-center rounded-3xl bg-emerald-100 text-emerald-600 mb-6 shadow-sm">
+          <ShieldCheck className="size-10" />
+        </div>
+
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700 mb-4">
+          Active Subscription
+        </div>
+
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900">
+          You Already Have an Active Plan
+        </h1>
+
+        <p className="mt-3 text-sm text-zinc-600 leading-relaxed">
+          Your account is currently locked into the <strong className="text-zinc-900 font-semibold">{activeSub.planName}</strong> with full unlocked access to all revision materials, past papers, mark schemes, and Yumna AI tutor.
+        </p>
+
+        {/* Plan details card */}
+        <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+            <span className="text-xs text-zinc-500 font-medium">Active Plan</span>
+            <span className="text-sm font-bold text-zinc-900">{activeSub.planName}</span>
+          </div>
+          <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+            <span className="text-xs text-zinc-500 font-medium">Access Status</span>
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+              <Check className="size-3" strokeWidth={3} /> Pro Unlocked
             </span>
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
-              <Lock className="size-3 text-emerald-600" /> 256-bit Encrypted
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-zinc-500 font-medium">Valid Until</span>
+            <span className="text-xs font-bold text-zinc-800">
+              {activeSub.formattedExpiry} ({activeSub.daysRemaining} days remaining)
             </span>
           </div>
+        </div>
 
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-700">Name on card</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Alex Morgan"
-              value={cardName}
-              onChange={(e) => setCardName(e.target.value)}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-medium text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
-            />
-          </div>
+        {/* Protection notice */}
+        <div className="mt-5 rounded-2xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-900 leading-relaxed text-left flex items-start gap-2.5">
+          <Lock className="size-4 text-amber-700 shrink-0 mt-0.5" />
+          <span>
+            <strong>Account Protected:</strong> To prevent accidental duplicate billing, additional purchases and upgrades are blocked for this account until your current subscription expires.
+          </span>
+        </div>
 
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-700">Card number</label>
-            <div className="relative">
-              <input
-                type="text"
-                required
-                placeholder="1234 5678 9012 3456"
-                value={cardNumber}
-                onChange={(e) => handleCardNumberChange(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 pr-10 text-sm font-mono text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
-              />
-              <CreditCard className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-zinc-400 pointer-events-none" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-700">Expiry date</label>
-              <input
-                type="text"
-                required
-                placeholder="MM / YY"
-                value={cardExpiry}
-                onChange={(e) => handleExpiryChange(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-mono text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-700">Security code (CVC)</label>
-              <input
-                type="password"
-                required
-                maxLength={4}
-                placeholder="•••"
-                value={cardCvv}
-                onChange={(e) => handleCvvChange(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-mono text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
-              />
-            </div>
-          </div>
-
-          {cardError && (
-            <p className="text-xs text-red-600 font-medium pt-1">{cardError}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={cardProcessing}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0070BA] hover:bg-[#005ea6] active:scale-[0.99] py-3.5 text-sm font-bold text-white shadow-sm transition-all disabled:opacity-60 cursor-pointer"
+        {/* Action buttons */}
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link
+            to="/home"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-6 py-3.5 text-sm font-semibold text-white hover:bg-zinc-800 transition shadow-sm"
           >
-            {cardProcessing ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                <span>Processing secure payment…</span>
-              </>
-            ) : (
-              <>
-                <Lock className="size-4" />
-                <span>Pay {displayPrice} securely</span>
-              </>
-            )}
-          </button>
-        </form>
-      )}
+            Go to Home Dashboard
+          </Link>
+          <Link
+            to="/settings"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white px-5 py-3.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition shadow-sm"
+          >
+            Manage Subscription
+          </Link>
+        </div>
+      </main>
+
+      <footer className="border-t border-zinc-200 bg-white py-6 text-center text-xs text-zinc-400">
+        <p>&copy; {new Date().getFullYear()} ExamGlow. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
@@ -437,19 +362,34 @@ function CheckoutPage() {
   const { plan: planId } = useSearch({ from: "/checkout" });
   const [currency, setCurrency] = useState<CurrencyInfo | null>(null);
   const [success, setSuccess] = useState(false);
+  const [activeSub, setActiveSub] = useState(() => getActiveSubscription());
   const successRef = useRef(false);
 
-  const plan = PLANS[planId] ?? PLANS["monthly"]!;
+  const plan = PLANS[planId] ?? PLANS["termly"]!;
 
-  useEffect(() => { detectCurrency().then(setCurrency); }, []);
+  useEffect(() => {
+    detectCurrency().then(setCurrency);
+    const prof = readProfile();
+    const email = prof.email;
+    const sub = typeof window !== "undefined" ? window.localStorage.getItem("examglow.google_sub") : null;
+    if (email || sub) {
+      syncGoogleAccountPlan(email || "", sub || undefined).then((synced) => {
+        if (synced) {
+          const s = getActiveSubscription(synced);
+          if (s) setActiveSub(s);
+        }
+      });
+    }
+  }, []);
 
   const handleSuccess = useCallback(() => {
     if (successRef.current) return;
     successRef.current = true;
     setSuccess(true);
-    setTimeout(() => navigate({ to: "/home" }), 2500);
+    setTimeout(() => navigate({ to: "/home" }), 2000);
   }, [navigate]);
 
+  if (activeSub) return <ActiveSubscriptionBlocked activeSub={activeSub} />;
   if (success) return <SuccessScreen />;
 
   return (

@@ -168,6 +168,7 @@ export function loadPayPalSDK(currency: string = "USD"): Promise<void> {
       `&currency=${safeCurrency}`,
       `&intent=capture`,
       `&components=buttons`,
+      `&enable-funding=card`,
     ].join("");
     s.async = true;
     s.onload = () => resolve();

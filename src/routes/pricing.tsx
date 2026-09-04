@@ -1,10 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Check, Globe, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Globe, Loader2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import balanceDoodle from "@/assets/balance-doodle.png";
 import avatar1 from "@/assets/avatar-1.jpg";
-import { saveProfile } from "@/lib/onboarding";
+import {
+  saveProfile,
+  readProfile,
+  getActiveSubscription,
+  syncGoogleAccountPlan,
+} from "@/lib/onboarding";
 import { detectCurrency, formatPrice, type CurrencyInfo } from "@/lib/paypal";
 
 export const Route = createFileRoute("/pricing")({
@@ -45,8 +50,22 @@ function PricingPage() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<PlanId>("termly");
   const [currency, setCurrency] = useState<CurrencyInfo | null>(null);
+  const [activeSub, setActiveSub] = useState(() => getActiveSubscription());
 
-  useEffect(() => { detectCurrency().then(setCurrency); }, []);
+  useEffect(() => {
+    detectCurrency().then(setCurrency);
+    const prof = readProfile();
+    const email = prof.email;
+    const sub = typeof window !== "undefined" ? window.localStorage.getItem("examglow.google_sub") : null;
+    if (email || sub) {
+      syncGoogleAccountPlan(email || "", sub || undefined).then((synced) => {
+        if (synced) {
+          const s = getActiveSubscription(synced);
+          if (s) setActiveSub(s);
+        }
+      });
+    }
+  }, []);
 
   return (
     <div className="dark min-h-dvh bg-background px-4 py-4 text-foreground sm:px-6 lg:h-dvh lg:overflow-hidden lg:px-8 lg:py-3">
@@ -101,16 +120,28 @@ function PricingPage() {
             </div>
           )}
 
+          {activeSub && (
+            <div className="mt-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/40 p-3.5 text-xs text-emerald-300 space-y-1">
+              <span className="font-semibold flex items-center gap-1.5 text-sm text-emerald-200">
+                <ShieldCheck className="size-4 text-emerald-400" /> Active Subscription
+              </span>
+              <p>
+                You are currently subscribed to <strong className="text-white">{activeSub.planName}</strong> with access until <strong className="text-white">{activeSub.formattedExpiry}</strong> ({activeSub.daysRemaining} days left). Upgrades and duplicate purchases are locked on this account until your plan expires.
+              </p>
+            </div>
+          )}
+
           <div className="mt-4 space-y-2">
             {PLAN_META.map(plan => {
               const active = selected === plan.id;
+              const isCurrent = activeSub?.plan === plan.id || (plan.id === "termly" && activeSub?.plan === "monthly");
               return (
                 <button key={plan.id} type="button" onClick={() => setSelected(plan.id)}
                   aria-pressed={active}
                   className={`w-full overflow-hidden rounded-2xl border text-left transition-colors ${active ? "border-foreground bg-secondary" : "border-border bg-card"}`}>
                   {"badge" in plan && plan.badge && (
                     <span className="block bg-ink-foreground py-1 text-center text-[11px] font-semibold text-ink">
-                      {plan.badge}
+                      {isCurrent ? "YOUR CURRENT PLAN" : plan.badge}
                     </span>
                   )}
                   <span className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-2.5 sm:px-6">
@@ -135,14 +166,24 @@ function PricingPage() {
             })}
           </div>
 
-          <button
-            type="button"
-            disabled={!currency}
-            onClick={() => navigate({ to: "/checkout", search: { plan: selected } })}
-            className="mt-4 w-full rounded-full bg-ink-foreground py-3.5 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5 disabled:opacity-60"
-          >
-            {currency ? `Unlock Premium · ${formatPrice(selected, currency)}` : "Loading…"}
-          </button>
+          {activeSub ? (
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/home" })}
+              className="mt-4 w-full rounded-full bg-emerald-500 hover:bg-emerald-600 py-3.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5"
+            >
+              Subscription Active · Go to Dashboard
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!currency}
+              onClick={() => navigate({ to: "/checkout", search: { plan: selected } })}
+              className="mt-4 w-full rounded-full bg-ink-foreground py-3.5 text-[15px] font-semibold text-ink transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+            >
+              {currency ? `Unlock Premium · ${formatPrice(selected, currency)}` : "Loading…"}
+            </button>
+          )}
 
           <p className="mt-2 text-center text-sm text-muted-foreground">
             Cancel anytime · Secure checkout · PayPal &amp; all major cards
