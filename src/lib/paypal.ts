@@ -66,7 +66,13 @@ export async function detectCurrency(): Promise<CurrencyInfo> {
 }
 
 const USD_PRICES: Record<string, number> = {
-  weekly: 2.00, monthly: 5.99, termly: 14.99, "exam-pass": 25.99,
+  weekly: 2.00,
+  termly: 14.99,
+  "3months": 14.99,
+  yearly: 39.99,
+  "1year": 39.99,
+  monthly: 5.99,
+  "exam-pass": 25.99,
 };
 
 export function convertPrice(planId: string, currency: CurrencyInfo): string {

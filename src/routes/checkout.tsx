@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 import logoMark from "@/assets/logo-mark.png";
-import { saveProfile } from "@/lib/onboarding";
+import { saveProfile, readProfile, lockGoogleAccountPlan } from "@/lib/onboarding";
 import {
   detectCurrency,
   formatPrice,
@@ -27,61 +27,87 @@ import { updateAccountPlan, type PlanLabel } from "@/lib/admin-store";
 
 export const Route = createFileRoute("/checkout")({
   validateSearch: (s: Record<string, unknown>) => ({
-    plan: (s["plan"] as string) || "monthly",
+    plan: (s["plan"] as string) || "termly",
   }),
   head: () => ({ meta: [{ title: "Checkout — ExamGlow" }] }),
   component: CheckoutPage,
 });
 
-// ─── Plan data ────────────────────────────────────────────────────────────────
+// ─── Plan data (Exact 3 Plans) ────────────────────────────────────────────────
 
 const PLANS: Record<string, { name: string; period: string; features: string[] }> = {
   weekly: {
     name: "Weekly Plan",
     period: "billed every week",
     features: [
-      "Full notes access",
-      "Past papers",
-      "AI chat & 24/7 Tutor",
-      "Syllabus & exam specs",
-      "Cancel anytime",
-    ],
-  },
-  monthly: {
-    name: "Monthly Plan",
-    period: "billed every month",
-    features: [
-      "Full notes access",
-      "Past papers",
-      "AI chat & 24/7 Tutor",
-      "Syllabus & exam specs",
-      "Personalized study plan",
+      "Full notes access & syllabus specs",
+      "Past papers & mark schemes",
+      "AI Tutor Yumna (voice & chat)",
+      "Cross-device Google account access",
       "Cancel anytime",
     ],
   },
   termly: {
-    name: "Termly Plan",
+    name: "3 Months Plan",
     period: "billed every 3 months",
     features: [
-      "Full notes access",
-      "Past papers",
-      "AI chat & 24/7 Tutor",
-      "Syllabus & exam specs",
-      "Personalized study plan",
-      "Priority support",
+      "Full notes access & syllabus specs",
+      "Past papers & mark schemes",
+      "AI Tutor Yumna (voice & chat)",
+      "Personalized revision plan",
+      "Cross-device Google account access",
       "Cancel anytime",
     ],
   },
-  "exam-pass": {
-    name: "Exam Pass",
-    period: "valid until end of exam season",
+  yearly: {
+    name: "1 Year Plan",
+    period: "billed every year",
     features: [
-      "Full notes access",
-      "Past papers",
-      "AI chat & 24/7 Tutor",
-      "Syllabus & exam specs",
-      "Personalized study plan",
-      "Exam prep toolkit",
+      "Full notes access & syllabus specs",
+      "Past papers & mark schemes",
+      "AI Tutor Yumna (voice & chat)",
+      "Personalized revision plan",
+      "Full exam season protection",
+      "Cross-device Google account access",
+      "Cancel anytime",
+    ],
+  },
+  // Aliases for compatibility
+  "3months": {
+    name: "3 Months Plan",
+    period: "billed every 3 months",
+    features: [
+      "Full notes access & syllabus specs",
+      "Past papers & mark schemes",
+      "AI Tutor Yumna (voice & chat)",
+      "Personalized revision plan",
+      "Cross-device Google account access",
+      "Cancel anytime",
+    ],
+  },
+  "1year": {
+    name: "1 Year Plan",
+    period: "billed every year",
+    features: [
+      "Full notes access & syllabus specs",
+      "Past papers & mark schemes",
+      "AI Tutor Yumna (voice & chat)",
+      "Personalized revision plan",
+      "Full exam season protection",
+      "Cross-device Google account access",
+      "Cancel anytime",
+    ],
+  },
+  monthly: {
+    name: "3 Months Plan",
+    period: "billed every 3 months",
+    features: [
+      "Full notes access & syllabus specs",
+      "Past papers & mark schemes",
+      "AI Tutor Yumna (voice & chat)",
+      "Personalized revision plan",
+      "Cross-device Google account access",
+      "Cancel anytime",
     ],
   },
 };
@@ -175,9 +201,12 @@ function PayPalSection({
             } catch (e) {
               console.warn("Capture note:", e);
             }
-            saveProfile({ plan: planId as PlanLabel });
+            const normalizedPlan = (planId === "3months" ? "termly" : planId === "1year" ? "yearly" : planId === "monthly" ? "termly" : planId) as PlanLabel;
+            saveProfile({ plan: normalizedPlan });
             const uid = typeof window !== "undefined" ? window.localStorage.getItem("examglow.google_sub") : null;
-            if (uid) await updateAccountPlan(uid, planId as PlanLabel);
+            const userEmail = typeof window !== "undefined" ? readProfile().email : null;
+            await lockGoogleAccountPlan(normalizedPlan, userEmail ?? undefined, uid ?? undefined);
+            if (uid) await updateAccountPlan(uid, normalizedPlan);
             onSuccess();
           },
           onError: (err: unknown) => {
@@ -238,9 +267,12 @@ function PayPalSection({
     setCardProcessing(true);
     try {
       await new Promise((r) => setTimeout(r, 800));
-      saveProfile({ plan: planId as PlanLabel });
+      const normalizedPlan = (planId === "3months" ? "termly" : planId === "1year" ? "yearly" : planId === "monthly" ? "termly" : planId) as PlanLabel;
+      saveProfile({ plan: normalizedPlan });
       const uid = typeof window !== "undefined" ? window.localStorage.getItem("examglow.google_sub") : null;
-      if (uid) await updateAccountPlan(uid, planId as PlanLabel);
+      const userEmail = typeof window !== "undefined" ? readProfile().email : null;
+      await lockGoogleAccountPlan(normalizedPlan, userEmail ?? undefined, uid ?? undefined);
+      if (uid) await updateAccountPlan(uid, normalizedPlan);
       onSuccess();
     } catch {
       setCardError("Payment processing was interrupted. Please try again.");
@@ -386,12 +418,14 @@ function PayPalSection({
 
 function SuccessScreen() {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-zinc-50 px-4">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-zinc-50 px-4 text-center">
       <div className="flex size-20 items-center justify-center rounded-full bg-emerald-500 shadow-lg">
         <Check className="size-10 text-white" strokeWidth={3} />
       </div>
       <h1 className="text-3xl font-bold text-zinc-900">Payment successful!</h1>
-      <p className="text-zinc-500">Welcome to ExamGlow Premium. Redirecting…</p>
+      <p className="text-zinc-500 max-w-sm">
+        Welcome to ExamGlow Pro! Your subscription is active and locked into your account. Unlocking full access to all revision materials…
+      </p>
     </div>
   );
 }
@@ -507,24 +541,22 @@ function CheckoutPage() {
               ))}
             </div>
 
-            {/* Terms of Service & Auto-Renewal Notice */}
-            <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 text-[12px] text-zinc-600 leading-relaxed">
-              <p className="font-semibold text-zinc-800 mb-1">Terms of Service & Auto-Renewal Policy</p>
-              <p>
-                By completing your payment, you agree to our Terms of Service and acknowledge that your subscription will automatically renew at the end of each billing cycle ({plan.period}) at the regular rate shown above unless cancelled.
-              </p>
-              <p className="mt-1.5 text-zinc-500">
-                You can easily turn off auto-renewal or cancel anytime with one click in your{" "}
-                <button
-                  type="button"
-                  onClick={() => navigate({ to: "/settings" })}
-                  className="font-medium text-zinc-800 underline hover:text-black"
-                >
-                  Account Settings
-                </button>
-                . There are no cancellation fees, lock-ins, or hidden charges.
-              </p>
-            </div>
+            {/* Legal agreement links */}
+            <p className="mt-6 text-center text-xs text-zinc-500 leading-normal">
+              By completing your purchase, you agree to our{" "}
+              <Link to="/terms" className="font-medium text-zinc-800 underline hover:text-black">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link to="/privacy" className="font-medium text-zinc-800 underline hover:text-black">
+                Privacy Policy
+              </Link>
+              . Subscriptions automatically renew until cancelled in your{" "}
+              <Link to="/settings" className="font-medium text-zinc-800 underline hover:text-black">
+                Account Settings
+              </Link>
+              .
+            </p>
           </div>
 
           {/* ── Right: Plan summary ─────────────────────────────────────────── */}

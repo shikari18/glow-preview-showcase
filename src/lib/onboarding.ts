@@ -1,19 +1,19 @@
 export type SubscriptionStatus = "active" | "canceled" | "past_due" | "expired";
 
 export type OnboardingProfile = {
-  name?: string;
-  email?: string;
-  role?: string;
-  goal?: string;
-  source?: string;
-  plan?: "weekly" | "monthly" | "termly" | "exam-pass" | "free";
-  autoRenew?: boolean;
-  paidAt?: number;
-  renewalDue?: number;
-  subscriptionStatus?: SubscriptionStatus;
-  notesCount?: number;
-  streakDays?: number;
-  curriculum?: string;
+  name?: string | undefined;
+  email?: string | undefined;
+  role?: string | undefined;
+  goal?: string | undefined;
+  source?: string | undefined;
+  plan?: "weekly" | "termly" | "yearly" | "monthly" | "exam-pass" | "free" | undefined;
+  autoRenew?: boolean | undefined;
+  paidAt?: number | undefined;
+  renewalDue?: number | undefined;
+  subscriptionStatus?: SubscriptionStatus | undefined;
+  notesCount?: number | undefined;
+  streakDays?: number | undefined;
+  curriculum?: string | undefined;
 };
 
 const KEY = "examglow.profile";
@@ -26,10 +26,10 @@ export function readProfile(): OnboardingProfile {
     const raw = window.localStorage.getItem(KEY);
     const profile = raw ? (JSON.parse(raw) as OnboardingProfile) : {};
     
-    // If autoRenew is explicitly false and renewal date has passed, mark past_due
+    // If autoRenew is explicitly false and renewal date has passed, mark expired
     if (profile.plan && profile.plan !== "free") {
       if (profile.autoRenew === false && profile.renewalDue && Date.now() > profile.renewalDue) {
-        profile.subscriptionStatus = "past_due";
+        profile.subscriptionStatus = "expired";
         profile.plan = "free";
         window.localStorage.setItem(KEY, JSON.stringify(profile));
       }
@@ -51,10 +51,16 @@ export function saveProfile(patch: OnboardingProfile) {
     if (patch.plan && patch.plan !== "free") {
       next.subscriptionStatus = "active";
       if (next.autoRenew === undefined) next.autoRenew = true;
-      next.paidAt = Date.now();
-      // Calculate renewal due date: 7 days for weekly, 30 for monthly, 90 for termly
-      const days = patch.plan === "weekly" ? 7 : patch.plan === "monthly" ? 30 : 90;
-      next.renewalDue = Date.now() + days * 24 * 60 * 60 * 1000;
+      if (!next.paidAt) next.paidAt = Date.now();
+
+      if (!next.renewalDue) {
+        // Calculate renewal due date: 7 days for weekly, 90 for termly (3 months), 365 for yearly
+        const days =
+          patch.plan === "weekly" ? 7 :
+          patch.plan === "yearly" ? 365 :
+          patch.plan === "monthly" ? 30 : 90;
+        next.renewalDue = Date.now() + days * 24 * 60 * 60 * 1000;
+      }
     }
 
     window.localStorage.setItem(KEY, JSON.stringify(next));
@@ -66,9 +72,66 @@ export function saveProfile(patch: OnboardingProfile) {
 export function isPaidUser(profile?: OnboardingProfile): boolean {
   const p = profile ?? readProfile();
   if (!p.plan || p.plan === "free") return false;
-  if (p.subscriptionStatus !== "active") return false;
-  if (!p.paidAt) return false;
+  if (p.subscriptionStatus === "expired") return false;
+  if (p.autoRenew === false && p.renewalDue && Date.now() > p.renewalDue) return false;
   return true;
+}
+
+export async function syncGoogleAccountPlan(email: string, sub?: string): Promise<OnboardingProfile | null> {
+  try {
+    const params = new URLSearchParams();
+    if (email) params.set("email", email);
+    if (sub) params.set("sub", sub);
+
+    const res = await fetch(`/api/account-plan?${params.toString()}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { found?: boolean; plan?: string; renewalDue?: number; autoRenew?: boolean };
+    if (data.found && data.plan && data.plan !== "free") {
+      const patch: OnboardingProfile = {
+        plan: data.plan as OnboardingProfile["plan"],
+        renewalDue: data.renewalDue,
+        autoRenew: data.autoRenew ?? true,
+        subscriptionStatus: "active",
+      };
+      saveProfile(patch);
+      return readProfile();
+    }
+  } catch (e) {
+    console.warn("Failed to sync account plan from server:", e);
+  }
+  return null;
+}
+
+export async function lockGoogleAccountPlan(
+  plan: string,
+  email?: string,
+  sub?: string,
+  renewalDue?: number
+): Promise<boolean> {
+  try {
+    const prof = readProfile();
+    const effectiveEmail = (email || prof.email)?.trim().toLowerCase();
+    const effectiveSub = (sub || (typeof window !== "undefined" ? window.localStorage.getItem("examglow.google_sub") || undefined : undefined))?.trim();
+    const effectiveRenewal = renewalDue || prof.renewalDue;
+
+    if (!effectiveEmail && !effectiveSub) return false;
+
+    const res = await fetch("/api/account-plan", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        email: effectiveEmail,
+        sub: effectiveSub,
+        plan,
+        renewalDue: effectiveRenewal,
+        autoRenew: true,
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn("Failed to lock account plan to server:", e);
+    return false;
+  }
 }
 
 export function toggleAutoRenew(enabled?: boolean): boolean {

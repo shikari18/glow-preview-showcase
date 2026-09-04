@@ -5,7 +5,13 @@ import logoMark from "@/assets/logo-mark.png";
 import roomDoodle from "@/assets/room-doodle.png";
 import googleLogo from "@/assets/brands/google.svg";
 import { triggerGoogleSignIn, decodeGoogleJwt } from "@/lib/google-auth";
-import { saveProfile } from "@/lib/onboarding";
+import {
+  saveProfile,
+  readProfile,
+  isPaidUser,
+  syncGoogleAccountPlan,
+  lockGoogleAccountPlan,
+} from "@/lib/onboarding";
 import { registerAccount } from "@/lib/admin-store";
 
 export function AuthLayout({ title, children }: { title: string; children: ReactNode }) {
@@ -26,13 +32,24 @@ export function AuthLayout({ title, children }: { title: string; children: React
         window.localStorage.setItem("examglow.auth_method", "google");
         window.localStorage.setItem("examglow.google_sub", payload.sub);
       } catch { /* storage unavailable */ }
+
+      // Check if this Gmail account has an existing Pro plan locked in
+      let existingProfile = await syncGoogleAccountPlan(payload.email, payload.sub);
+      const localProfile = readProfile();
+      if ((!existingProfile || existingProfile.plan === "free") && isPaidUser(localProfile)) {
+        // If user paid on this device before signing in with Google, lock Pro to their Gmail
+        await lockGoogleAccountPlan(localProfile.plan!, payload.email, payload.sub, localProfile.renewalDue);
+        existingProfile = localProfile;
+      }
+      const activePlan = existingProfile?.plan ?? localProfile.plan ?? "free";
+
       // Register in admin store (Supabase or localStorage fallback)
       await registerAccount({
         id: payload.sub,
         name: payload.name,
         email: payload.email,
         picture: payload.picture,
-        plan: "free",
+        plan: activePlan as "free" | "weekly" | "termly" | "yearly",
         role: "",
         goal: "",
       });
@@ -101,7 +118,15 @@ export function AuthLayout({ title, children }: { title: string; children: React
           {children}
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            By continuing you agree to our Terms of Service and Privacy Policy.
+            By continuing you agree to our{" "}
+            <Link to="/terms" className="underline hover:text-foreground">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link to="/privacy" className="underline hover:text-foreground">
+              Privacy Policy
+            </Link>
+            .
           </p>
         </div>
       </div>

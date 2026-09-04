@@ -1,6 +1,6 @@
 import { isSupabaseConfigured, dbSelect, dbUpsert, dbUpdate, dbDelete } from "./supabase";
 
-export type PlanLabel = "free" | "weekly" | "monthly" | "termly" | "exam-pass";
+export type PlanLabel = "free" | "weekly" | "termly" | "yearly" | "monthly" | "exam-pass";
 
 export type AdminAccount = {
   id: string;
@@ -123,15 +123,17 @@ export async function deleteAccount(id: string) {
 export const PLAN_LABELS: Record<PlanLabel, string> = {
   free: "Free",
   weekly: "Weekly",
-  monthly: "Monthly",
-  termly: "Termly",
+  monthly: "3 Months",
+  termly: "3 Months",
+  yearly: "1 Year",
   "exam-pass": "Exam Pass",
 };
 
 export const PLAN_PRICES: Record<PlanLabel, string> = {
-  free: "£0",
-  weekly: "£4.99/wk",
-  monthly: "£14.99/mo",
-  termly: "£39.99/term",
-  "exam-pass": "£79.99",
+  free: "$0",
+  weekly: "$2.00/wk",
+  monthly: "$14.99/3mo",
+  termly: "$14.99/3mo",
+  yearly: "$39.99/yr",
+  "exam-pass": "$39.99",
 };

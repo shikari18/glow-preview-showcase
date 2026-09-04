@@ -24,6 +24,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as PastQuestionsRouteImport } from './routes/past-questions'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as QuizzesRouteImport } from './routes/quizzes'
 import { Route as RecordLectureRouteImport } from './routes/record-lecture'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -31,8 +32,10 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as StudyPlanRouteImport } from './routes/study-plan'
 import { Route as SyllabusRouteImport } from './routes/syllabus'
 import { Route as SyllabusNotesRouteImport } from './routes/syllabus-notes'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TestRouteImport } from './routes/test'
 import { Route as TutorsRouteImport } from './routes/tutors'
+import { Route as ApiAccountPlanRouteImport } from './routes/api/account-plan'
 import { Route as ApiAssignmentRouteImport } from './routes/api/assignment'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiPaypalCaptureRouteImport } from './routes/api/paypal-capture'
@@ -117,6 +120,11 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const QuizzesRoute = QuizzesRouteImport.update({
   id: '/quizzes',
   path: '/quizzes',
@@ -152,6 +160,11 @@ const SyllabusNotesRoute = SyllabusNotesRouteImport.update({
   path: '/syllabus-notes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TestRoute = TestRouteImport.update({
   id: '/test',
   path: '/test',
@@ -160,6 +173,11 @@ const TestRoute = TestRouteImport.update({
 const TutorsRoute = TutorsRouteImport.update({
   id: '/tutors',
   path: '/tutors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAccountPlanRoute = ApiAccountPlanRouteImport.update({
+  id: '/api/account-plan',
+  path: '/api/account-plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAssignmentRoute = ApiAssignmentRouteImport.update({
@@ -219,6 +237,7 @@ export interface FileRoutesByFullPath {
   '/notes': typeof NotesRoute
   '/past-questions': typeof PastQuestionsRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/quizzes': typeof QuizzesRoute
   '/record-lecture': typeof RecordLectureRoute
   '/settings': typeof SettingsRoute
@@ -226,8 +245,10 @@ export interface FileRoutesByFullPath {
   '/study-plan': typeof StudyPlanRoute
   '/syllabus': typeof SyllabusRoute
   '/syllabus-notes': typeof SyllabusNotesRoute
+  '/terms': typeof TermsRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
+  '/api/account-plan': typeof ApiAccountPlanRoute
   '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
   '/api/paypal-capture': typeof ApiPaypalCaptureRoute
@@ -253,6 +274,7 @@ export interface FileRoutesByTo {
   '/notes': typeof NotesRoute
   '/past-questions': typeof PastQuestionsRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/quizzes': typeof QuizzesRoute
   '/record-lecture': typeof RecordLectureRoute
   '/settings': typeof SettingsRoute
@@ -260,8 +282,10 @@ export interface FileRoutesByTo {
   '/study-plan': typeof StudyPlanRoute
   '/syllabus': typeof SyllabusRoute
   '/syllabus-notes': typeof SyllabusNotesRoute
+  '/terms': typeof TermsRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
+  '/api/account-plan': typeof ApiAccountPlanRoute
   '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
   '/api/paypal-capture': typeof ApiPaypalCaptureRoute
@@ -288,6 +312,7 @@ export interface FileRoutesById {
   '/notes': typeof NotesRoute
   '/past-questions': typeof PastQuestionsRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/quizzes': typeof QuizzesRoute
   '/record-lecture': typeof RecordLectureRoute
   '/settings': typeof SettingsRoute
@@ -295,8 +320,10 @@ export interface FileRoutesById {
   '/study-plan': typeof StudyPlanRoute
   '/syllabus': typeof SyllabusRoute
   '/syllabus-notes': typeof SyllabusNotesRoute
+  '/terms': typeof TermsRoute
   '/test': typeof TestRoute
   '/tutors': typeof TutorsRoute
+  '/api/account-plan': typeof ApiAccountPlanRoute
   '/api/assignment': typeof ApiAssignmentRoute
   '/api/chat': typeof ApiChatRoute
   '/api/paypal-capture': typeof ApiPaypalCaptureRoute
@@ -324,6 +351,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/past-questions'
     | '/pricing'
+    | '/privacy'
     | '/quizzes'
     | '/record-lecture'
     | '/settings'
@@ -331,8 +359,10 @@ export interface FileRouteTypes {
     | '/study-plan'
     | '/syllabus'
     | '/syllabus-notes'
+    | '/terms'
     | '/test'
     | '/tutors'
+    | '/api/account-plan'
     | '/api/assignment'
     | '/api/chat'
     | '/api/paypal-capture'
@@ -358,6 +388,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/past-questions'
     | '/pricing'
+    | '/privacy'
     | '/quizzes'
     | '/record-lecture'
     | '/settings'
@@ -365,8 +396,10 @@ export interface FileRouteTypes {
     | '/study-plan'
     | '/syllabus'
     | '/syllabus-notes'
+    | '/terms'
     | '/test'
     | '/tutors'
+    | '/api/account-plan'
     | '/api/assignment'
     | '/api/chat'
     | '/api/paypal-capture'
@@ -392,6 +425,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/past-questions'
     | '/pricing'
+    | '/privacy'
     | '/quizzes'
     | '/record-lecture'
     | '/settings'
@@ -399,8 +433,10 @@ export interface FileRouteTypes {
     | '/study-plan'
     | '/syllabus'
     | '/syllabus-notes'
+    | '/terms'
     | '/test'
     | '/tutors'
+    | '/api/account-plan'
     | '/api/assignment'
     | '/api/chat'
     | '/api/paypal-capture'
@@ -427,6 +463,7 @@ export interface RootRouteChildren {
   NotesRoute: typeof NotesRoute
   PastQuestionsRoute: typeof PastQuestionsRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
   QuizzesRoute: typeof QuizzesRoute
   RecordLectureRoute: typeof RecordLectureRoute
   SettingsRoute: typeof SettingsRoute
@@ -434,8 +471,10 @@ export interface RootRouteChildren {
   StudyPlanRoute: typeof StudyPlanRoute
   SyllabusRoute: typeof SyllabusRoute
   SyllabusNotesRoute: typeof SyllabusNotesRoute
+  TermsRoute: typeof TermsRoute
   TestRoute: typeof TestRoute
   TutorsRoute: typeof TutorsRoute
+  ApiAccountPlanRoute: typeof ApiAccountPlanRoute
   ApiAssignmentRoute: typeof ApiAssignmentRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiPaypalCaptureRoute: typeof ApiPaypalCaptureRoute
@@ -553,6 +592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/quizzes': {
       id: '/quizzes'
       path: '/quizzes'
@@ -602,6 +648,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SyllabusNotesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/test': {
       id: '/test'
       path: '/test'
@@ -614,6 +667,13 @@ declare module '@tanstack/react-router' {
       path: '/tutors'
       fullPath: '/tutors'
       preLoaderRoute: typeof TutorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/account-plan': {
+      id: '/api/account-plan'
+      path: '/api/account-plan'
+      fullPath: '/api/account-plan'
+      preLoaderRoute: typeof ApiAccountPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/assignment': {
@@ -691,6 +751,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotesRoute: NotesRoute,
   PastQuestionsRoute: PastQuestionsRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
   QuizzesRoute: QuizzesRoute,
   RecordLectureRoute: RecordLectureRoute,
   SettingsRoute: SettingsRoute,
@@ -698,8 +759,10 @@ const rootRouteChildren: RootRouteChildren = {
   StudyPlanRoute: StudyPlanRoute,
   SyllabusRoute: SyllabusRoute,
   SyllabusNotesRoute: SyllabusNotesRoute,
+  TermsRoute: TermsRoute,
   TestRoute: TestRoute,
   TutorsRoute: TutorsRoute,
+  ApiAccountPlanRoute: ApiAccountPlanRoute,
   ApiAssignmentRoute: ApiAssignmentRoute,
   ApiChatRoute: ApiChatRoute,
   ApiPaypalCaptureRoute: ApiPaypalCaptureRoute,

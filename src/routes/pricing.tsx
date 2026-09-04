@@ -22,10 +22,9 @@ export const Route = createFileRoute("/pricing")({
 });
 
 const PLAN_META = [
-  { id: "weekly"    as const, name: "Weekly",    per: "/wk" },
-  { id: "monthly"   as const, name: "Monthly",   per: "/mo",  badge: "MOST POPULAR" },
-  { id: "termly"    as const, name: "Termly",    per: "/3mo", badge: "BEST VALUE" },
-  { id: "exam-pass" as const, name: "Exam Pass", per: "",     badge: "EXAM PASS" },
+  { id: "weekly" as const, name: "Weekly", per: "/wk" },
+  { id: "termly" as const, name: "3 Months", per: "/3mo", badge: "MOST POPULAR" },
+  { id: "yearly" as const, name: "1 Year", per: "/yr", badge: "BEST VALUE" },
 ] as const;
 
 type PlanId = (typeof PLAN_META)[number]["id"];
@@ -33,16 +32,18 @@ type PlanId = (typeof PLAN_META)[number]["id"];
 function planSubline(id: PlanId, c: CurrencyInfo): string {
   const p = formatPrice(id, c);
   switch (id) {
-    case "weekly":    return `${p} billed every week`;
-    case "monthly":   return `${p} billed every month`;
-    case "termly":    return `${p} every 3 months`;
-    case "exam-pass": return `${p} valid until end of exam season`;
+    case "weekly":
+      return `${p} billed every week`;
+    case "termly":
+      return `${p} billed every 3 months`;
+    case "yearly":
+      return `${p} billed every year`;
   }
 }
 
 function PricingPage() {
   const navigate = useNavigate();
-  const [selected, setSelected] = useState<PlanId>("monthly");
+  const [selected, setSelected] = useState<PlanId>("termly");
   const [currency, setCurrency] = useState<CurrencyInfo | null>(null);
 
   useEffect(() => { detectCurrency().then(setCurrency); }, []);

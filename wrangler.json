@@ -1,5 +1,12 @@
 {
   "name": "examglow",
+  "account_id": "6731a2cf3ac3e76d3f399f505a7e5c11",
   "compatibility_date": "2024-12-01",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
+  "kv_namespaces": [
+    {
+      "binding": "EXAMGLOW_ACCOUNTS",
+      "id": "ac27c362ef214d11acb10f8bb5120f6a"
+    }
+  ]
 }
