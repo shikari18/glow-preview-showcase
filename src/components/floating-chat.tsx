@@ -4,7 +4,7 @@ import { MessageCircle, X } from "lucide-react";
 
 import { StudyChat } from "@/components/study-chat";
 
-const hiddenOn = ["/chat", "/login", "/signup", "/onboarding"];
+const hiddenOn = ["/chat", "/login", "/signup", "/onboarding", "/syllabus-notes"];
 
 export function FloatingChat() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });

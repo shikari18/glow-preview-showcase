@@ -13,6 +13,7 @@ const GEMINI_TTS_KEY =
 
 let currentAudio: HTMLAudioElement | null = null;
 let currentAudioUrl: string | null = null;
+const audioCache = new Map<string, string>();
 
 function pcmToWav(pcmData: Uint8Array, sampleRate = 24000, numChannels = 1): ArrayBuffer {
   const buffer = new ArrayBuffer(44 + pcmData.length);
@@ -64,13 +65,37 @@ export function cleanSpeechText(text: string): string {
     .replace(/\\(times|cdot)/g, " times ")
     .replace(/[\{\}\\]/g, "")
     .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 1500);
+    .trim();
+}
+
+export function prepareSpeechSnippet(text: string): string {
+  const clean = cleanSpeechText(text);
+  if (clean.length <= 280) return clean;
+  // Find natural sentence boundary within first 280 chars
+  const sentences = clean.match(/[^.!?]+[.!?]+/g);
+  if (sentences && sentences.length > 0) {
+    let combined = "";
+    for (const s of sentences) {
+      if ((combined + s).length <= 280) {
+        combined += (combined ? " " : "") + s.trim();
+      } else {
+        break;
+      }
+    }
+    if (combined.length >= 50) return combined;
+  }
+  const lastSpace = clean.slice(0, 260).lastIndexOf(" ");
+  return (lastSpace > 50 ? clean.slice(0, lastSpace) : clean.slice(0, 250)).trim() + ".";
 }
 
 export async function generateGeminiSpeech(text: string): Promise<string | null> {
-  const clean = cleanSpeechText(text);
-  if (!clean) return null;
+  const snippet = prepareSpeechSnippet(text);
+  if (!snippet) return null;
+
+  // Check in-memory audio cache for instant replay
+  if (audioCache.has(snippet)) {
+    return audioCache.get(snippet)!;
+  }
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${GEMINI_TTS_KEY}`;
@@ -81,7 +106,7 @@ export async function generateGeminiSpeech(text: string): Promise<string | null>
         contents: [
           {
             role: "user",
-            parts: [{ text: clean }],
+            parts: [{ text: snippet }],
           },
         ],
         generationConfig: {
@@ -95,10 +120,13 @@ export async function generateGeminiSpeech(text: string): Promise<string | null>
           },
         },
       }),
-      signal: AbortSignal.timeout(12000),
+      signal: AbortSignal.timeout(25000),
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn("Gemini TTS HTTP error:", res.status);
+      return null;
+    }
 
     const data = (await res.json()) as {
       candidates?: Array<{
@@ -125,7 +153,9 @@ export async function generateGeminiSpeech(text: string): Promise<string | null>
 
     const wavBuffer = pcmToWav(bytes, 24000, 1);
     const blob = new Blob([wavBuffer], { type: "audio/wav" });
-    return URL.createObjectURL(blob);
+    const urlBlob = URL.createObjectURL(blob);
+    audioCache.set(snippet, urlBlob);
+    return urlBlob;
   } catch (err) {
     console.warn("Gemini TTS request error:", err);
     return null;
@@ -156,7 +186,6 @@ export function playRealisticVoice(
     const audioUrl = await generateGeminiSpeech(text);
 
     if (isStopped) {
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
       return;
     }
 
@@ -178,39 +207,12 @@ export function playRealisticVoice(
         await audio.play();
         return;
       } catch {
-        // Autoplay blocked, fall through to browser speech
+        // Autoplay blocked by browser policy
+        callbacks?.onError?.();
       }
-    }
-
-    // Fallback: Web SpeechSynthesis
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      const clean = cleanSpeechText(text);
-      if (!clean) {
-        callbacks?.onEnd?.();
-        return;
-      }
-
-      const utterance = new SpeechSynthesisUtterance(clean);
-      utterance.rate = 1.05;
-      utterance.pitch = 1.05;
-
-      const voices = window.speechSynthesis.getVoices();
-      const femaleVoice = voices.find(
-        (v) =>
-          v.lang.startsWith("en") &&
-          (v.name.includes("Natural") ||
-            v.name.includes("Google") ||
-            v.name.includes("Samantha") ||
-            v.name.includes("Female")),
-      );
-      if (femaleVoice) utterance.voice = femaleVoice;
-
-      utterance.onend = () => callbacks?.onEnd?.();
-      utterance.onerror = () => callbacks?.onEnd?.();
-
-      window.speechSynthesis.speak(utterance);
     } else {
-      callbacks?.onEnd?.();
+      // Never fall back to robotic browser voice; call onError cleanly
+      callbacks?.onError?.();
     }
   })();
 

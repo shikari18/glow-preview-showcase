@@ -17,8 +17,9 @@ export function ContentProtectionGuard() {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
-  // Only protect syllabus, syllabus-notes, and past-questions pages (notes and home are free)
+  // Protect notes, syllabus, syllabus-notes, and past-questions
   const isProtectedPage =
+    currentPath.startsWith("/notes") ||
     currentPath.startsWith("/syllabus") ||
     currentPath.startsWith("/past-questions");
 
@@ -37,7 +38,7 @@ export function ContentProtectionGuard() {
       e.preventDefault();
     };
 
-    // 3. Detect screenshot keys and clear clipboard
+    // 3. Detect screenshot keys (Windows, Mac, Android hardware keys)
     const handleKeyDown = (e: KeyboardEvent) => {
       // PrintScreen key (Windows / Linux)
       if (e.key === "PrintScreen" || e.keyCode === 44) {
@@ -56,10 +57,21 @@ export function ContentProtectionGuard() {
         e.preventDefault();
         wipeClipboardAndBlackout();
       }
+      // Android screenshot button combo hardware key events
+      if (e.key === "VolumeDown" || e.key === "VolumeUp" || (e as any).keyCode === 24 || (e as any).keyCode === 25) {
+        wipeClipboardAndBlackout();
+      }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === "PrintScreen" || e.keyCode === 44) {
+      if (e.key === "PrintScreen" || e.keyCode === 44 || e.key === "VolumeDown" || e.key === "VolumeUp") {
+        wipeClipboardAndBlackout();
+      }
+    };
+
+    // 4. Mobile 3-finger screenshot gesture detection
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches && e.touches.length >= 3) {
         wipeClipboardAndBlackout();
       }
     };
@@ -75,10 +87,10 @@ export function ContentProtectionGuard() {
           setBlackout(false);
           document.documentElement.classList.remove("drm-blackout");
         }
-      }, 2000);
+      }, 2500);
     }
 
-    // 4. Window blur: Whenever Snipping Tool or external screenshot app opens
+    // 5. Window blur & pagehide: Mobile app switcher or screenshot capture overlay
     const handleBlur = () => {
       setBlackout(true);
       document.documentElement.classList.add("drm-blackout");
@@ -88,8 +100,13 @@ export function ContentProtectionGuard() {
     };
 
     const handleFocus = () => {
-      setBlackout(false);
-      document.documentElement.classList.remove("drm-blackout");
+      // Delay unmasking so hardware screenshot capture completes on black screen
+      setTimeout(() => {
+        if (document.hasFocus()) {
+          setBlackout(false);
+          document.documentElement.classList.remove("drm-blackout");
+        }
+      }, 600);
     };
 
     const handleVisibility = () => {
@@ -105,13 +122,16 @@ export function ContentProtectionGuard() {
     window.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("blur", handleBlur);
     window.addEventListener("focus", handleFocus);
+    window.addEventListener("pagehide", handleBlur);
     document.addEventListener("visibilitychange", handleVisibility);
 
-    // Disable text selection on body
+    // Disable text selection and mobile callouts
     document.body.style.userSelect = "none";
     document.body.style.webkitUserSelect = "none";
+    (document.body.style as any).webkitTouchCallout = "none";
 
     return () => {
       window.removeEventListener("copy", handleCopy);
@@ -119,11 +139,14 @@ export function ContentProtectionGuard() {
       window.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("pagehide", handleBlur);
       document.removeEventListener("visibilitychange", handleVisibility);
       document.body.style.userSelect = "";
       document.body.style.webkitUserSelect = "";
+      (document.body.style as any).webkitTouchCallout = "";
       document.documentElement.classList.remove("drm-blackout");
     };
   }, [isProtectedPage]);

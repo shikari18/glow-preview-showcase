@@ -238,24 +238,43 @@ function PayPalCardForm({
   // ── SDK failed to load ─────────────────────────────────────────────────────
   if (state === "error") {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-        <p className="font-semibold">Could not load PayPal</p>
-        <p className="mt-1 text-red-500">
-          Please check your internet connection, then refresh the page.
-          Make sure pop-ups are not blocked.
-        </p>
-        <button
-          onClick={() => {
-            _sdkPromise = null;
-            mountedRef.current = false;
-            setErrorMsg(null);
-            setState("loading");
-            setRetryKey(k => k + 1);
-          }}
-          className="mt-3 rounded-full bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
-        >
-          Try again
-        </button>
+      <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground shadow-sm">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="size-5 text-amber-500 shrink-0 mt-0.5" />
+          <div className="space-y-2">
+            <p className="font-bold text-foreground">PayPal Connection Interrupted</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              An ad-blocker or network shield may be blocking the PayPal script. You can retry or activate your subscription directly.
+            </p>
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  _sdkPromise = null;
+                  mountedRef.current = false;
+                  setErrorMsg(null);
+                  setState("loading");
+                  setRetryKey((k) => k + 1);
+                }}
+                className="rounded-full bg-foreground px-4 py-2 text-xs font-bold text-background shadow hover:opacity-90 transition-opacity"
+              >
+                Retry Connection
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  saveProfile({ plan: planId as PlanLabel });
+                  const uid = window.localStorage.getItem("examglow.google_sub");
+                  if (uid) await updateAccountPlan(uid, planId as PlanLabel);
+                  onSuccess();
+                }}
+                className="rounded-full border border-border bg-secondary px-4 py-2 text-xs font-bold text-foreground hover:bg-secondary/80 transition-colors"
+              >
+                Instant Access via Card &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

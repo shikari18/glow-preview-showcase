@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { PageSkeleton } from "@/components/page-skeleton";
 import logoMark from "@/assets/logo-mark.png";
 import avatar1 from "@/assets/avatar-1.jpg";
 import {
@@ -530,16 +531,20 @@ export function ProfileAvatar({ className = "" }: { className?: string }) {
 export function DashboardLayout({
   crumbs = [],
   children,
+  loading = false,
 }: {
   crumbs?: { label: string; icon?: ReactNode }[];
   children: ReactNode;
+  loading?: boolean;
 }) {
   return (
     <div className="flex h-dvh overflow-hidden bg-background">
       <DashboardSidebar />
       <main className="min-w-0 flex-1 overflow-y-auto">
         <TopBar crumbs={crumbs} />
-        <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-4 sm:px-6 lg:px-8">{children}</div>
+        <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-4 sm:px-6 lg:px-8">
+          {loading ? <PageSkeleton /> : children}
+        </div>
       </main>
     </div>
   );
@@ -662,3 +667,5 @@ export function SetFilterRow({ right }: { right?: ReactNode }) {
     </div>
   );
 }
+
+export { PageSkeleton } from "@/components/page-skeleton";

@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { BookOpen, ChevronRight, Search, ArrowLeft, Lock, FileText, Check, Sparkles, X } from "lucide-react";
+import { BookOpen, ChevronRight, Search, ArrowLeft, Lock, FileText, Check, Volume2, VolumeX, Loader2 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-page";
-import { StudyChat } from "@/components/study-chat";
+import { playRealisticVoice, stopRealisticVoice } from "@/lib/gemini-tts";
 import type { SubjectNotes, Chapter } from "@/lib/notes/types";
 import { SYLLABUS_NOTES } from "@/lib/syllabus-notes";
 import { formatMathAndMarkdown } from "@/lib/render-math";
@@ -52,7 +52,8 @@ function ChapterDoc({
   onPrev: () => void;
 }) {
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
-  const [showTeachMe, setShowTeachMe] = useState(false);
+  const [isTeaching, setIsTeaching] = useState(false);
+  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const toggleCollapse = (i: number) =>
     setCollapsed((prev) => ({ ...prev, [i]: !prev[i] }));
@@ -61,11 +62,46 @@ function ChapterDoc({
   const hasNext = idx < allChapters.length - 1;
   const hasPrev = idx > 0;
 
+  function handleTeachMe() {
+    if (isTeaching || isVoiceLoading) {
+      stopRealisticVoice();
+      setIsTeaching(false);
+      setIsVoiceLoading(false);
+      return;
+    }
+
+    setIsVoiceLoading(true);
+    // Create an engaging Cambridge tutor overview of this chapter
+    const lessonIntro = `Welcome to Chapter ${chapter.number}: ${chapter.title}. In this chapter, you will master ${chapter.intro.replace(/[*_#`$]/g, "").slice(0, 200)}. Let's walk through the key examination concepts so you can achieve top marks.`;
+
+    playRealisticVoice(lessonIntro, {
+      onStart: () => {
+        setIsVoiceLoading(false);
+        setIsTeaching(true);
+      },
+      onEnd: () => {
+        setIsVoiceLoading(false);
+        setIsTeaching(false);
+      },
+      onError: () => {
+        setIsVoiceLoading(false);
+        setIsTeaching(false);
+      },
+    });
+  }
+
+  useEffect(() => {
+    return () => {
+      stopRealisticVoice();
+    };
+  }, [chapter.number]);
+
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.body.dataset["readingChapter"] = "true";
     return () => {
       delete document.body.dataset["readingChapter"];
+      stopRealisticVoice();
     };
   }, []);
 
@@ -79,7 +115,10 @@ function ChapterDoc({
       {/* Top navigation bar */}
       <div className="flex h-13 shrink-0 items-center gap-3 border-b border-black/10 bg-[#faf9f5]/90 px-6 backdrop-blur dark:border-white/10 dark:bg-[#181816]/90">
         <button
-          onClick={onBack}
+          onClick={() => {
+            stopRealisticVoice();
+            onBack();
+          }}
           className="flex items-center gap-2 text-sm font-medium text-black/70 hover:text-black transition-colors dark:text-white/70 dark:hover:text-white"
         >
           <ArrowLeft className="size-4" />
@@ -88,11 +127,31 @@ function ChapterDoc({
         <div className="flex-1" />
         <button
           type="button"
-          onClick={() => setShowTeachMe(true)}
-          className="flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-xs font-bold text-primary-foreground shadow-sm hover:opacity-90 transition-opacity"
+          onClick={handleTeachMe}
+          className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold transition-all shadow-sm ${
+            isTeaching
+              ? "bg-rose-500 text-white animate-pulse"
+              : isVoiceLoading
+              ? "bg-primary/20 text-primary cursor-wait"
+              : "bg-foreground text-background hover:opacity-90"
+          }`}
         >
-          <Sparkles className="size-3.5" />
-          <span>Teach Me</span>
+          {isTeaching ? (
+            <>
+              <VolumeX className="size-3.5" />
+              <span>Stop Teaching</span>
+            </>
+          ) : isVoiceLoading ? (
+            <>
+              <Loader2 className="size-3.5 animate-spin" />
+              <span>Preparing Lesson...</span>
+            </>
+          ) : (
+            <>
+              <Volume2 className="size-3.5" />
+              <span>Teach Me</span>
+            </>
+          )}
         </button>
         <span className="text-xs font-mono text-black/50 dark:text-white/50 ml-2">
           Chapter {chapter.number} of {allChapters.length}
@@ -213,46 +272,37 @@ function ChapterDoc({
         </article>
       </div>
 
-      {/* Floating Teach Me pill button */}
-      {!showTeachMe && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <button
-            type="button"
-            onClick={() => setShowTeachMe(true)}
-            className="flex items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-bold text-background shadow-2xl transition-all hover:scale-105 active:scale-95"
-          >
-            <Sparkles className="size-4 text-amber-400" />
-            <span>Teach Me</span>
-          </button>
-        </div>
-      )}
-
-      {/* Slide-out Teach Me Drawer */}
-      {showTeachMe && (
-        <div className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-md sm:max-w-lg flex-col border-l border-border bg-card shadow-2xl">
-          <div className="flex h-13 shrink-0 items-center justify-between border-b border-border px-5 bg-card">
-            <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-primary" />
-              <span className="font-bold text-sm text-foreground">
-                Yumna AI Tutor · Ch. {chapter.number}
-              </span>
-            </div>
-            <button
-              onClick={() => setShowTeachMe(false)}
-              className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <StudyChat
-              className="h-full border-0"
-              onClose={() => setShowTeachMe(false)}
-              isMini={true}
-            />
-          </div>
-        </div>
-      )}
+      {/* Floating Teach Me Voice Button (no sparkle svg, realistic voice playback) */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          type="button"
+          onClick={handleTeachMe}
+          className={`flex items-center gap-2.5 rounded-full px-5 py-3 text-sm font-bold shadow-2xl transition-all hover:scale-105 active:scale-95 ${
+            isTeaching
+              ? "bg-rose-600 text-white animate-pulse"
+              : isVoiceLoading
+              ? "bg-foreground text-background opacity-80 cursor-wait"
+              : "bg-foreground text-background"
+          }`}
+        >
+          {isTeaching ? (
+            <>
+              <VolumeX className="size-4" />
+              <span>Stop Teaching</span>
+            </>
+          ) : isVoiceLoading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              <span>Preparing Realistic Voice...</span>
+            </>
+          ) : (
+            <>
+              <Volume2 className="size-4" />
+              <span>Teach Me This Chapter</span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

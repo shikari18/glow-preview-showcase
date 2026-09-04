@@ -109,6 +109,7 @@ export function StudyChat({
   const [error, setError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [playingMsgIdx, setPlayingMsgIdx] = useState<number | null>(null);
+  const [voiceLoadingIdx, setVoiceLoadingIdx] = useState<number | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
 
   // Dictation Speech-to-Text (inside the input box)
@@ -689,21 +690,40 @@ export function StudyChat({
                             onClick={() => {
                               stopRealisticVoice();
                               setPlayingMsgIdx(null);
+                              setVoiceLoadingIdx(null);
                             }}
                             className="flex items-center gap-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 px-3 py-1 text-[11px] font-bold text-rose-500 hover:bg-rose-500/20 transition-colors"
                           >
                             <VolumeX className="size-3.5" />
                             <span>Stop Speaking</span>
                           </button>
+                        ) : voiceLoadingIdx === i ? (
+                          <button
+                            type="button"
+                            disabled
+                            className="flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/30 px-3 py-1 text-[11px] font-bold text-primary animate-pulse"
+                          >
+                            <Loader2 className="size-3.5 animate-spin" />
+                            <span>Preparing realistic voice...</span>
+                          </button>
                         ) : (
                           <button
                             type="button"
                             onClick={() => {
-                              setPlayingMsgIdx(i);
+                              setVoiceLoadingIdx(i);
                               playRealisticVoice(m.content, {
-                                onStart: () => setPlayingMsgIdx(i),
-                                onEnd: () => setPlayingMsgIdx(null),
-                                onError: () => setPlayingMsgIdx(null),
+                                onStart: () => {
+                                  setVoiceLoadingIdx(null);
+                                  setPlayingMsgIdx(i);
+                                },
+                                onEnd: () => {
+                                  setVoiceLoadingIdx(null);
+                                  setPlayingMsgIdx(null);
+                                },
+                                onError: () => {
+                                  setVoiceLoadingIdx(null);
+                                  setPlayingMsgIdx(null);
+                                },
                               });
                             }}
                             className="flex items-center gap-1.5 rounded-full bg-secondary/80 hover:bg-secondary px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground transition-colors"
@@ -809,102 +829,117 @@ export function StudyChat({
             </div>
           )}
 
-          {/* Active Voice Bar (Claude/Lovable Style - Images 2 & 3) */}
-          {voiceMode && (
-            <div
-              className={`mb-2.5 flex items-center justify-between rounded-2xl px-4 py-2.5 transition-all ${
-                isSpeaking
-                  ? "border border-amber-500/40 bg-amber-500/10 text-amber-500 dark:text-amber-400 shadow-sm"
-                  : "border border-sky-500/40 bg-sky-500/10 text-sky-500 dark:text-sky-400 shadow-sm"
-              }`}
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span
-                  className={`size-2.5 rounded-full animate-ping ${
-                    isSpeaking ? "bg-amber-400" : "bg-sky-400"
-                  }`}
-                />
-                <span className="text-xs font-bold truncate">
-                  {isSpeaking
-                    ? "Yumna is speaking..."
-                    : isListening
-                    ? "Listening to you... speak naturally"
-                    : "Connecting to voice..."}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={endVoiceCall}
-                className="flex items-center gap-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 px-3.5 py-1 text-xs font-bold hover:opacity-90 transition-opacity"
-              >
-                <span>••• Stop</span>
-              </button>
-            </div>
-          )}
-
-          {/* Sleek Lovable-Style Input Container */}
+          {/* Sleek Lovable-Style Input Container (+6px height, integrated voice lighting from middle) */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               void send(input);
             }}
-            className="flex items-center gap-2 rounded-2xl border border-border/80 bg-card p-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition-all"
+            className={`relative flex min-h-[58px] items-center gap-2 rounded-2xl border transition-all shadow-sm ${
+              voiceMode
+                ? isSpeaking
+                  ? "border-amber-500 bg-amber-500/5 ring-2 ring-amber-500/30 px-4 py-2"
+                  : "border-sky-500 bg-sky-500/5 ring-2 ring-sky-500/30 px-4 py-2"
+                : "border-border/80 bg-card p-3 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary"
+            }`}
           >
-            {/* Attachment Button (Only shown in full chat, removed in mini chat) */}
-            {!isMini && (
-              <button
-                type="button"
-                onClick={() => setUploadOpen((v) => !v)}
-                className="flex size-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Upload file or image"
-              >
-                <Plus className="size-4" />
-              </button>
+            {voiceMode ? (
+              // Integrated voice call interface inside the input bar itself
+              <div className="flex w-full items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    className={`size-3 rounded-full animate-ping shrink-0 ${
+                      isSpeaking ? "bg-amber-500" : "bg-sky-500"
+                    }`}
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span
+                      className={`text-xs font-bold truncate ${
+                        isSpeaking
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-sky-600 dark:text-sky-400"
+                      }`}
+                    >
+                      {isSpeaking
+                        ? "Yumna is speaking (Realistic Voice)..."
+                        : isListening
+                        ? "Listening to you... speak naturally"
+                        : "Connecting to Yumna..."}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground truncate">
+                      {voiceTranscript ? `"${voiceTranscript}"` : "Speech-to-speech active · tap Stop to finish"}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={endVoiceCall}
+                  className="flex items-center gap-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 px-4 py-1.5 text-xs font-bold hover:opacity-90 transition-opacity shrink-0 shadow-sm"
+                >
+                  <span>••• Stop</span>
+                </button>
+              </div>
+            ) : (
+              // Standard Lovable-style input
+              <>
+                {/* Attachment Button (Only shown in full chat, removed in mini chat) */}
+                {!isMini && (
+                  <button
+                    type="button"
+                    onClick={() => setUploadOpen((v) => !v)}
+                    className="flex size-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                    title="Upload file or image"
+                  >
+                    <Plus className="size-4" />
+                  </button>
+                )}
+
+                {/* Input Textarea */}
+                <textarea
+                  ref={inputRef}
+                  rows={1}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void send(input);
+                    }
+                  }}
+                  placeholder="Ask Yumna anything... (Paste questions, formulas, or homework)"
+                  className="flex-1 bg-transparent px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none max-h-32 leading-relaxed"
+                />
+
+                {/* Dictation Mic Button (Speech-to-Text strictly for input dictation) */}
+                <button
+                  type="button"
+                  onClick={toggleDictation}
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition-all ${
+                    isDictating
+                      ? "bg-rose-500/20 text-rose-500 animate-pulse border border-rose-500/40"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
+                  title={isDictating ? "Stop Dictation" : "Dictate with voice"}
+                >
+                  <Mic className="size-4" />
+                </button>
+
+                {/* Send Button */}
+                <button
+                  type="submit"
+                  disabled={!input.trim() && !attachment}
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition-all ${
+                    input.trim() || attachment
+                      ? "bg-ink text-ink-foreground shadow hover:opacity-90 cursor-pointer"
+                      : "bg-secondary text-muted-foreground cursor-not-allowed opacity-50"
+                  }`}
+                  title="Send message"
+                >
+                  <ArrowUp className="size-4" />
+                </button>
+              </>
             )}
-
-            {/* Input Textarea */}
-            <textarea
-              ref={inputRef}
-              rows={1}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void send(input);
-                }
-              }}
-              placeholder="Ask Yumna anything... (Paste questions, formulas, or homework)"
-              className="flex-1 bg-transparent px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none max-h-32 leading-relaxed"
-            />
-
-            {/* Dictation Mic Button (Speech-to-Text strictly for input dictation) */}
-            <button
-              type="button"
-              onClick={toggleDictation}
-              className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition-all ${
-                isDictating
-                  ? "bg-rose-500/20 text-rose-500 animate-pulse border border-rose-500/40"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`}
-              title={isDictating ? "Stop Dictation" : "Dictate with voice"}
-            >
-              <Mic className="size-4" />
-            </button>
-
-            {/* Send Button */}
-            <button
-              type="submit"
-              disabled={!input.trim() && !attachment}
-              className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition-all ${
-                input.trim() || attachment
-                  ? "bg-ink text-ink-foreground shadow hover:opacity-90 cursor-pointer"
-                  : "bg-secondary text-muted-foreground cursor-not-allowed opacity-50"
-              }`}
-              title="Send message"
-            >
-              <ArrowUp className="size-4" />
-            </button>
           </form>
 
           <p className="mt-1.5 text-center text-[11px] text-muted-foreground">
