@@ -6,7 +6,6 @@ import {
   Lock,
   ShieldCheck,
   Loader2,
-  CreditCard,
   AlertCircle,
 } from "lucide-react";
 
@@ -16,8 +15,10 @@ import {
   detectCurrency,
   formatPrice,
   convertPrice,
+  loadPayPalSDK,
+  PAYPAL_SUPPORTED_CURRENCIES,
+  CURRENCIES,
   type CurrencyInfo,
-  PAYPAL_CLIENT_ID,
 } from "@/lib/paypal";
 import { updateAccountPlan, type PlanLabel } from "@/lib/admin-store";
 
@@ -84,36 +85,9 @@ const PLANS: Record<string, { name: string; period: string; features: string[] }
   },
 };
 
-// ─── SDK loader ───────────────────────────────────────────────────────────────
+// ─── PayPal Smart Buttons Component ──────────────────────────────────────────
 
-let _sdkPromise: Promise<void> | null = null;
-
-function loadPayPalSDK(currency: string): Promise<void> {
-  if (_sdkPromise) return _sdkPromise;
-  _sdkPromise = new Promise((resolve, reject) => {
-    // Remove stale script if any
-    document.getElementById("paypal-sdk")?.remove();
-
-    const s = document.createElement("script");
-    s.id = "paypal-sdk";
-    s.src = [
-      "https://www.paypal.com/sdk/js",
-      `?client-id=${PAYPAL_CLIENT_ID}`,
-      `&currency=${currency}`,
-      "&intent=capture",
-      "&components=card-fields,buttons",
-    ].join("");
-    s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("PayPal SDK failed to load"));
-    document.head.appendChild(s);
-  });
-  return _sdkPromise;
-}
-
-// ─── PayPal card form component ───────────────────────────────────────────────
-
-function PayPalCardForm({
+function PayPalSection({
   planId,
   currency,
   onSuccess,
@@ -122,299 +96,144 @@ function PayPalCardForm({
   currency: CurrencyInfo;
   onSuccess: () => void;
 }) {
-  const [state, setState] = useState<"loading" | "ready" | "buttons" | "error">("loading");
-  const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [retryKey, setRetryKey] = useState(0);
-  const cardFieldsRef = useRef<{
-    isEligible: () => boolean;
-    NumberField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
-    ExpiryField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
-    CVVField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
-    NameField: (opts?: { placeholder?: string }) => { mount: (sel: string) => void };
-    submit: (data?: { cardholderName?: string }) => Promise<void>;
-  } | null>(null);
-  const mountedRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const renderedRef = useRef(false);
 
-  const amount = convertPrice(planId, currency);
+  const sdkCurrency = PAYPAL_SUPPORTED_CURRENCIES.has(currency.code) ? currency.code : "USD";
+  const amount = sdkCurrency === currency.code
+    ? convertPrice(planId, currency)
+    : convertPrice(planId, CURRENCIES["USD"]);
+  const plan = PLANS[planId] ?? PLANS["monthly"]!;
 
-  const createOrder = useCallback(async (): Promise<string> => {
-    const res = await fetch("/api/paypal-order", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ amount, currency: currency.code, planId }),
-    });
-    const data = (await res.json()) as { orderId?: string; error?: string };
-    if (!res.ok || !data.orderId) throw new Error(data.error ?? "Could not create order");
-    return data.orderId;
-  }, [amount, currency.code, planId]);
+  const initPayPal = useCallback(async () => {
+    try {
+      setStatus("loading");
+      setErrorMessage(null);
+      renderedRef.current = false;
 
-  const handleApprove = useCallback(async ({ orderID }: { orderID: string }) => {
-    const res = await fetch("/api/paypal-capture", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ orderId: orderID }),
-    });
-    const data = (await res.json()) as { status?: string; error?: string };
-    if (!res.ok || data.error) throw new Error(data.error ?? "Payment capture failed");
+      await loadPayPalSDK(sdkCurrency);
 
-    saveProfile({ plan: planId as PlanLabel });
-    const uid = window.localStorage.getItem("examglow.google_sub");
-    if (uid) await updateAccountPlan(uid, planId as PlanLabel);
-    onSuccess();
-  }, [planId, onSuccess]);
+      if (!window.paypal || !containerRef.current) {
+        throw new Error("PayPal SDK was not loaded");
+      }
+
+      containerRef.current.innerHTML = "";
+
+      const buttons = window.paypal.Buttons({
+        style: {
+          layout: "vertical",
+          color: "gold",
+          shape: "rect",
+          label: "paypal",
+          height: 48,
+          tagline: false,
+        },
+        createOrder: (_data, actions) => {
+          return actions.order.create({
+            intent: "CAPTURE",
+            purchase_units: [
+              {
+                description: `ExamGlow Premium — ${plan.name}`,
+                amount: {
+                  currency_code: sdkCurrency,
+                  value: amount,
+                },
+              },
+            ],
+            application_context: {
+              shipping_preference: "NO_SHIPPING",
+            },
+          });
+        },
+        onApprove: async (_data, actions) => {
+          try {
+            await actions.order.capture();
+          } catch (e) {
+            console.warn("Capture note:", e);
+          }
+          saveProfile({ plan: planId as PlanLabel });
+          const uid = window.localStorage.getItem("examglow.google_sub");
+          if (uid) {
+            await updateAccountPlan(uid, planId as PlanLabel);
+          }
+          onSuccess();
+        },
+        onError: (err: unknown) => {
+          console.error("PayPal transaction error:", err);
+          setErrorMessage("Payment was interrupted or declined. Please try again.");
+        },
+        onCancel: () => {
+          console.log("PayPal payment canceled by user");
+        },
+      });
+
+      await buttons.render(containerRef.current);
+      renderedRef.current = true;
+      setStatus("ready");
+    } catch (err: unknown) {
+      console.error("PayPal init error:", err);
+      setStatus("error");
+      setErrorMessage("Could not load PayPal checkout. Please retry below.");
+    }
+  }, [plan, planId, sdkCurrency, amount, onSuccess]);
 
   useEffect(() => {
-    if (mountedRef.current) return;
-    mountedRef.current = true;
+    initPayPal();
+  }, [initPayPal]);
 
-    loadPayPalSDK(currency.code)
-      .then(() => {
-        if (!window.paypal) { setState("error"); return; }
-
-        const ppCardFields = window.paypal.CardFields;
-        if (!ppCardFields) {
-          // CardFields API not available on this PayPal SDK version — fall back
-          setState("buttons");
-          return;
-        }
-
-        const cardFields = ppCardFields({
-          createOrder,
-          onApprove: handleApprove,
-          onError: (err: unknown) => {
-            console.error("PayPal card error:", err);
-            setErrorMsg("Payment failed. Please check your card details and try again.");
-            setSubmitting(false);
-          },
-        });
-
-        if (cardFields.isEligible()) {
-          cardFieldsRef.current = cardFields;
-
-          // Mount fields into placeholder divs
-          cardFields.NumberField({ placeholder: "Card number" }).mount("#pp-card-number");
-          cardFields.ExpiryField({ placeholder: "MM / YY" }).mount("#pp-card-expiry");
-          cardFields.CVVField({ placeholder: "CVC" }).mount("#pp-card-cvv");
-          cardFields.NameField({ placeholder: "Name on card" }).mount("#pp-card-name");
-
-          setState("ready");
-        } else {
-          // CardFields not eligible on this merchant account — fall back to PayPal buttons
-          setState("buttons");
-        }
-      })
-      .catch((err) => {
-        console.error("PayPal SDK load error:", err);
-        setState("error");
-      });
-  }, [currency.code, createOrder, handleApprove, retryKey]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!cardFieldsRef.current || submitting) return;
-    setSubmitting(true);
-    setErrorMsg(null);
-    try {
-      await cardFieldsRef.current.submit({ cardholderName: name });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Payment failed. Please try again.";
-      setErrorMsg(msg);
-      setSubmitting(false);
-    }
-  };
-
-  // ── Loading ────────────────────────────────────────────────────────────────
-  if (state === "loading") {
-    return (
-      <div className="flex h-24 items-center justify-center gap-2 rounded-2xl bg-zinc-100 text-sm text-zinc-500">
-        <Loader2 className="size-4 animate-spin" />
-        Loading payment form…
-      </div>
-    );
-  }
-
-  // ── SDK failed to load ─────────────────────────────────────────────────────
-  if (state === "error") {
-    return (
-      <div className="rounded-2xl border border-border bg-card p-5 text-sm text-foreground shadow-sm">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="size-5 text-amber-500 shrink-0 mt-0.5" />
-          <div className="space-y-2">
-            <p className="font-bold text-foreground">PayPal Connection Interrupted</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              An ad-blocker or network shield may be blocking the PayPal script. You can retry or activate your subscription directly.
-            </p>
-            <div className="flex flex-wrap items-center gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  _sdkPromise = null;
-                  mountedRef.current = false;
-                  setErrorMsg(null);
-                  setState("loading");
-                  setRetryKey((k) => k + 1);
-                }}
-                className="rounded-full bg-foreground px-4 py-2 text-xs font-bold text-background shadow hover:opacity-90 transition-opacity"
-              >
-                Retry Connection
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  saveProfile({ plan: planId as PlanLabel });
-                  const uid = window.localStorage.getItem("examglow.google_sub");
-                  if (uid) await updateAccountPlan(uid, planId as PlanLabel);
-                  onSuccess();
-                }}
-                className="rounded-full border border-border bg-secondary px-4 py-2 text-xs font-bold text-foreground hover:bg-secondary/80 transition-colors"
-              >
-                Instant Access via Card &rarr;
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Fallback: PayPal standard buttons (when CardFields not available) ───────
-  if (state === "buttons") {
-    return (
-      <div className="space-y-3">
-        <PayPalButtonsFallback planId={planId} currency={currency} onSuccess={onSuccess} />
-      </div>
-    );
-  }
-
-  // ── PayPal Card Fields form ────────────────────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Name on card */}
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-          Name on card
-        </label>
-        <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-shadow">
-          <div id="pp-card-name" className="w-full" />
-        </div>
-      </div>
-
-      {/* Card number */}
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-          Card number
-        </label>
-        <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-shadow">
-          <CreditCard className="size-4 shrink-0 text-zinc-400" />
-          <div id="pp-card-number" className="w-full" />
-        </div>
-      </div>
-
-      {/* Expiry + CVV */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">Expiry</label>
-          <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-shadow">
-            <div id="pp-card-expiry" />
+    <div className="space-y-3">
+      {status === "loading" && (
+        <div className="space-y-3 py-3">
+          <div className="flex h-12 w-full animate-pulse items-center justify-center rounded-2xl bg-amber-500/10 text-xs font-semibold text-amber-900/80 border border-amber-500/20">
+            <Loader2 className="mr-2 size-4 animate-spin text-amber-600" />
+            Loading PayPal & Card Checkout…
           </div>
-        </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-zinc-700">CVC</label>
-          <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-shadow">
-            <div id="pp-card-cvv" />
-          </div>
-        </div>
-      </div>
-
-      {/* Name state — hidden since PayPal NameField handles it, but keep for accessibility */}
-      <input type="hidden" value={name} onChange={(e) => setName(e.target.value)} />
-
-      {/* Error */}
-      {errorMsg && (
-        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          <AlertCircle className="mt-0.5 size-4 shrink-0" />
-          <span>{errorMsg}</span>
+          <div className="h-12 w-full animate-pulse rounded-2xl bg-zinc-100" />
         </div>
       )}
 
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={submitting}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0070BA] py-3.5 text-[15px] font-semibold text-white transition-all hover:bg-[#005ea6] active:scale-[0.99] disabled:opacity-60"
-      >
-        {submitting ? (
-          <>
-            <Loader2 className="size-4 animate-spin" />
-            Processing…
-          </>
-        ) : (
-          <>
-            <Lock className="size-4" />
-            Pay {formatPrice(planId, currency)} securely
-          </>
-        )}
-      </button>
-
-      {/* Card logos */}
-      <div className="flex items-center justify-center gap-2 pt-1">
-        {["Visa", "Mastercard", "Amex", "Discover"].map((c) => (
-          <span
-            key={c}
-            className="rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-bold text-zinc-500"
+      {errorMessage && (
+        <div className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="size-4 shrink-0 text-amber-600" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => initPayPal()}
+            className="ml-3 shrink-0 rounded-full bg-amber-600 px-3 py-1 font-bold text-white hover:bg-amber-700 transition"
           >
-            {c}
-          </span>
-        ))}
-      </div>
+            Retry
+          </button>
+        </div>
+      )}
 
-      <p className="text-center text-xs text-zinc-400">
-        Processed securely by PayPal · No PayPal account needed
-      </p>
-    </form>
+      {/* Official PayPal Buttons Container */}
+      <div
+        ref={containerRef}
+        id="paypal-button-container"
+        className={status === "ready" ? "block" : "hidden"}
+      />
+
+      {status === "error" && (
+        <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 text-center">
+          <p className="text-xs text-zinc-500 mb-3">
+            PayPal checkout could not be loaded. Please ensure PayPal is allowed in your browser settings or try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => initPayPal()}
+            className="rounded-full bg-zinc-900 px-5 py-2.5 text-xs font-bold text-white hover:bg-zinc-800 transition"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
+    </div>
   );
-}
-
-// ─── Fallback PayPal buttons (if CardFields not eligible) ─────────────────────
-
-function PayPalButtonsFallback({
-  planId,
-  currency,
-  onSuccess,
-}: {
-  planId: string;
-  currency: CurrencyInfo;
-  onSuccess: () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const rendered = useRef(false);
-  const amount = convertPrice(planId, currency);
-  const plan = PLANS[planId];
-
-  useEffect(() => {
-    if (rendered.current || !window.paypal || !ref.current) return;
-    rendered.current = true;
-
-    window.paypal.Buttons({
-      style: { layout: "vertical", color: "blue", shape: "rect", label: "pay", height: 50, tagline: false },
-      createOrder: async (_d: unknown, actions: { order: { create: (o: unknown) => Promise<string> } }) =>
-        actions.order.create({
-          intent: "CAPTURE",
-          purchase_units: [{ description: `ExamGlow ${plan?.name ?? planId}`, amount: { currency_code: currency.code, value: amount } }],
-        }),
-      onApprove: async (data: { orderID: string }, actions: { order: { capture: () => Promise<unknown> } }) => {
-        await actions.order.capture();
-        saveProfile({ plan: planId as PlanLabel });
-        const uid = window.localStorage.getItem("examglow.google_sub");
-        if (uid) await updateAccountPlan(uid, planId as PlanLabel);
-        onSuccess();
-      },
-    }).render(ref.current!);
-  }, [amount, currency, plan, planId, onSuccess]);
-
-  return <div ref={ref} />;
 }
 
 // ─── Success screen ────────────────────────────────────────────────────────────
@@ -482,7 +301,7 @@ function CheckoutPage() {
           <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
             <h1 className="text-xl font-bold text-zinc-900">Complete your purchase</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              Pay securely with your debit or credit card
+              Pay securely with PayPal or any major debit/credit card
             </p>
 
             {/* Order summary */}
@@ -502,15 +321,15 @@ function CheckoutPage() {
               </div>
               {currency && currency.code !== "USD" && (
                 <p className="mt-1 text-right text-xs text-zinc-400">
-                  Prices in {currency.code}
+                  Prices converted for your location ({currency.code})
                 </p>
               )}
             </div>
 
-            {/* Card form */}
+            {/* PayPal Buttons */}
             <div className="mt-6">
               {currency ? (
-                <PayPalCardForm
+                <PayPalSection
                   key={`${planId}-${currency.code}`}
                   planId={planId}
                   currency={currency}
@@ -518,13 +337,32 @@ function CheckoutPage() {
                 />
               ) : (
                 <div className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-zinc-100 text-sm text-zinc-500">
-                  <Loader2 className="size-4 animate-spin" /> Detecting your location…
+                  <Loader2 className="size-4 animate-spin" /> Detecting location…
                 </div>
               )}
             </div>
 
+            {/* Trust row */}
+            <div className="mt-6 flex items-center justify-center gap-5 text-xs text-zinc-400">
+              <span className="flex items-center gap-1"><Lock className="size-3" /> 256-bit SSL</span>
+              <span className="flex items-center gap-1"><ShieldCheck className="size-3" /> Secure</span>
+              <span className="flex items-center gap-1"><Check className="size-3" /> Cancel anytime</span>
+            </div>
+
+            {/* Card logos */}
+            <div className="mt-4 flex items-center justify-center gap-2">
+              {["Visa", "Mastercard", "Amex", "Discover", "PayPal"].map((c) => (
+                <span
+                  key={c}
+                  className="rounded-md border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-bold text-zinc-500"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+
             {/* Terms of Service & Auto-Renewal Notice */}
-            <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 text-[12px] text-zinc-600 leading-relaxed">
+            <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/80 p-4 text-[12px] text-zinc-600 leading-relaxed">
               <p className="font-semibold text-zinc-800 mb-1">Terms of Service & Auto-Renewal Policy</p>
               <p>
                 By completing your payment, you agree to our Terms of Service and acknowledge that your subscription will automatically renew at the end of each billing cycle ({plan.period}) at the regular rate shown above unless cancelled.
@@ -540,13 +378,6 @@ function CheckoutPage() {
                 </button>
                 . There are no cancellation fees, lock-ins, or hidden charges.
               </p>
-            </div>
-
-            {/* Trust row */}
-            <div className="mt-6 flex items-center justify-center gap-5 text-xs text-zinc-400">
-              <span className="flex items-center gap-1"><Lock className="size-3" /> 256-bit SSL</span>
-              <span className="flex items-center gap-1"><ShieldCheck className="size-3" /> Secure</span>
-              <span className="flex items-center gap-1"><Check className="size-3" /> Cancel anytime</span>
             </div>
           </div>
 
@@ -575,6 +406,14 @@ function CheckoutPage() {
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Help note */}
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 text-sm text-zinc-500 shadow-sm">
+              <p className="font-semibold text-zinc-800">Don't have a PayPal account?</p>
+              <p className="mt-1 text-xs text-zinc-500 leading-relaxed">
+                Click the black <strong className="text-zinc-700">"Debit or Credit Card"</strong> button directly under the PayPal button to pay with your card — no PayPal registration required.
+              </p>
             </div>
           </div>
         </div>

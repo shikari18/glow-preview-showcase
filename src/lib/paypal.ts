@@ -126,18 +126,32 @@ export type PayPalButtonConfig = {
   onCancel?: () => void;
 };
 
+export const PAYPAL_SUPPORTED_CURRENCIES = new Set<string>([
+  "AUD", "BRL", "CAD", "CNY", "CZK", "DKK", "EUR", "HKD", "HUF", "ILS",
+  "JPY", "MYR", "MXN", "TWD", "NZD", "NOK", "PHP", "PLN", "GBP", "SGD",
+  "SEK", "CHF", "THB", "USD",
+]);
+
 let _sdkPromise: Promise<void> | null = null;
 let _sdkCurrency: string | null = null;
 
-export function loadPayPalSDK(currency: CurrencyCode): Promise<void> {
-  // Reuse if same currency already loaded
-  if (_sdkPromise && _sdkCurrency === currency) return _sdkPromise;
+export function loadPayPalSDK(currency: string = "USD"): Promise<void> {
+  const safeCurrency = PAYPAL_SUPPORTED_CURRENCIES.has(currency) ? currency : "USD";
 
-  // Remove old script tag if currency changed
-  document.getElementById("paypal-sdk")?.remove();
-  if (window.paypal) delete (window as Window & { paypal?: unknown }).paypal;
+  // Reuse if same currency already loaded on window
+  if (typeof window !== "undefined" && window.paypal && _sdkCurrency === safeCurrency) {
+    return Promise.resolve();
+  }
+
+  // Reuse ongoing load promise if currency matches
+  if (_sdkPromise && _sdkCurrency === safeCurrency) return _sdkPromise;
+
+  // Remove old script tag if currency changed or failed
+  if (typeof document !== "undefined") {
+    document.getElementById("paypal-sdk")?.remove();
+  }
   _sdkPromise = null;
-  _sdkCurrency = currency;
+  _sdkCurrency = safeCurrency;
 
   _sdkPromise = new Promise((resolve, reject) => {
     const s = document.createElement("script");
@@ -145,15 +159,20 @@ export function loadPayPalSDK(currency: CurrencyCode): Promise<void> {
     s.src = [
       `https://www.paypal.com/sdk/js`,
       `?client-id=${PAYPAL_CLIENT_ID}`,
-      `&currency=${currency}`,
+      `&currency=${safeCurrency}`,
       `&intent=capture`,
       `&components=buttons`,
+      `&enable-funding=card`,
     ].join("");
     s.async = true;
     s.onload = () => resolve();
-    s.onerror = () => reject(new Error("PayPal SDK failed to load"));
+    s.onerror = (err) => {
+      _sdkPromise = null;
+      reject(err);
+    };
     document.head.appendChild(s);
   });
 
   return _sdkPromise;
 }
+
