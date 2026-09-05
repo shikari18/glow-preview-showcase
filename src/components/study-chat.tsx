@@ -122,15 +122,36 @@ export function StudyChat({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState("");
 
-  // Upload dropdown
   const [uploadOpen, setUploadOpen] = useState(false);
   const [attachment, setAttachment] = useState<UploadedAttachment | null>(null);
+
+  // Mobile input focus & viewport docking
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [viewportBottomOffset, setViewportBottomOffset] = useState(0);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  // Listen to mobile virtual keyboard visualViewport changes
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+    const updateViewport = () => {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      const offset = Math.max(0, window.innerHeight - (vv.offsetTop + vv.height));
+      setViewportBottomOffset(offset);
+    };
+
+    window.visualViewport.addEventListener("resize", updateViewport);
+    window.visualViewport.addEventListener("scroll", updateViewport);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", updateViewport);
+      window.visualViewport?.removeEventListener("scroll", updateViewport);
+    };
+  }, []);
 
   // Load session messages on mount or session switch
   useEffect(() => {
@@ -770,8 +791,15 @@ export function StudyChat({
       </Conversation>
 
       {/* Modern, Sleek Input UI: Chat with Yumna */}
-      <div className="shrink-0 border-t border-border bg-card/60 px-4 py-3 backdrop-blur">
-        <div className="mx-auto max-w-3xl">
+      <div
+        style={viewportBottomOffset > 0 ? { transform: `translateY(-${viewportBottomOffset}px)` } : undefined}
+        className={`shrink-0 border-t border-border bg-card/95 backdrop-blur transition-all duration-150 z-30 ${
+          isInputFocused
+            ? "px-2 sm:px-4 py-2 sm:py-3 shadow-lg -translate-y-1 sm:translate-y-0"
+            : "px-3 sm:px-4 py-2.5 sm:py-3"
+        }`}
+      >
+        <div className="mx-auto w-full max-w-3xl">
           {/* Attachment Preview Banner */}
           {attachment && (
             <div className="mb-2 flex items-center justify-between rounded-xl bg-secondary px-3 py-1.5 text-xs text-foreground">
@@ -840,14 +868,18 @@ export function StudyChat({
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              inputRef.current?.blur();
+              setIsInputFocused(false);
               void send(input);
             }}
-            className={`relative flex min-h-[58px] items-center gap-2 rounded-2xl border transition-all shadow-sm ${
+            className={`relative flex min-h-[56px] w-full items-center gap-1.5 sm:gap-2 rounded-2xl border transition-all shadow-sm ${
               voiceMode
                 ? isSpeaking
-                  ? "border-amber-500 bg-amber-500/5 ring-2 ring-amber-500/30 px-4 py-2"
-                  : "border-sky-500 bg-sky-500/5 ring-2 ring-sky-500/30 px-4 py-2"
-                : "border-border/80 bg-card p-3 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary"
+                  ? "border-amber-500 bg-amber-500/5 ring-2 ring-amber-500/30 px-3 sm:px-4 py-2"
+                  : "border-sky-500 bg-sky-500/5 ring-2 ring-sky-500/30 px-3 sm:px-4 py-2"
+                : isInputFocused
+                ? "border-primary bg-card ring-2 ring-primary/30 p-2 sm:p-3 shadow-md"
+                : "border-border/80 bg-card p-2 sm:p-3 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary"
             }`}
           >
             {voiceMode ? (
@@ -907,15 +939,19 @@ export function StudyChat({
                   ref={inputRef}
                   rows={1}
                   value={input}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
+                      inputRef.current?.blur();
+                      setIsInputFocused(false);
                       void send(input);
                     }
                   }}
                   placeholder="Ask Yumna anything... (Paste questions, formulas, or homework)"
-                  className="flex-1 bg-transparent px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none max-h-32 leading-relaxed"
+                  className="flex-1 min-w-0 bg-transparent px-2 sm:px-2.5 py-1.5 text-base sm:text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none max-h-32 leading-relaxed"
                 />
 
                 {/* Dictation Mic Button (Speech-to-Text strictly for input dictation) */}
@@ -935,6 +971,10 @@ export function StudyChat({
                 {/* Send Button */}
                 <button
                   type="submit"
+                  onClick={() => {
+                    inputRef.current?.blur();
+                    setIsInputFocused(false);
+                  }}
                   disabled={!input.trim() && !attachment}
                   className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition-all ${
                     input.trim() || attachment
@@ -949,7 +989,7 @@ export function StudyChat({
             )}
           </form>
 
-          <p className="mt-1.5 text-center text-[11px] text-muted-foreground">
+          <p className="mt-1.5 text-center text-[11px] text-muted-foreground hidden sm:block">
             Press <kbd className="font-sans px-1 rounded bg-secondary">Enter</kbd> to send · <kbd className="font-sans px-1 rounded bg-secondary">Shift+Enter</kbd> for new line
           </p>
         </div>

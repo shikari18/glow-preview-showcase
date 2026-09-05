@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { BookOpen, FileText, X, ExternalLink, Search, ChevronRight, Lock } from "lucide-react";
+import { BookOpen, FileText, X, ExternalLink, Search, ChevronRight } from "lucide-react";
 
 import { DashboardLayout, PageHeading } from "@/components/dashboard-page";
 import {
@@ -9,8 +9,6 @@ import {
   type IgcseSubject,
   type SyllabusDoc,
 } from "@/lib/igcse-syllabuses";
-import { isPaidUser } from "@/lib/onboarding";
-import { PaywallModal } from "@/components/paywall-modal";
 
 export const Route = createFileRoute("/syllabus")({
   head: () => ({
@@ -78,29 +76,14 @@ function PdfModal({ subject, doc, onClose }: {
 
 // ─── Subject row (collapsed by default) ──────────────────────────────────────
 
-const OPEN_FREE_SUBJECT_IDS = [
-  "biology",
-  "chemistry",
-  "physics",
-  "mathematics",
-  "economics",
-  "computer-science",
-  "geography",
-];
-
 function SubjectRow({
   subject,
-  isPaid,
   onOpen,
-  onLockedClick,
 }: {
   subject: IgcseSubject;
-  isPaid: boolean;
   onOpen: (doc: SyllabusDoc) => void;
-  onLockedClick: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const isLocked = !isPaid && !OPEN_FREE_SUBJECT_IDS.includes(subject.id);
 
   return (
     <div>
@@ -118,11 +101,9 @@ function SubjectRow({
           {subject.syllabuses.length} syllabus{subject.syllabuses.length > 1 ? "es" : ""}
         </span>
         <div className="flex-1" />
-        {isLocked && (
-          <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
-            <Lock className="size-3" /> Locked
-          </span>
-        )}
+        <span className="text-xs font-semibold text-muted-foreground/70">
+          {open ? "Hide" : "View"}
+        </span>
       </button>
 
       {open && (
@@ -131,30 +112,14 @@ function SubjectRow({
             <button
               key={doc.url}
               type="button"
-              onClick={() => {
-                if (isLocked) {
-                  onLockedClick();
-                } else {
-                  onOpen(doc);
-                }
-              }}
+              onClick={() => onOpen(doc)}
               className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
-              {isLocked ? (
-                <Lock className="size-4 shrink-0 text-amber-500" aria-hidden />
-              ) : (
-                <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-              )}
+              <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
               <span className="flex-1 text-sm font-medium">{doc.label}</span>
-              {isLocked ? (
-                <span className="shrink-0 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
-                  Upgrade
-                </span>
-              ) : (
-                <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 text-xs text-muted-foreground">
-                  PDF
-                </span>
-              )}
+              <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 text-xs text-muted-foreground">
+                PDF
+              </span>
             </button>
           ))}
         </div>
@@ -169,12 +134,6 @@ function SyllabusPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [viewer, setViewer] = useState<{ subject: IgcseSubject; doc: SyllabusDoc } | null>(null);
-  const [isPaid, setIsPaid] = useState(false);
-  const [paywallOpen, setPaywallOpen] = useState(false);
-
-  useEffect(() => {
-    setIsPaid(isPaidUser());
-  }, []);
 
   const categories = ["All", ...igcseCategories];
 
@@ -281,9 +240,7 @@ function SyllabusPage() {
                   <SubjectRow
                     key={subject.id}
                     subject={subject}
-                    isPaid={isPaid}
                     onOpen={(doc) => setViewer({ subject, doc })}
-                    onLockedClick={() => setPaywallOpen(true)}
                   />
                 ))}
               </div>
@@ -291,13 +248,6 @@ function SyllabusPage() {
           ))}
         </div>
       </DashboardLayout>
-
-      <PaywallModal
-        open={paywallOpen}
-        onClose={() => setPaywallOpen(false)}
-        title="Unlock Official Cambridge Syllabuses"
-        subtitle="This syllabus is available on ExamGlow Premium. Upgrade to unlock all 25+ Cambridge syllabuses, exam specifications, marking schemes, and past papers."
-      />
     </>
   );
 }

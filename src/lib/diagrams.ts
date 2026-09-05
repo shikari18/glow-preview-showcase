@@ -4,85 +4,259 @@
  */
 
 export const DIAGRAM_MAP: Record<string, string> = {
-  "cell-structure.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 460" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
+  "cell-structure.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 560" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
   <defs>
-    <linearGradient id="animalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fff1f2" />
-      <stop offset="100%" stop-color="#ffe4e6" />
+    <linearGradient id="animalCytoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff5f5" />
+      <stop offset="60%" stop-color="#ffe4e6" />
+      <stop offset="100%" stop-color="#fecdd3" />
     </linearGradient>
-    <linearGradient id="plantGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ecfdf5" />
-      <stop offset="100%" stop-color="#d1fae5" />
+    <linearGradient id="plantCytoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0fdf4" />
+      <stop offset="60%" stop-color="#dcfce7" />
+      <stop offset="100%" stop-color="#bbf7d0" />
     </linearGradient>
-    <linearGradient id="nucleusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#c084fc" />
-      <stop offset="100%" stop-color="#7e22ce" />
+    <linearGradient id="nuclearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d8b4fe" />
+      <stop offset="50%" stop-color="#a855f7" />
+      <stop offset="100%" stop-color="#6b21a8" />
     </linearGradient>
+    <radialGradient id="nucleolusGrad" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#581c87" />
+      <stop offset="100%" stop-color="#3b0764" />
+    </radialGradient>
     <linearGradient id="vacuoleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#bae6fd" />
-      <stop offset="100%" stop-color="#38bdf8" />
+      <stop offset="0%" stop-color="#e0f2fe" />
+      <stop offset="50%" stop-color="#bae6fd" />
+      <stop offset="100%" stop-color="#7dd3fc" />
     </linearGradient>
     <linearGradient id="chloroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4ade80" />
+      <stop offset="0%" stop-color="#86efac" />
+      <stop offset="50%" stop-color="#22c55e" />
       <stop offset="100%" stop-color="#15803d" />
     </linearGradient>
+    <linearGradient id="mitoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdba74" />
+      <stop offset="60%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </linearGradient>
+    <filter id="softShadow" x="-6%" y="-6%" width="112%" height="112%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
   </defs>
-  <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
-  <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
+
+  <rect x="0" y="0" width="920" height="54" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+  <text x="460" y="28" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" fill="#0f172a">
     Cambridge IGCSE Biology · Ultrastructure of Animal vs. Plant Cells
   </text>
-  <g transform="translate(30, 70)">
-    <text x="175" y="10" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#be123c">ANIMAL CELL</text>
-    <text x="175" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#64748b">Irregular shape · No cell wall or chloroplasts</text>
-    <path d="M 60 160 C 50 80, 160 50, 260 70 C 330 90, 340 180, 310 250 C 270 310, 140 330, 80 280 C 40 240, 70 190, 60 160 Z" fill="url(#animalGrad)" stroke="#f43f5e" stroke-width="3" />
-    <text x="120" y="130" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#64748b">Cytoplasm</text>
-    <circle cx="190" cy="180" r="42" fill="url(#nucleusGrad)" stroke="#581c87" stroke-width="2" />
-    <circle cx="190" cy="180" r="15" fill="#f3e8ff" opacity="0.9" />
-    <text x="190" y="184" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" font-weight="700" fill="#581c87">DNA</text>
-    <g transform="translate(100, 220) rotate(-25)">
-      <rect x="0" y="0" width="34" height="18" rx="9" fill="#f97316" stroke="#c2410c" stroke-width="1.5" />
-      <path d="M 6 9 Q 12 4 17 9 T 28 9" stroke="#fed7aa" stroke-width="2" fill="none" />
+  <text x="460" y="45" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#64748b">
+    Syllabus 0610 Chapter 2: Cell Structures, Organelle Functions &amp; Identification
+  </text>
+
+  <!-- LEFT: ANIMAL CELL -->
+  <g transform="translate(40, 68)">
+    <rect x="0" y="0" width="400" height="32" rx="8" fill="#fff1f2" stroke="#fecdd3" stroke-width="1" />
+    <text x="200" y="21" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#be123c">
+      ANIMAL CELL (Irregular · No Cell Wall)
+    </text>
+
+    <path d="M 40 170 C 35 90, 140 50, 230 65 C 320 80, 365 140, 355 220 C 345 300, 260 335, 170 330 C 70 325, 45 250, 40 170 Z"
+          fill="url(#animalCytoGrad)" stroke="#e11d48" stroke-width="3" filter="url(#softShadow)" />
+
+    <text x="90" y="110" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#881337">Cytoplasm (Cytosol)</text>
+
+    <circle cx="195" cy="195" r="44" fill="url(#nuclearGrad)" stroke="#4c1d95" stroke-width="2.5" />
+    <circle cx="195" cy="195" r="41" fill="none" stroke="#e9d5ff" stroke-width="1.5" stroke-dasharray="6 3" />
+    <circle cx="188" cy="190" r="14" fill="url(#nucleolusGrad)" />
+    <path d="M 175 210 Q 185 220 205 215 T 225 200" fill="none" stroke="#ede9fe" stroke-width="1.5" opacity="0.8" />
+    <text x="195" y="194" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" font-weight="800" fill="#ffffff">Nucleolus</text>
+
+    <path d="M 238 180 C 265 175, 275 195, 255 210 C 275 220, 265 240, 240 235"
+          fill="none" stroke="#9333ea" stroke-width="3" stroke-linecap="round" />
+    <path d="M 248 175 C 275 170, 285 190, 268 205"
+          fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" />
+    <circle cx="260" cy="178" r="2" fill="#3b0764" />
+    <circle cx="270" cy="195" r="2" fill="#3b0764" />
+    <circle cx="258" cy="225" r="2" fill="#3b0764" />
+
+    <g transform="translate(85, 220)">
+      <path d="M 10 10 Q 35 18 60 10" fill="none" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round" />
+      <path d="M 12 20 Q 35 28 58 20" fill="none" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round" />
+      <path d="M 16 30 Q 35 36 54 30" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" />
+      <circle cx="70" cy="12" r="3.5" fill="#fbbf24" stroke="#d97706" stroke-width="1" />
+      <circle cx="66" cy="26" r="3" fill="#fbbf24" stroke="#d97706" stroke-width="1" />
     </g>
-    <g transform="translate(240, 120) rotate(35)">
-      <rect x="0" y="0" width="34" height="18" rx="9" fill="#f97316" stroke="#c2410c" stroke-width="1.5" />
-      <path d="M 6 9 Q 12 4 17 9 T 28 9" stroke="#fed7aa" stroke-width="2" fill="none" />
+
+    <g transform="translate(100, 125) rotate(-20)">
+      <rect x="0" y="0" width="38" height="20" rx="10" fill="url(#mitoGrad)" stroke="#9a3412" stroke-width="1.5" />
+      <path d="M 7 10 Q 13 4 19 10 T 31 10" fill="none" stroke="#ffedd5" stroke-width="2" />
     </g>
-    <circle cx="110" cy="180" r="2.5" fill="#334155" />
-    <circle cx="130" cy="200" r="2.5" fill="#334155" />
-    <circle cx="260" cy="200" r="2.5" fill="#334155" />
-    <circle cx="230" cy="240" r="2.5" fill="#334155" />
-    <line x1="310" y1="130" x2="355" y2="110" stroke="#be123c" stroke-width="1.5" />
-    <text x="358" y="113" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#be123c">Cell Membrane</text>
-    <line x1="230" y1="180" x2="355" y2="175" stroke="#7e22ce" stroke-width="1.5" />
-    <text x="358" y="178" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#7e22ce">Nucleus (Genetic DNA)</text>
-    <line x1="130" y1="235" x2="130" y2="330" stroke="#c2410c" stroke-width="1.5" />
-    <text x="130" y="345" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#c2410c">Mitochondrion (ATP)</text>
+    <g transform="translate(230, 105) rotate(35)">
+      <rect x="0" y="0" width="36" height="18" rx="9" fill="url(#mitoGrad)" stroke="#9a3412" stroke-width="1.5" />
+      <path d="M 6 9 Q 12 4 18 9 T 30 9" fill="none" stroke="#ffedd5" stroke-width="2" />
+    </g>
+    <g transform="translate(150, 275) rotate(15)">
+      <rect x="0" y="0" width="36" height="18" rx="9" fill="url(#mitoGrad)" stroke="#9a3412" stroke-width="1.5" />
+      <path d="M 6 9 Q 12 4 18 9 T 30 9" fill="none" stroke="#ffedd5" stroke-width="2" />
+    </g>
+
+    <circle cx="105" cy="180" r="7" fill="#f43f5e" stroke="#be123c" stroke-width="1.5" />
+    <circle cx="280" cy="150" r="6" fill="#f43f5e" stroke="#be123c" stroke-width="1.5" />
+    <circle cx="140" cy="85" r="2.5" fill="#334155" />
+    <circle cx="165" cy="100" r="2.5" fill="#334155" />
+    <circle cx="120" cy="200" r="2.5" fill="#334155" />
+    <circle cx="285" cy="245" r="2.5" fill="#334155" />
+    <circle cx="210" cy="290" r="2.5" fill="#334155" />
+
+    <line x1="330" y1="120" x2="385" y2="95" stroke="#be123c" stroke-width="1.5" />
+    <circle cx="330" cy="120" r="2.5" fill="#be123c" />
+    <text x="388" y="98" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#be123c">Cell Membrane</text>
+
+    <line x1="235" y1="170" x2="385" y2="150" stroke="#6b21a8" stroke-width="1.5" />
+    <circle cx="235" cy="170" r="2.5" fill="#6b21a8" />
+    <text x="388" y="153" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#6b21a8">Nucleus (DNA)</text>
+
+    <line x1="125" y1="140" x2="20" y2="155" stroke="#c2410c" stroke-width="1.5" />
+    <circle cx="125" cy="140" r="2.5" fill="#c2410c" />
+    <text x="15" y="158" text-anchor="end" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#c2410c">Mitochondrion (ATP)</text>
+
+    <line x1="95" y1="245" x2="20" y2="245" stroke="#d97706" stroke-width="1.5" />
+    <circle cx="95" cy="245" r="2.5" fill="#d97706" />
+    <text x="15" y="248" text-anchor="end" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#d97706">Golgi Apparatus</text>
+
+    <line x1="260" y1="225" x2="385" y2="235" stroke="#475569" stroke-width="1.5" />
+    <circle cx="260" cy="225" r="2.5" fill="#475569" />
+    <text x="388" y="238" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#334155">Ribosomes (80S)</text>
   </g>
-  <g transform="translate(450, 70)">
-    <text x="185" y="10" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#15803d">PLANT CELL</text>
-    <text x="185" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="#64748b">Fixed rigid polygonal structure · Cellulose wall &amp; Vacuole</text>
-    <polygon points="50,60 300,50 340,250 290,320 60,310 30,170" fill="#bbf7d0" stroke="#16a34a" stroke-width="6" stroke-linejoin="round" />
-    <polygon points="56,66 294,56 333,246 285,313 65,304 36,172" fill="url(#plantGrad)" stroke="#22c55e" stroke-width="2" stroke-linejoin="round" />
-    <path d="M 120,100 C 240,90 270,140 260,230 C 250,280 180,290 120,270 C 80,240 80,140 120,100 Z" fill="url(#vacuoleGrad)" stroke="#0284c7" stroke-width="2" opacity="0.85" />
-    <text x="180" y="185" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0369a1">Central Vacuole (Cell Sap)</text>
-    <circle cx="85" cy="120" r="28" fill="url(#nucleusGrad)" stroke="#581c87" stroke-width="2" />
-    <circle cx="85" cy="120" r="10" fill="#f3e8ff" />
-    <g transform="translate(190, 68) rotate(15)">
-      <ellipse cx="20" cy="12" rx="20" ry="12" fill="url(#chloroGrad)" stroke="#14532d" stroke-width="1.5" />
-      <line x1="8" y1="12" x2="32" y2="12" stroke="#bbf7d0" stroke-width="1.5" />
+
+  <!-- RIGHT: PLANT CELL -->
+  <g transform="translate(480, 68)">
+    <rect x="0" y="0" width="400" height="32" rx="8" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1" />
+    <text x="200" y="21" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#15803d">
+      PLANT CELL (Fixed Polygonal · Wall &amp; Chloroplasts)
+    </text>
+
+    <polygon points="50,60 320,45 365,225 315,325 70,320 25,185"
+             fill="#86efac" stroke="#15803d" stroke-width="7" stroke-linejoin="round" filter="url(#softShadow)" />
+
+    <polygon points="56,66 314,52 358,222 310,318 75,313 32,187"
+             fill="url(#plantCytoGrad)" stroke="#16a34a" stroke-width="2.5" stroke-linejoin="round" />
+
+    <path d="M 125 100 C 240 85, 275 125, 270 215 C 265 270, 205 285, 135 275 C 80 265, 75 140, 125 100 Z"
+          fill="url(#vacuoleGrad)" stroke="#0284c7" stroke-width="2.5" opacity="0.9" />
+    <text x="180" y="180" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="800" fill="#0369a1">
+      Central Vacuole
+    </text>
+    <text x="180" y="196" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#0284c7">
+      (Cell Sap &amp; Turgor)
+    </text>
+
+    <circle cx="85" cy="115" r="32" fill="url(#nuclearGrad)" stroke="#4c1d95" stroke-width="2" />
+    <circle cx="85" cy="115" r="10" fill="url(#nucleolusGrad)" />
+    <text x="85" y="118" text-anchor="middle" font-family="system-ui, sans-serif" font-size="8" font-weight="700" fill="#ffffff">DNA</text>
+
+    <!-- Chloroplast 1 -->
+    <g transform="translate(200, 60) rotate(10)">
+      <ellipse cx="26" cy="16" rx="26" ry="16" fill="url(#chloroGrad)" stroke="#14532d" stroke-width="2" />
+      <line x1="12" y1="12" x2="20" y2="12" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="12" y1="16" x2="20" y2="16" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="12" y1="20" x2="20" y2="20" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="28" y1="12" x2="38" y2="12" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="28" y1="16" x2="38" y2="16" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="28" y1="20" x2="38" y2="20" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
     </g>
-    <g transform="translate(260, 160) rotate(-30)">
-      <ellipse cx="20" cy="12" rx="20" ry="12" fill="url(#chloroGrad)" stroke="#14532d" stroke-width="1.5" />
-      <line x1="8" y1="12" x2="32" y2="12" stroke="#bbf7d0" stroke-width="1.5" />
+
+    <!-- Chloroplast 2 -->
+    <g transform="translate(280, 160) rotate(-35)">
+      <ellipse cx="26" cy="16" rx="26" ry="16" fill="url(#chloroGrad)" stroke="#14532d" stroke-width="2" />
+      <line x1="12" y1="12" x2="20" y2="12" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="12" y1="16" x2="20" y2="16" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="28" y1="12" x2="38" y2="12" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="28" y1="16" x2="38" y2="16" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
     </g>
-    <g transform="translate(80, 250) rotate(20)">
-      <ellipse cx="20" cy="12" rx="20" ry="12" fill="url(#chloroGrad)" stroke="#14532d" stroke-width="1.5" />
-      <line x1="8" y1="12" x2="32" y2="12" stroke="#bbf7d0" stroke-width="1.5" />
+
+    <!-- Chloroplast 3 -->
+    <g transform="translate(85, 245) rotate(25)">
+      <ellipse cx="26" cy="16" rx="26" ry="16" fill="url(#chloroGrad)" stroke="#14532d" stroke-width="2" />
+      <line x1="12" y1="12" x2="20" y2="12" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="12" y1="16" x2="20" y2="16" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="28" y1="12" x2="38" y2="12" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
+      <line x1="28" y1="16" x2="38" y2="16" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round" />
     </g>
-    <line x1="30" y1="60" x2="-20" y2="40" stroke="#16a34a" stroke-width="1.5" />
-    <text x="-25" y="38" text-anchor="end" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#15803d">Cell Wall (Cellulose)</text>
-    <line x1="230" y1="70" x2="290" y2="25" stroke="#15803d" stroke-width="1.5" />
-    <text x="295" y="25" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#15803d">Chloroplast</text>
+
+    <g transform="translate(180, 280) rotate(-15)">
+      <rect x="0" y="0" width="34" height="17" rx="8.5" fill="url(#mitoGrad)" stroke="#9a3412" stroke-width="1.5" />
+      <path d="M 6 8.5 Q 11 3 17 8.5 T 28 8.5" fill="none" stroke="#ffedd5" stroke-width="1.8" />
+    </g>
+
+    <ellipse cx="270" cy="255" rx="8" ry="6" fill="#fef08a" stroke="#ca8a04" stroke-width="1.5" />
+    <ellipse cx="285" cy="245" rx="7" ry="5" fill="#fef08a" stroke="#ca8a04" stroke-width="1.5" />
+
+    <line x1="45" y1="80" x2="-20" y2="55" stroke="#15803d" stroke-width="2" />
+    <circle cx="45" cy="80" r="3" fill="#15803d" />
+    <text x="-25" y="58" text-anchor="end" font-family="system-ui, sans-serif" font-size="11" font-weight="800" fill="#15803d">
+      Cellulose Cell Wall
+    </text>
+
+    <line x1="35" y1="170" x2="-20" y2="170" stroke="#16a34a" stroke-width="1.5" />
+    <circle cx="35" cy="170" r="2.5" fill="#16a34a" />
+    <text x="-25" y="173" text-anchor="end" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#16a34a">
+      Cell Membrane
+    </text>
+
+    <line x1="250" y1="75" x2="385" y2="75" stroke="#14532d" stroke-width="1.5" />
+    <circle cx="250" cy="75" r="2.5" fill="#14532d" />
+    <text x="388" y="78" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#14532d">
+      Chloroplast (Chlorophyll)
+    </text>
+
+    <line x1="265" y1="210" x2="385" y2="210" stroke="#0284c7" stroke-width="1.5" />
+    <circle cx="265" cy="210" r="2.5" fill="#0284c7" />
+    <text x="388" y="213" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0284c7">
+      Tonoplast (Vacuole)
+    </text>
+
+    <line x1="290" y1="255" x2="385" y2="265" stroke="#ca8a04" stroke-width="1.5" />
+    <circle cx="290" cy="255" r="2.5" fill="#ca8a04" />
+    <text x="388" y="268" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#854d0e">
+      Starch Granules
+    </text>
+  </g>
+
+  <!-- BOTTOM: CAMBRIDGE EXAM SUMMARY MATRIX TABLE -->
+  <g transform="translate(40, 425)">
+    <rect x="0" y="0" width="840" height="115" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+
+    <rect x="0" y="0" width="840" height="30" rx="14" fill="#f1f5f9" />
+    <rect x="0" y="20" width="840" height="10" fill="#f1f5f9" />
+    <text x="140" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#475569">ORGANELLE / FEATURE</text>
+    <text x="340" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#be123c">ANIMAL CELL</text>
+    <text x="510" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#15803d">PLANT CELL</text>
+    <text x="710" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0f172a">CAMBRIDGE EXAM ROLE</text>
+    <line x1="0" y1="30" x2="840" y2="30" stroke="#cbd5e1" stroke-width="1" />
+
+    <text x="25" y="48" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#334155">Cellulose Cell Wall</text>
+    <text x="340" y="48" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#ef4444">✕ Absent</text>
+    <text x="510" y="48" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#16a34a">✓ Present (outermost)</text>
+    <text x="610" y="48" font-family="system-ui, sans-serif" font-size="10" fill="#475569">Rigid tensile structure; prevents lysis under turgor</text>
+
+    <line x1="15" y1="56" x2="825" y2="56" stroke="#e2e8f0" stroke-width="1" />
+    <text x="25" y="70" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#334155">Chloroplasts (Chlorophyll)</text>
+    <text x="340" y="70" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#ef4444">✕ Absent</text>
+    <text x="510" y="70" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#16a34a">✓ Present (in green cells)</text>
+    <text x="610" y="70" font-family="system-ui, sans-serif" font-size="10" fill="#475569">Captures light energy for photosynthesis ($CO_2 + H_2O$)</text>
+
+    <line x1="15" y1="78" x2="825" y2="78" stroke="#e2e8f0" stroke-width="1" />
+    <text x="25" y="92" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#334155">Large Permanent Vacuole</text>
+    <text x="340" y="92" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#ef4444">✕ Small/temporary only</text>
+    <text x="510" y="92" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#16a34a">✓ Present (central sap)</text>
+    <text x="610" y="92" font-family="system-ui, sans-serif" font-size="10" fill="#475569">Maintains hydrostatic pressure against cellulose wall</text>
+
+    <line x1="15" y1="100" x2="825" y2="100" stroke="#e2e8f0" stroke-width="1" />
+    <text x="25" y="112" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#334155">Carbohydrate Storage</text>
+    <text x="340" y="112" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#be123c">Glycogen granules</text>
+    <text x="510" y="112" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#15803d">Starch granules</text>
+    <text x="610" y="112" font-family="system-ui, sans-serif" font-size="10" fill="#475569">Insoluble polymers; tested with iodine solution</text>
   </g>
 </svg>`,
 

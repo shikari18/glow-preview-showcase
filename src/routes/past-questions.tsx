@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { BookOpen, X, ExternalLink, ChevronRight, FileText, Lock } from "lucide-react";
+import { BookOpen, X, ExternalLink, ChevronRight, FileText } from "lucide-react";
 import { DashboardLayout, PageHeading } from "@/components/dashboard-page";
-import { PaywallModal } from "@/components/paywall-modal";
 
 export const Route = createFileRoute("/past-questions")({
   head: () => ({
@@ -230,16 +229,13 @@ function YearRow({
   papers,
   color,
   onOpen,
-  onLockClick,
 }: {
   year: number;
   papers: Paper[];
   color: string;
   onOpen: (p: Paper) => void;
-  onLockClick: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const isLocked = year < 2024;
   const sessionMap = new Map<string, Paper[]>();
   papers.forEach(p => {
     if (!sessionMap.has(p.session)) sessionMap.set(p.session, []);
@@ -250,29 +246,17 @@ function YearRow({
     <div>
       <button
         type="button"
-        onClick={() => {
-          if (isLocked) {
-            onLockClick();
-          } else {
-            setOpen(v => !v);
-          }
-        }}
+        onClick={() => setOpen(v => !v)}
         className="flex w-full items-center gap-3 border-b border-border py-3 text-sm text-muted-foreground hover:text-foreground"
       >
         <ChevronRight className={`size-4 shrink-0 transition-transform duration-200 ${open ? "rotate-90" : ""}`} />
         <span className="font-bold text-foreground">{year}</span>
         <span className="text-xs">{papers.length} papers</span>
-        {isLocked ? (
-          <span className="ml-auto flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20">
-            <Lock className="size-3" /> Locked (Premium)
-          </span>
-        ) : (
-          <span className="ml-auto rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-            Free Preview
-          </span>
-        )}
+        <span className="ml-auto rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+          Free Access
+        </span>
       </button>
-      {!isLocked && open && (
+      {open && (
         <div className="pb-4 pt-3 pl-4">
           {Array.from(sessionMap.entries()).map(([session, sps]) => (
             <div key={session} className="mb-4">
@@ -291,11 +275,9 @@ function YearRow({
 function SubjectSection({
   subj,
   onOpen,
-  onLockClick,
 }: {
   subj: SubjectGroup;
   onOpen: (p: Paper) => void;
-  onLockClick: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const totalPapers = subj.years.reduce((n, y) => n + y.papers.length, 0);
@@ -329,7 +311,6 @@ function SubjectSection({
               papers={y.papers}
               color={subj.color}
               onOpen={onOpen}
-              onLockClick={onLockClick}
             />
           ))}
         </div>
@@ -343,7 +324,6 @@ function SubjectSection({
 function PastQuestionsPage() {
   const [selected, setSelected] = useState<Paper | null>(null);
   const [activeSubject, setActiveSubject] = useState("All");
-  const [paywallOpen, setPaywallOpen] = useState(false);
 
   const subjects = ["All", ...SUBJECTS.map((s) => s.subject)];
   const displayed = activeSubject === "All" ? SUBJECTS : SUBJECTS.filter((s) => s.subject === activeSubject);
@@ -351,12 +331,6 @@ function PastQuestionsPage() {
 
   return (
     <>
-      <PaywallModal
-        open={paywallOpen}
-        onClose={() => setPaywallOpen(false)}
-        title="Unlock All Cambridge Past Questions"
-        subtitle="Upgrade to ExamGlow Premium to unlock verified past examination papers and examiner mark schemes across all years."
-      />
       {selected && <PaperModal paper={selected} onClose={() => setSelected(null)} />}
       <DashboardLayout crumbs={[{ label: "Course" }, { label: "Past Questions" }]}>
         {/* Hero */}
@@ -400,7 +374,6 @@ function PastQuestionsPage() {
               key={subj.code}
               subj={subj}
               onOpen={setSelected}
-              onLockClick={() => setPaywallOpen(true)}
             />
           ))}
         </div>

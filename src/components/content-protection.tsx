@@ -17,11 +17,9 @@ export function ContentProtectionGuard() {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
-  // Protect notes, syllabus, syllabus-notes, and past-questions
-  const isProtectedPage =
-    currentPath.startsWith("/notes") ||
-    currentPath.startsWith("/syllabus") ||
-    currentPath.startsWith("/past-questions");
+  // Syllabus and past questions are 100% free and screenshot-able.
+  // Content protection is strictly applied to proprietary notes (/notes).
+  const isProtectedPage = currentPath.startsWith("/notes");
 
   const [blackout, setBlackout] = useState(false);
 

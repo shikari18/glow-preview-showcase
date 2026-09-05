@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { BookOpen, ChevronRight, Search, ArrowLeft, Lock, FileText, Check, Volume2, VolumeX, Loader2, Play, Pause, SkipBack, SkipForward, X } from "lucide-react";
+import { BookOpen, ChevronRight, Search, ArrowLeft, FileText, Check, Volume2, VolumeX, Loader2, Play, Pause, SkipBack, SkipForward, X } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-page";
 import { playRealisticVoice, stopRealisticVoice, pauseRealisticVoice, resumeRealisticVoice, preloadGeminiSpeech, cleanSpeechText } from "@/lib/gemini-tts";
 import type { SubjectNotes, Chapter } from "@/lib/notes/types";
 import { SYLLABUS_NOTES } from "@/lib/syllabus-notes";
 import { formatMathAndMarkdown } from "@/lib/render-math";
 import { getChapterDiagramSvg } from "@/lib/diagrams";
-import { isPaidUser } from "@/lib/onboarding";
-import { PaywallModal } from "@/components/paywall-modal";
 
 export const Route = createFileRoute("/syllabus-notes")({
   head: () => ({
@@ -670,14 +668,10 @@ function ChapterDoc({
 
 function SubjectNoteRow({
   subject,
-  isPaid,
   onSelectChapter,
-  onLockedClick,
 }: {
   subject: SubjectNotes;
-  isPaid: boolean;
   onSelectChapter: (c: Chapter) => void;
-  onLockedClick: (ch: Chapter) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -707,65 +701,34 @@ function SubjectNoteRow({
       {/* Expanded chapter list in clean horizontal lines */}
       {open && (
         <div className="pb-4 pt-2 pl-6 sm:pl-8 space-y-2">
-          {subject.chapters.map((ch) => {
-            const isLocked = !isPaid && ch.number >= 3;
-
-            return (
-              <button
-                key={ch.number}
-                type="button"
-                onClick={() => {
-                  if (isLocked) {
-                    onLockedClick(ch);
-                  } else {
-                    onSelectChapter(ch);
-                  }
-                }}
-                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
-                  isLocked
-                    ? "border-amber-500/25 bg-secondary/30 hover:bg-amber-500/[0.04]"
-                    : "border-border bg-card hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-sm"
-                }`}
+          {subject.chapters.map((ch) => (
+            <button
+              key={ch.number}
+              type="button"
+              onClick={() => onSelectChapter(ch)}
+              className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-sm"
+            >
+              {/* Chapter number */}
+              <div
+                className={`flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${subject.color} text-white`}
               >
-                {/* Chapter number or Lock icon */}
-                <div
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                    isLocked
-                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                      : `${subject.color} text-white`
-                  }`}
-                >
-                  {isLocked ? <Lock className="size-3.5" /> : ch.number}
-                </div>
+                {ch.number}
+              </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {ch.title}
-                    </p>
-                    {isLocked && (
-                      <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                        Locked
-                      </span>
-                    )}
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground mt-0.5">
-                    {ch.subheadings.length} sections · {ch.subheadings.map((s) => s.title).slice(0, 3).join(", ")}...
-                  </p>
-                </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {ch.title}
+                </p>
+                <p className="truncate text-xs text-muted-foreground mt-0.5">
+                  {ch.subheadings.length} sections · {ch.subheadings.map((s) => s.title).slice(0, 3).join(", ")}...
+                </p>
+              </div>
 
-                {isLocked ? (
-                  <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background shadow-sm">
-                    Unlock
-                  </span>
-                ) : (
-                  <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground">
-                    Read note →
-                  </span>
-                )}
-              </button>
-            );
-          })}
+              <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground">
+                Read note →
+              </span>
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -779,13 +742,6 @@ function SyllabusNotesPage() {
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [paywallOpen, setPaywallOpen] = useState(false);
-  const [paywallData, setPaywallData] = useState<{ title?: string; subtitle?: string }>({});
-  const [isPaid, setIsPaid] = useState(false);
-
-  useEffect(() => {
-    setIsPaid(isPaidUser());
-  }, []);
 
   const categories = ["All", "Sciences", "Mathematics", "English", "Business & Economics", "Humanities", "Technology"];
 
@@ -821,17 +777,6 @@ function SyllabusNotesPage() {
     const idx = selectedSubject.chapters.findIndex((c) => c.number === activeChapter.number);
     const nextCh = selectedSubject.chapters[idx + 1];
     if (!nextCh) return;
-
-    // Strict lock check for next chapter navigation
-    if (!isPaid && nextCh.number >= 3) {
-      setPaywallData({
-        title: `Chapter ${nextCh.number} is Locked`,
-        subtitle:
-          "Free preview covers Chapters 1 & 2. Upgrade to ExamGlow Premium to continue reading Chapter 3 and all remaining topics.",
-      });
-      setPaywallOpen(true);
-      return;
-    }
     setActiveChapter(nextCh);
   };
 
@@ -843,26 +788,8 @@ function SyllabusNotesPage() {
     }
   };
 
-  const handleLockedChapterClick = (ch: Chapter) => {
-    setPaywallData({
-      title: `Unlock Chapter ${ch.number}: ${ch.title}`,
-      subtitle:
-        "Chapters 1 & 2 are free to preview. Upgrade to ExamGlow Premium to unlock all chapters, complete diagrams, and mark schemes.",
-    });
-    setPaywallOpen(true);
-  };
-
   return (
     <>
-      <PaywallModal
-        open={paywallOpen}
-        onClose={() => setPaywallOpen(false)}
-        title={paywallData.title ?? "Unlock Full Chapter Access"}
-        subtitle={
-          paywallData.subtitle ??
-          "Chapters 1 & 2 are free to preview. Upgrade to ExamGlow Premium to unlock Chapter 3 and all remaining syllabus notes."
-        }
-      />
 
       {activeChapter && selectedSubject && (
         <ChapterDoc
@@ -952,12 +879,10 @@ function SyllabusNotesPage() {
                     <SubjectNoteRow
                       key={subject.id}
                       subject={subject}
-                      isPaid={isPaid}
                       onSelectChapter={(c) => {
                         setSelectedSubject(subject);
                         setActiveChapter(c);
                       }}
-                      onLockedClick={handleLockedChapterClick}
                     />
                   ))}
                 </div>
