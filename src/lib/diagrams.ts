@@ -47,10 +47,10 @@ export const DIAGRAM_MAP: Record<string, string> = {
 
   <rect x="0" y="0" width="920" height="54" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
   <text x="460" y="28" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" fill="#0f172a">
-    Cambridge IGCSE Biology · Ultrastructure of Animal vs. Plant Cells
+    Ultrastructure of Animal vs. Plant Cells
   </text>
   <text x="460" y="45" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#64748b">
-    Syllabus 0610 Chapter 2: Cell Structures, Organelle Functions &amp; Identification
+    Cell Structures, Organelle Functions &amp; Identification
   </text>
 
   <!-- LEFT: ANIMAL CELL -->
@@ -232,7 +232,7 @@ export const DIAGRAM_MAP: Record<string, string> = {
     <text x="140" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#475569">ORGANELLE / FEATURE</text>
     <text x="340" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#be123c">ANIMAL CELL</text>
     <text x="510" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#15803d">PLANT CELL</text>
-    <text x="710" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0f172a">CAMBRIDGE EXAM ROLE</text>
+    <text x="710" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0f172a">KEY FUNCTION &amp; ROLE</text>
     <line x1="0" y1="30" x2="840" y2="30" stroke="#cbd5e1" stroke-width="1" />
 
     <text x="25" y="48" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#334155">Cellulose Cell Wall</text>
@@ -284,7 +284,7 @@ export const DIAGRAM_MAP: Record<string, string> = {
   </defs>
   <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
   <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
-    Cambridge IGCSE 0680 Environmental Management · The Geological Rock Cycle
+    The Geological Rock Cycle
   </text>
   <g transform="translate(320, 380)">
     <rect x="0" y="0" width="200" height="65" rx="16" fill="url(#magmaGrad)" stroke="#7f1d1d" stroke-width="2" />
@@ -315,7 +315,7 @@ export const DIAGRAM_MAP: Record<string, string> = {
   "demographic-transition.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 460" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
   <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
   <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
-    Cambridge IGCSE 0460 Geography · The Demographic Transition Model (DTM)
+    The Demographic Transition Model (DTM)
   </text>
   <g transform="translate(80, 80)">
     <!-- 5 Stage Columns -->
@@ -374,7 +374,7 @@ export const DIAGRAM_MAP: Record<string, string> = {
   </defs>
   <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
   <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
-    Cambridge IGCSE 0460 Geography · Destructive (Convergent) Plate Boundary
+    Destructive (Convergent) Plate Boundary
   </text>
   <g transform="translate(60, 80)">
     <!-- Asthenosphere Mantle -->
@@ -421,7 +421,7 @@ export const DIAGRAM_MAP: Record<string, string> = {
   "fractional-distillation.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 480" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
   <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
   <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
-    Cambridge IGCSE 0620 Chemistry · Fractional Distillation of Crude Oil
+    Fractional Distillation of Crude Oil
   </text>
   <g transform="translate(100, 80)">
     <!-- Distillation Tower -->
@@ -465,7 +465,7 @@ export const DIAGRAM_MAP: Record<string, string> = {
   "supply-demand.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 460" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
   <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
   <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
-    Cambridge IGCSE 0455 Economics · Market Equilibrium (Supply &amp; Demand)
+    Market Equilibrium (Supply &amp; Demand)
   </text>
   <g transform="translate(140, 80)">
     <!-- Axes -->
@@ -505,7 +505,7 @@ export const DIAGRAM_MAP: Record<string, string> = {
   </defs>
   <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
   <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
-    Cambridge IGCSE 0580 Mathematics · Quadratic Function Parabola Anatomy
+    Quadratic Function Parabola Anatomy
   </text>
   <g transform="translate(100, 80)">
     <line x1="20" y1="240" x2="620" y2="240" stroke="#334155" stroke-width="2" />
@@ -542,7 +542,7 @@ export const DIAGRAM_MAP: Record<string, string> = {
   </defs>
   <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
   <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
-    Cambridge IGCSE 0478 / 0417 · Von Neumann Computer Architecture &amp; System Buses
+    Von Neumann Computer Architecture &amp; System Buses
   </text>
   <g transform="translate(60, 90)">
     <rect x="0" y="0" width="240" height="280" rx="18" fill="#f8fafc" stroke="#2563eb" stroke-width="2.5" />
@@ -576,7 +576,7 @@ export const DIAGRAM_MAP: Record<string, string> = {
 
   "biology-classification.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 380" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
     <rect width="840" height="46" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
-    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#14532d">Cambridge IGCSE Biology · 5 Kingdoms &amp; Dichotomous Key</text>
+    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#14532d">5 Kingdoms &amp; Dichotomous Key</text>
     <g transform="translate(40, 75)">
       <rect x="0" y="0" width="130" height="60" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
       <text x="65" y="26" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#065f46">Animalia</text>
@@ -694,7 +694,7 @@ export const DIAGRAM_MAP: Record<string, string> = {
 
   "chemistry-mole-triangle.svg": `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 380" width="100%" height="auto" class="rounded-2xl bg-white shadow-sm border border-slate-200">
     <rect width="840" height="46" fill="#fdf4ff" stroke="#f5d0fe" stroke-width="1"/>
-    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#86198f">The 3 Essential Cambridge Mole Calculation Triangles</text>
+    <text x="420" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#86198f">The 3 Essential Mole Calculation Triangles</text>
     <g transform="translate(50, 75)">
       <!-- Triangle 1: Mass -->
       <polygon points="110,20 20,180 200,180" fill="#fdf2f8" stroke="#ec4899" stroke-width="2.5"/>

@@ -17,9 +17,9 @@ export function ContentProtectionGuard() {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
-  // Syllabus and past questions are 100% free and screenshot-able.
-  // Content protection is strictly applied to proprietary notes (/notes).
-  const isProtectedPage = currentPath.startsWith("/notes");
+  // Syllabus (/syllabus) and past questions (/past-questions) are 100% free and screenshot-able.
+  // Content protection is strictly applied to proprietary notes (/notes and /syllabus-notes).
+  const isProtectedPage = currentPath.startsWith("/notes") || currentPath.startsWith("/syllabus-notes");
 
   const [blackout, setBlackout] = useState(false);
 
@@ -160,12 +160,15 @@ export function ContentProtectionGuard() {
           visibility: hidden !important;
         }
       }
-      .drm-blackout body {
+      .drm-blackout, .drm-blackout body, .drm-blackout #root {
         background: #000000 !important;
+        background-color: #000000 !important;
+        color: #000000 !important;
       }
       .drm-blackout body * {
         visibility: hidden !important;
         opacity: 0 !important;
+        filter: brightness(0) !important;
       }
     `;
     document.head.appendChild(style);
@@ -178,15 +181,9 @@ export function ContentProtectionGuard() {
 
   return (
     <div
-      className="fixed inset-0 z-[99999999] flex flex-col items-center justify-center bg-black text-white select-none pointer-events-none"
+      className="fixed inset-0 z-[99999999] bg-black select-none pointer-events-none"
+      style={{ backgroundColor: "#000000", filter: "brightness(0)" }}
       aria-hidden="true"
-    >
-      <div className="text-center px-6">
-        <p className="text-xs uppercase tracking-widest text-zinc-500 font-mono">ExamGlow Protected Content</p>
-        <p className="text-sm font-semibold text-zinc-400 mt-2">
-          Screen capture is strictly restricted on syllabus notes, past questions, and learning materials.
-        </p>
-      </div>
-    </div>
+    />
   );
 }

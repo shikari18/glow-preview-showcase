@@ -43,10 +43,10 @@
   <!-- Top Title Banner -->
   <rect x="0" y="0" width="920" height="54" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
   <text x="460" y="28" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" fill="#0f172a">
-    Cambridge IGCSE Biology · Ultrastructure of Animal vs. Plant Cells
+    Ultrastructure of Animal vs. Plant Cells
   </text>
   <text x="460" y="45" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#64748b">
-    Syllabus 0610 Chapter 2: Cell Structures, Organelle Functions &amp; Identification
+    Cell Structures, Organelle Functions &amp; Identification
   </text>
 
   <!-- ═════════════════════════════════════════════════════════════════════════ -->
@@ -269,7 +269,7 @@
     <text x="140" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#475569">ORGANELLE / FEATURE</text>
     <text x="340" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#be123c">ANIMAL CELL</text>
     <text x="510" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#15803d">PLANT CELL</text>
-    <text x="710" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0f172a">CAMBRIDGE EXAM ROLE</text>
+    <text x="710" y="20" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#0f172a">KEY FUNCTION &amp; ROLE</text>
     <line x1="0" y1="30" x2="840" y2="30" stroke="#cbd5e1" stroke-width="1" />
 
     <!-- Row 1: Cellulose Cell Wall -->

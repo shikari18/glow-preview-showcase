@@ -20,7 +20,7 @@
   <!-- Title Banner -->
   <rect x="0" y="0" width="840" height="52" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
   <text x="420" y="32" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="700" fill="#0f172a">
-    Cambridge IGCSE 0478 / 0417 · Von Neumann Computer Architecture &amp; System Buses
+    Von Neumann Computer Architecture &amp; System Buses
   </text>
 
   <!-- ── 1. Central Processing Unit (CPU) Block (Left) ── -->

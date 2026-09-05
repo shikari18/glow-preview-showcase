@@ -40,6 +40,7 @@ import { Route as ApiAssignmentRouteImport } from './routes/api/assignment'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as ApiPaypalCaptureRouteImport } from './routes/api/paypal-capture'
 import { Route as ApiPaypalOrderRouteImport } from './routes/api/paypal-order'
+import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as OnboardingGoalRouteImport } from './routes/onboarding.goal'
 import { Route as OnboardingRoleRouteImport } from './routes/onboarding.role'
 import { Route as OnboardingSourceRouteImport } from './routes/onboarding.source'
@@ -200,6 +201,11 @@ const ApiPaypalOrderRoute = ApiPaypalOrderRouteImport.update({
   path: '/api/paypal-order',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTtsRoute = ApiTtsRouteImport.update({
+  id: '/api/tts',
+  path: '/api/tts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingGoalRoute = OnboardingGoalRouteImport.update({
   id: '/onboarding/goal',
   path: '/onboarding/goal',
@@ -253,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/api/paypal-capture': typeof ApiPaypalCaptureRoute
   '/api/paypal-order': typeof ApiPaypalOrderRoute
+  '/api/tts': typeof ApiTtsRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/source': typeof OnboardingSourceRoute
@@ -290,6 +297,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/api/paypal-capture': typeof ApiPaypalCaptureRoute
   '/api/paypal-order': typeof ApiPaypalOrderRoute
+  '/api/tts': typeof ApiTtsRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/source': typeof OnboardingSourceRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/api/paypal-capture': typeof ApiPaypalCaptureRoute
   '/api/paypal-order': typeof ApiPaypalOrderRoute
+  '/api/tts': typeof ApiTtsRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
   '/onboarding/role': typeof OnboardingRoleRoute
   '/onboarding/source': typeof OnboardingSourceRoute
@@ -367,6 +376,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/paypal-capture'
     | '/api/paypal-order'
+    | '/api/tts'
     | '/onboarding/goal'
     | '/onboarding/role'
     | '/onboarding/source'
@@ -404,6 +414,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/paypal-capture'
     | '/api/paypal-order'
+    | '/api/tts'
     | '/onboarding/goal'
     | '/onboarding/role'
     | '/onboarding/source'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/api/paypal-capture'
     | '/api/paypal-order'
+    | '/api/tts'
     | '/onboarding/goal'
     | '/onboarding/role'
     | '/onboarding/source'
@@ -479,6 +491,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   ApiPaypalCaptureRoute: typeof ApiPaypalCaptureRoute
   ApiPaypalOrderRoute: typeof ApiPaypalOrderRoute
+  ApiTtsRoute: typeof ApiTtsRoute
   OnboardingGoalRoute: typeof OnboardingGoalRoute
   OnboardingRoleRoute: typeof OnboardingRoleRoute
   OnboardingSourceRoute: typeof OnboardingSourceRoute
@@ -704,6 +717,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPaypalOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/tts': {
+      id: '/api/tts'
+      path: '/api/tts'
+      fullPath: '/api/tts'
+      preLoaderRoute: typeof ApiTtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding/goal': {
       id: '/onboarding/goal'
       path: '/onboarding/goal'
@@ -767,6 +787,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   ApiPaypalCaptureRoute: ApiPaypalCaptureRoute,
   ApiPaypalOrderRoute: ApiPaypalOrderRoute,
+  ApiTtsRoute: ApiTtsRoute,
   OnboardingGoalRoute: OnboardingGoalRoute,
   OnboardingRoleRoute: OnboardingRoleRoute,
   OnboardingSourceRoute: OnboardingSourceRoute,

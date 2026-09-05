@@ -40,7 +40,7 @@ import {
   FREE_AI_MESSAGE_LIMIT,
 } from "@/lib/onboarding";
 import { PaywallModal } from "@/components/paywall-modal";
-import { playRealisticVoice, stopRealisticVoice } from "@/lib/gemini-tts";
+import { playRealisticVoice, stopRealisticVoice, unlockAudio } from "@/lib/gemini-tts";
 
 type UploadedAttachment = {
   name: string;
@@ -355,6 +355,8 @@ export function StudyChat({
     setInput("");
     setAttachment(null);
     setError(null);
+    setIsInputFocused(false);
+    inputRef.current?.blur();
     setStatus("submitted");
     incrementAiMessageCount();
 
@@ -569,16 +571,6 @@ export function StudyChat({
           </button>
         </div>
 
-        {/* Center: Persona identity */}
-        <div className="flex items-center gap-2">
-          <span className="relative flex size-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
-          </span>
-          <span className="text-sm font-bold text-foreground">Yumna</span>
-          <span className="text-xs text-muted-foreground hidden sm:inline">· AI Study Tutor</span>
-        </div>
-
         {/* Right side: Voice Call launcher (Hidden on mini widget) */}
         <div className="flex items-center gap-2">
           {!isMini && (
@@ -588,8 +580,9 @@ export function StudyChat({
                 if (voiceMode) {
                   endVoiceCall();
                 } else {
+                  unlockAudio();
                   setVoiceMode(true);
-                  startListening();
+                  speakResponse("Hey there! What are we studying together today? ✨");
                 }
               }}
               className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
@@ -793,9 +786,9 @@ export function StudyChat({
       {/* Modern, Sleek Input UI: Chat with Yumna */}
       <div
         style={viewportBottomOffset > 0 ? { transform: `translateY(-${viewportBottomOffset}px)` } : undefined}
-        className={`shrink-0 border-t border-border bg-card/95 backdrop-blur transition-all duration-150 z-30 ${
+        className={`shrink-0 border-t border-border bg-card/95 backdrop-blur transition-all duration-200 z-30 ${
           isInputFocused
-            ? "px-2 sm:px-4 py-2 sm:py-3 shadow-lg -translate-y-1 sm:translate-y-0"
+            ? "px-2 sm:px-4 py-3 sm:py-3 shadow-2xl -translate-y-2 sm:translate-y-0 pb-4 sm:pb-3"
             : "px-3 sm:px-4 py-2.5 sm:py-3"
         }`}
       >
@@ -903,7 +896,7 @@ export function StudyChat({
                         ? "Yumna is speaking (Realistic Voice)..."
                         : isListening
                         ? "Listening to you... speak naturally"
-                        : "Connecting to Yumna..."}
+                        : "Voice ready · speak or type below"}
                     </span>
                     <span className="text-[11px] text-muted-foreground truncate">
                       {voiceTranscript ? `"${voiceTranscript}"` : "Speech-to-speech active · tap Stop to finish"}
