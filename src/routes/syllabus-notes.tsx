@@ -447,7 +447,7 @@ function ChapterDoc({
           <div className="mt-8 overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-sm">
             <div className="mb-3 flex items-center justify-between border-b border-border pb-2 text-xs font-semibold text-muted-foreground">
               <span>Concept Diagram · Chapter {chapter.number}</span>
-              <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-bold text-foreground">Cambridge Syllabus Diagram</span>
+              <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-bold text-foreground">Interactive Concept Diagram</span>
             </div>
             <div
               className="w-full overflow-x-auto"

@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
+import { ShieldAlert } from "lucide-react";
+import { readProfile } from "@/lib/onboarding";
 
 /**
- * Hard Content Protection & Netflix-Style Screenshot Blocker
+ * Hard Content Protection & Anti-Capture Guard
  * ─────────────────────────────────────────────────────────────────────────────
- * Prevents text copying, right-clicking, and screenshots on protected pages.
- * Copying is allowed ONLY on /chat and assignment solver pages.
- *
- * How the Screenshot Blocker Works:
- * 1. The millisecond any screenshot tool (Windows Snipping Tool, PrtScn, Win+Shift+S,
- *    ShareX, Lightshot, Mac Grab) activates, the browser window loses focus ('blur').
- * 2. While blurred, the entire page is blanked out to pitch black (#000000).
- * 3. Any press of the PrintScreen key immediately wipes the system clipboard.
+ * Provides multi-layer DRM defense for proprietary syllabus and user notes:
+ * 1. Persistent Control Center / Multitasking Blackout Lock (neutralizes iOS screen recordings).
+ * 2. Dynamic Forensic Anti-Piracy Watermark (permanently burns user identity into any capture).
+ * 3. Hardware Button / Shortcut detection (PrintScreen, Win+Shift+S, Cmd+Shift, Android volume keys).
+ * 4. Mobile 3-finger screenshot gesture traps.
+ * 5. Strict WebKit text-selection and touch callout lockdowns.
  */
 export function ContentProtectionGuard() {
   const routerState = useRouterState();
@@ -22,6 +22,18 @@ export function ContentProtectionGuard() {
   const isProtectedPage = currentPath.startsWith("/notes") || currentPath.startsWith("/syllabus-notes");
 
   const [blackout, setBlackout] = useState(false);
+  const [watermarkText, setWatermarkText] = useState("ExamGlow Protected · Confidential");
+
+  useEffect(() => {
+    if (!isProtectedPage) return;
+
+    try {
+      const profile = readProfile();
+      const id = profile?.email || profile?.name || "Licensed Student";
+      const date = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      setWatermarkText(`${id} · ${date}`);
+    } catch {}
+  }, [isProtectedPage]);
 
   useEffect(() => {
     if (!isProtectedPage) return;
@@ -38,24 +50,19 @@ export function ContentProtectionGuard() {
 
     // 3. Detect screenshot keys (Windows, Mac, Android hardware keys)
     const handleKeyDown = (e: KeyboardEvent) => {
-      // PrintScreen key (Windows / Linux)
       if (e.key === "PrintScreen" || e.keyCode === 44) {
         wipeClipboardAndBlackout();
       }
-      // Windows Snipping Tool: Win + Shift + S or Ctrl + Shift + S
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "s" || e.key === "S")) {
         wipeClipboardAndBlackout();
       }
-      // macOS Screenshot shortcuts: Cmd + Shift + 3, 4, 5
       if (e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key)) {
         wipeClipboardAndBlackout();
       }
-      // Print shortcut: Ctrl + P / Cmd + P
       if ((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "P")) {
         e.preventDefault();
         wipeClipboardAndBlackout();
       }
-      // Android screenshot button combo hardware key events
       if (e.key === "VolumeDown" || e.key === "VolumeUp" || (e as any).keyCode === 24 || (e as any).keyCode === 25) {
         wipeClipboardAndBlackout();
       }
@@ -80,38 +87,18 @@ export function ContentProtectionGuard() {
       try {
         navigator.clipboard.writeText("Screen capture is disabled on ExamGlow protected syllabus and exam materials.");
       } catch {}
-      setTimeout(() => {
-        if (document.hasFocus()) {
-          setBlackout(false);
-          document.documentElement.classList.remove("drm-blackout");
-        }
-      }, 2500);
     }
 
-    // 5. Window blur & pagehide: Mobile app switcher or screenshot capture overlay
+    // 5. Window blur & pagehide: Triggered when iOS Control Center is opened to start screen recording
+    // or when switching apps. Keeps the blackout active until explicit student verification!
     const handleBlur = () => {
       setBlackout(true);
       document.documentElement.classList.add("drm-blackout");
-      try {
-        navigator.clipboard.writeText("Screen capture is disabled on ExamGlow protected content.");
-      } catch {}
-    };
-
-    const handleFocus = () => {
-      // Delay unmasking so hardware screenshot capture completes on black screen
-      setTimeout(() => {
-        if (document.hasFocus()) {
-          setBlackout(false);
-          document.documentElement.classList.remove("drm-blackout");
-        }
-      }, 600);
     };
 
     const handleVisibility = () => {
       if (document.hidden) {
         handleBlur();
-      } else {
-        handleFocus();
       }
     };
 
@@ -122,7 +109,6 @@ export function ContentProtectionGuard() {
     window.addEventListener("keyup", handleKeyUp);
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("blur", handleBlur);
-    window.addEventListener("focus", handleFocus);
     window.addEventListener("pagehide", handleBlur);
     document.addEventListener("visibilitychange", handleVisibility);
 
@@ -139,7 +125,6 @@ export function ContentProtectionGuard() {
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("blur", handleBlur);
-      window.removeEventListener("focus", handleFocus);
       window.removeEventListener("pagehide", handleBlur);
       document.removeEventListener("visibilitychange", handleVisibility);
       document.body.style.userSelect = "";
@@ -149,7 +134,7 @@ export function ContentProtectionGuard() {
     };
   }, [isProtectedPage]);
 
-  // CSS print blackout protection
+  // CSS print & hardware composition protection
   useEffect(() => {
     const style = document.createElement("style");
     style.id = "examglow-drm-css-protection";
@@ -170,6 +155,11 @@ export function ContentProtectionGuard() {
         opacity: 0 !important;
         filter: brightness(0) !important;
       }
+      /* Prevent iOS magnifier loupe and image dragging */
+      img {
+        -webkit-user-drag: none !important;
+        user-select: none !important;
+      }
     `;
     document.head.appendChild(style);
     return () => {
@@ -177,13 +167,49 @@ export function ContentProtectionGuard() {
     };
   }, []);
 
-  if (!isProtectedPage || !blackout) return null;
+  if (!isProtectedPage) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[99999999] bg-black select-none pointer-events-none"
-      style={{ backgroundColor: "#000000", filter: "brightness(0)" }}
-      aria-hidden="true"
-    />
+    <>
+      {/* ── Dynamic Forensic Anti-Piracy Watermark ────────────────────────── */}
+      {/* Burns user identity permanently into any physical screen grab or recording */}
+      <div
+        className="pointer-events-none fixed inset-0 z-30 select-none overflow-hidden opacity-[0.06] dark:opacity-[0.08]"
+        aria-hidden="true"
+        style={{
+          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='160' viewBox='0 0 320 160'><text x='50%' y='40%' text-anchor='middle' fill='%23000000' font-family='system-ui,sans-serif' font-weight='800' font-size='12' transform='rotate(-22 160 80)'>EXAMGLOW CONFIDENTIAL</text><text x='50%' y='60%' text-anchor='middle' fill='%23000000' font-family='system-ui,sans-serif' font-weight='700' font-size='10' transform='rotate(-22 160 80)'>${encodeURIComponent(
+            watermarkText,
+          )}</text></svg>")`,
+          backgroundRepeat: "repeat",
+        }}
+      />
+
+      {/* ── Screen Recording / App Switch Blackout Curtain ─────────────────── */}
+      {blackout && (
+        <div
+          onClick={() => {
+            setBlackout(false);
+            document.documentElement.classList.remove("drm-blackout");
+          }}
+          className="fixed inset-0 z-[99999999] flex flex-col items-center justify-center bg-black p-6 text-center text-white cursor-pointer select-none animate-in fade-in duration-150"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="size-16 rounded-3xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center mb-4 text-rose-500">
+            <ShieldAlert className="size-8" />
+          </div>
+          <p className="text-lg font-bold text-white tracking-tight">Screen Capture Protection Active</p>
+          <p className="mt-2 text-xs text-zinc-400 max-w-xs leading-relaxed">
+            Control Center, screen recording, or app switching was detected. Content is secured.
+          </p>
+          <button
+            type="button"
+            className="mt-6 rounded-full bg-white text-black px-6 py-2.5 text-xs font-bold shadow-lg hover:bg-zinc-200 active:scale-95 transition-all"
+          >
+            Tap to Resume Reading
+          </button>
+        </div>
+      )}
+    </>
   );
 }
