@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
-import { BookOpen, ChevronRight, Search, ArrowLeft, FileText, Check, Volume2, VolumeX, Loader2, Play, Pause, SkipBack, SkipForward, X, Lock } from "lucide-react";
+import { BookOpen, ChevronRight, Search, ArrowLeft, FileText, Check, Volume2, VolumeX, Loader2, Play, Pause, SkipBack, SkipForward, X, Lock, ShieldCheck } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard-page";
 import { playRealisticVoice, stopRealisticVoice, pauseRealisticVoice, resumeRealisticVoice, preloadGeminiSpeech, cleanSpeechText, unlockAudio } from "@/lib/gemini-tts";
 import type { SubjectNotes, Chapter } from "@/lib/notes/types";
 import { SYLLABUS_NOTES } from "@/lib/syllabus-notes";
 import { formatMathAndMarkdown } from "@/lib/render-math";
 import { getChapterDiagramSvg } from "@/lib/diagrams";
-import { isPaidUser } from "@/lib/onboarding";
+import { isPaidUser, readProfile } from "@/lib/onboarding";
 import { PaywallModal } from "@/components/paywall-modal";
 
 export const Route = createFileRoute("/syllabus-notes")({
@@ -175,6 +175,24 @@ function ChapterDoc({
 
   const toggleCollapse = (i: number) =>
     setCollapsed((prev) => ({ ...prev, [i]: !prev[i] }));
+
+  const [isTouchActive, setIsTouchActive] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [shieldActive, setShieldActive] = useState(true);
+  const [watermark, setWatermark] = useState("ExamGlow Protected · Confidential");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      setIsTouchDevice(hasTouch);
+      try {
+        const p = readProfile();
+        const id = p?.email || p?.name || "Licensed Student";
+        const d = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        setWatermark(`${id} · ${d}`);
+      } catch {}
+    }
+  }, []);
 
   const idx = allChapters.findIndex((c) => c.number === chapter.number);
   const hasNext = idx < allChapters.length - 1;
@@ -379,6 +397,25 @@ function ChapterDoc({
           <span>Back to chapters</span>
         </button>
         <div className="flex-1" />
+        {isTouchDevice && (
+          <button
+            type="button"
+            onClick={() => {
+              setShieldActive((v) => !v);
+              setIsTouchActive(false);
+            }}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all border ${
+              shieldActive
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                : "bg-zinc-500/10 text-zinc-500 border-zinc-500/20"
+            }`}
+            title="Toggle Anti-Screenshot Shield"
+          >
+            <ShieldCheck className="size-3.5" />
+            <span className="hidden sm:inline">Anti-Screenshot:</span>
+            <span>{shieldActive ? "ON (Blackout)" : "OFF"}</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={handleStartLecture}
@@ -419,8 +456,71 @@ function ChapterDoc({
         </span>
       </div>
 
-      {/* Scrollable document */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      {/* Scrollable document with active touch DRM protection */}
+      <div
+        ref={scrollRef}
+        onTouchStart={(e) => {
+          if (!shieldActive || !isTouchDevice) return;
+          if (e.touches.length > 1) {
+            setIsTouchActive(false);
+            return;
+          }
+          const touch = e.touches[0];
+          if (touch && (touch.clientY < 50 || touch.clientX < 15 || touch.clientX > window.innerWidth - 15)) {
+            setIsTouchActive(false);
+            return;
+          }
+          setIsTouchActive(true);
+        }}
+        onTouchMove={(e) => {
+          if (!shieldActive || !isTouchDevice) return;
+          if (e.touches.length > 1) {
+            setIsTouchActive(false);
+            return;
+          }
+          setIsTouchActive(true);
+        }}
+        onTouchEnd={() => {
+          if (shieldActive && isTouchDevice) setIsTouchActive(false);
+        }}
+        onTouchCancel={() => {
+          if (shieldActive && isTouchDevice) setIsTouchActive(false);
+        }}
+        className="relative flex-1 overflow-y-auto select-none"
+      >
+        {/* Dynamic Forensic Watermark Layer */}
+        <div
+          className="pointer-events-none fixed inset-0 z-30 select-none overflow-hidden opacity-[0.06] dark:opacity-[0.08]"
+          aria-hidden="true"
+          style={{
+            backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='160' viewBox='0 0 320 160'><text x='50%' y='40%' text-anchor='middle' fill='%23000000' font-family='system-ui,sans-serif' font-weight='800' font-size='12' transform='rotate(-22 160 80)'>EXAMGLOW CONFIDENTIAL</text><text x='50%' y='60%' text-anchor='middle' fill='%23000000' font-family='system-ui,sans-serif' font-weight='700' font-size='10' transform='rotate(-22 160 80)'>${encodeURIComponent(
+              watermark,
+            )}</text></svg>")`,
+            backgroundRepeat: "repeat",
+          }}
+        />
+
+        {/* Blackout shield when finger is lifted on touch devices */}
+        {shieldActive && isTouchDevice && !isTouchActive && (
+          <div
+            className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-black p-6 text-center select-none"
+            style={{ backgroundColor: "#000000" }}
+          >
+            <div className="size-16 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mb-4 text-emerald-400">
+              <ShieldCheck className="size-8" />
+            </div>
+            <h3 className="text-xl font-bold text-white tracking-tight">Anti-Screenshot Shield Active</h3>
+            <p className="mt-2 text-xs text-zinc-400 max-w-xs leading-relaxed">
+              Proprietary notes are protected from screenshots. The screen automatically turns black when physical phone buttons are pressed.
+            </p>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-white text-black px-6 py-3 text-xs font-bold shadow-2xl animate-pulse">
+              <span>👆 Hold Finger Anywhere on Screen to Read</span>
+            </div>
+            <p className="mt-4 text-[10px] text-zinc-500 font-mono">
+              Screenshotting while finger is lifted captures pure black.
+            </p>
+          </div>
+        )}
         <article className="mx-auto max-w-4xl px-6 pb-28 pt-12 sm:px-12">
           {/* Chapter badge */}
           <div
