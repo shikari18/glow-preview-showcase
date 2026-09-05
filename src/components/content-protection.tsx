@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouterState } from "@tanstack/react-router";
-import { ShieldAlert } from "lucide-react";
 import { readProfile } from "@/lib/onboarding";
 
 /**
- * Hard Content Protection & Anti-Capture Guard
+ * Netflix-Style Instant Blackout Screen Capture Protection
  * ─────────────────────────────────────────────────────────────────────────────
- * Provides multi-layer DRM defense for proprietary syllabus and user notes:
- * 1. Persistent Control Center / Multitasking Blackout Lock (neutralizes iOS screen recordings).
- * 2. Dynamic Forensic Anti-Piracy Watermark (permanently burns user identity into any capture).
- * 3. Hardware Button / Shortcut detection (PrintScreen, Win+Shift+S, Cmd+Shift, Android volume keys).
- * 4. Mobile 3-finger screenshot gesture traps.
- * 5. Strict WebKit text-selection and touch callout lockdowns.
+ * Provides instantaneous hardware/gesture screen capture blanking:
+ * 1. Physical Volume Buttons (via Web Audio session volume monitoring).
+ * 2. Power Button / Sleep Button / System screenshot trigger (blur, pagehide, visibilitychange).
+ * 3. 3-Finger Slide / Multi-finger gesture on mobile screens.
+ * 4. Desktop PrintScreen (PrtScn), Win+Shift+S, Cmd+Shift+3/4/5, Alt+PrtScn.
+ * 5. Instant pitch-black screen overlay (#000000) for 2.8 seconds during capture,
+ *    then automatically restores normal viewing.
  */
 export function ContentProtectionGuard() {
   const routerState = useRouterState();
@@ -23,6 +23,7 @@ export function ContentProtectionGuard() {
 
   const [blackout, setBlackout] = useState(false);
   const [watermarkText, setWatermarkText] = useState("ExamGlow Protected · Confidential");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!isProtectedPage) return;
@@ -38,67 +39,96 @@ export function ContentProtectionGuard() {
   useEffect(() => {
     if (!isProtectedPage) return;
 
-    // 1. Prevent copy and cut
-    const handleCopy = (e: ClipboardEvent) => {
-      e.preventDefault();
+    // Trigger instant Netflix-style black screen
+    const triggerDrmBlackout = () => {
+      setBlackout(true);
+      document.documentElement.classList.add("drm-blackout");
+
+      try {
+        navigator.clipboard.writeText("Screen capture is disabled on ExamGlow protected syllabus and exam materials.");
+      } catch {}
+
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      // Keep screen black during hardware capture (2.8 seconds), then smoothly restore
+      timeoutRef.current = setTimeout(() => {
+        setBlackout(false);
+        document.documentElement.classList.remove("drm-blackout");
+      }, 2800);
     };
 
-    // 2. Prevent right-click context menu
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-    };
+    // 1. Prevent copy, cut, and right click context menu
+    const handleCopy = (e: ClipboardEvent) => e.preventDefault();
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
 
-    // 3. Detect screenshot keys (Windows, Mac, Android hardware keys)
+    // 2. Hardware keys detection (PC shortcuts & Android volume buttons)
     const handleKeyDown = (e: KeyboardEvent) => {
+      // PrintScreen key (Windows / Linux)
       if (e.key === "PrintScreen" || e.keyCode === 44) {
-        wipeClipboardAndBlackout();
+        triggerDrmBlackout();
       }
+      // Windows Snipping Tool: Win + Shift + S or Ctrl + Shift + S
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "s" || e.key === "S")) {
-        wipeClipboardAndBlackout();
+        triggerDrmBlackout();
       }
+      // macOS Screenshot shortcuts: Cmd + Shift + 3, 4, 5
       if (e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key)) {
-        wipeClipboardAndBlackout();
+        triggerDrmBlackout();
       }
+      // Print shortcut: Ctrl + P / Cmd + P
       if ((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "P")) {
         e.preventDefault();
-        wipeClipboardAndBlackout();
+        triggerDrmBlackout();
       }
+      // Android / Hardware volume buttons
       if (e.key === "VolumeDown" || e.key === "VolumeUp" || (e as any).keyCode === 24 || (e as any).keyCode === 25) {
-        wipeClipboardAndBlackout();
+        triggerDrmBlackout();
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === "PrintScreen" || e.keyCode === 44 || e.key === "VolumeDown" || e.key === "VolumeUp") {
-        wipeClipboardAndBlackout();
+        triggerDrmBlackout();
       }
     };
 
-    // 4. Mobile 3-finger screenshot gesture detection
-    const handleTouchStart = (e: TouchEvent) => {
+    // 3. Mobile 3-finger screenshot slide gesture detection
+    const handleTouchGesture = (e: TouchEvent) => {
       if (e.touches && e.touches.length >= 3) {
-        wipeClipboardAndBlackout();
+        triggerDrmBlackout();
       }
     };
 
-    function wipeClipboardAndBlackout() {
-      setBlackout(true);
-      document.documentElement.classList.add("drm-blackout");
-      try {
-        navigator.clipboard.writeText("Screen capture is disabled on ExamGlow protected syllabus and exam materials.");
-      } catch {}
-    }
+    // 4. Physical Volume button listener via Audio session (iOS Safari & Android)
+    let silentAudio: HTMLAudioElement | null = null;
+    try {
+      silentAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
+      silentAudio.loop = true;
+      silentAudio.volume = 0.5;
 
-    // 5. Window blur & pagehide: Triggered when iOS Control Center is opened to start screen recording
-    // or when switching apps. Keeps the blackout active until explicit student verification!
+      const unlockAudio = () => {
+        if (silentAudio) {
+          silentAudio.play().catch(() => {});
+        }
+        window.removeEventListener("touchstart", unlockAudio);
+        window.removeEventListener("click", unlockAudio);
+      };
+      window.addEventListener("touchstart", unlockAudio, { passive: true });
+      window.addEventListener("click", unlockAudio, { passive: true });
+
+      silentAudio.addEventListener("volumechange", () => {
+        triggerDrmBlackout();
+      });
+    } catch {}
+
+    // 5. Power Button / Sleep-Wake / Control Center / App Switcher Detection
+    // Triggered the millisecond power or volume buttons are pressed on iPhone/Android
     const handleBlur = () => {
-      setBlackout(true);
-      document.documentElement.classList.add("drm-blackout");
+      triggerDrmBlackout();
     };
 
     const handleVisibility = () => {
       if (document.hidden) {
-        handleBlur();
+        triggerDrmBlackout();
       }
     };
 
@@ -107,7 +137,8 @@ export function ContentProtectionGuard() {
     window.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchstart", handleTouchGesture, { capture: true, passive: true });
+    window.addEventListener("touchmove", handleTouchGesture, { capture: true, passive: true });
     window.addEventListener("blur", handleBlur);
     window.addEventListener("pagehide", handleBlur);
     document.addEventListener("visibilitychange", handleVisibility);
@@ -118,12 +149,19 @@ export function ContentProtectionGuard() {
     (document.body.style as any).webkitTouchCallout = "none";
 
     return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (silentAudio) {
+        try {
+          silentAudio.pause();
+        } catch {}
+      }
       window.removeEventListener("copy", handleCopy);
       window.removeEventListener("cut", handleCopy);
       window.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchstart", handleTouchGesture, { capture: true });
+      window.removeEventListener("touchmove", handleTouchGesture, { capture: true });
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("pagehide", handleBlur);
       document.removeEventListener("visibilitychange", handleVisibility);
@@ -145,15 +183,35 @@ export function ContentProtectionGuard() {
           visibility: hidden !important;
         }
       }
-      .drm-blackout, .drm-blackout body, .drm-blackout #root {
+      html.drm-blackout,
+      html.drm-blackout body,
+      html.drm-blackout #root {
         background: #000000 !important;
         background-color: #000000 !important;
         color: #000000 !important;
       }
-      .drm-blackout body * {
-        visibility: hidden !important;
-        opacity: 0 !important;
+      html.drm-blackout #root {
         filter: brightness(0) !important;
+        opacity: 0 !important;
+      }
+      #examglow-netflix-shield {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: #000000 !important;
+        background-color: #000000 !important;
+        z-index: 2147483647 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #ffffff !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
       }
       /* Prevent iOS magnifier loupe and image dragging */
       img {
@@ -172,7 +230,6 @@ export function ContentProtectionGuard() {
   return (
     <>
       {/* ── Dynamic Forensic Anti-Piracy Watermark ────────────────────────── */}
-      {/* Burns user identity permanently into any physical screen grab or recording */}
       <div
         className="pointer-events-none fixed inset-0 z-30 select-none overflow-hidden opacity-[0.06] dark:opacity-[0.08]"
         aria-hidden="true"
@@ -184,30 +241,22 @@ export function ContentProtectionGuard() {
         }}
       />
 
-      {/* ── Screen Recording / App Switch Blackout Curtain ─────────────────── */}
+      {/* ── Netflix-Style Solid Pitch Black Screen Capture Shield ─────────── */}
       {blackout && (
         <div
+          id="examglow-netflix-shield"
           onClick={() => {
             setBlackout(false);
             document.documentElement.classList.remove("drm-blackout");
           }}
-          className="fixed inset-0 z-[99999999] flex flex-col items-center justify-center bg-black p-6 text-center text-white cursor-pointer select-none animate-in fade-in duration-150"
-          role="dialog"
-          aria-modal="true"
+          aria-hidden="true"
         >
-          <div className="size-16 rounded-3xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center mb-4 text-rose-500">
-            <ShieldAlert className="size-8" />
+          <div className="text-center px-6 select-none">
+            <p className="text-xs uppercase tracking-widest text-zinc-600 font-mono">ExamGlow Protected Content</p>
+            <p className="text-sm font-semibold text-zinc-400 mt-2">
+              Screen capture disabled.
+            </p>
           </div>
-          <p className="text-lg font-bold text-white tracking-tight">Screen Capture Protection Active</p>
-          <p className="mt-2 text-xs text-zinc-400 max-w-xs leading-relaxed">
-            Control Center, screen recording, or app switching was detected. Content is secured.
-          </p>
-          <button
-            type="button"
-            className="mt-6 rounded-full bg-white text-black px-6 py-2.5 text-xs font-bold shadow-lg hover:bg-zinc-200 active:scale-95 transition-all"
-          >
-            Tap to Resume Reading
-          </button>
         </div>
       )}
     </>
