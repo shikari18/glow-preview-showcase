@@ -230,13 +230,25 @@ export function ContentProtectionGuard() {
   return (
     <>
       {/* ── Dynamic Forensic Anti-Piracy Watermark ────────────────────────── */}
+      {/* Light Mode Watermark */}
       <div
-        className="pointer-events-none fixed inset-0 z-30 select-none overflow-hidden opacity-[0.06] dark:opacity-[0.08]"
+        className="pointer-events-none fixed inset-0 z-30 select-none overflow-hidden opacity-[0.09] dark:hidden"
         aria-hidden="true"
         style={{
-          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='160' viewBox='0 0 320 160'><text x='50%' y='40%' text-anchor='middle' fill='%23000000' font-family='system-ui,sans-serif' font-weight='800' font-size='12' transform='rotate(-22 160 80)'>EXAMGLOW CONFIDENTIAL</text><text x='50%' y='60%' text-anchor='middle' fill='%23000000' font-family='system-ui,sans-serif' font-weight='700' font-size='10' transform='rotate(-22 160 80)'>${encodeURIComponent(
+          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='360' height='180' viewBox='0 0 360 180'><text x='50%' y='40%' text-anchor='middle' fill='%23000000' font-family='system-ui,sans-serif' font-weight='800' font-size='11' letter-spacing='2' transform='rotate(-20 180 90)'>EXAMGLOW CONFIDENTIAL</text><text x='50%' y='58%' text-anchor='middle' fill='%23000000' font-family='system-ui,sans-serif' font-weight='600' font-size='9' transform='rotate(-20 180 90)'>${encodeURIComponent(
             watermarkText,
-          )}</text></svg>")`,
+          )}</text><text x='50%' y='74%' text-anchor='middle' fill='%23dc2626' font-family='system-ui,sans-serif' font-weight='700' font-size='8' transform='rotate(-20 180 90)'>DO NOT DISTRIBUTE · PROPRIETARY</text></svg>")`,
+          backgroundRepeat: "repeat",
+        }}
+      />
+      {/* Dark Mode Watermark */}
+      <div
+        className="pointer-events-none fixed inset-0 z-30 select-none overflow-hidden opacity-[0.11] hidden dark:block"
+        aria-hidden="true"
+        style={{
+          backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='360' height='180' viewBox='0 0 360 180'><text x='50%' y='40%' text-anchor='middle' fill='%23ffffff' font-family='system-ui,sans-serif' font-weight='800' font-size='11' letter-spacing='2' transform='rotate(-20 180 90)'>EXAMGLOW CONFIDENTIAL</text><text x='50%' y='58%' text-anchor='middle' fill='%23ffffff' font-family='system-ui,sans-serif' font-weight='600' font-size='9' transform='rotate(-20 180 90)'>${encodeURIComponent(
+            watermarkText,
+          )}</text><text x='50%' y='74%' text-anchor='middle' fill='%23f87171' font-family='system-ui,sans-serif' font-weight='700' font-size='8' transform='rotate(-20 180 90)'>DO NOT DISTRIBUTE · PROPRIETARY</text></svg>")`,
           backgroundRepeat: "repeat",
         }}
       />
